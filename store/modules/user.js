@@ -17,6 +17,7 @@ export const useUserStore = defineStore('user', () => {
   const avatar = ref(storage.get(constant.avatar))
   const roles = ref(storage.get(constant.roles))
   const permissions = ref(storage.get(constant.permissions))
+  const enrollment = ref(storage.get(constant.enrollment))
 
   const SET_TOKEN = (val) => {
     token.value = val
@@ -40,6 +41,10 @@ export const useUserStore = defineStore('user', () => {
   const SET_PERMISSIONS = (val) => {
     permissions.value = val
     storage.set(constant.permissions, val)
+  }
+  const SET_ENROLLMENT = (val) => {
+    enrollment.value = val
+    storage.set(constant.enrollment, val)
   }
 
   // 登录
@@ -76,7 +81,9 @@ export const useUserStore = defineStore('user', () => {
         } else {
           SET_ROLES(['ROLE_DEFAULT'])
         }
-		SET_ID(userid)
+        
+        SET_ENROLLMENT(res.user.enrollment)
+        SET_ID(userid)
         SET_NAME(username)
         SET_AVATAR(avatar)
         resolve(res)
@@ -108,8 +115,10 @@ export const useUserStore = defineStore('user', () => {
     name,
     avatar,
     roles,
+    enrollment,
     permissions,
     SET_AVATAR,
+    SET_ENROLLMENT,
     login: loginAction,
     getInfo: getInfoAction,
     logOut: logOutAction

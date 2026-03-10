@@ -1,0 +1,47 @@
+/**
+ * 通用标签选择器按钮样式
+ *
+ * 用法：在组件 <style lang="scss"> 中 @import '@/static/scss/select-tag.scss';
+ *
+ * HTML 结构示例：
+ *   <view class="select-tags">
+ *     <view class="select-tag" :class="{ active: ... }" @click="...">
+ *       <text class="select-tag-text">标签文字</text>
+ *     </view>
+ *   </view>
+ *
+ * 使用场景：每周频次、授课方式、分类速查区域/科目等所有标签多选/单选场景
+ */
+
+/* Tags 容器 */
+.select-tags {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* 单个 Tag */
+.select-tag {
+	padding: 7px 14px;
+	border-radius: 20px;
+	border: 1.5px solid #e2e8f0;
+	background: #f8fafc;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.select-tag.active {
+	border-color: #3B82F6;
+	background: #EFF6FF;
+}
+
+.select-tag-text {
+	font-size: 13px;
+	color: #64748b;
+}
+
+.select-tag.active .select-tag-text {
+	color: #3B82F6;
+	font-weight: 600;
+}

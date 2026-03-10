@@ -43,7 +43,7 @@
     },
     "quickapp" : {},
     "mp-weixin" : {
-        "appid" : "wxccd7e2a0911b3397",
+        "appid" : "wx4c21998d0c65f24b",
         "setting" : {
             "urlCheck" : false,
             "es6" : false,
@@ -53,7 +53,8 @@
         "optimization" : {
             "subPackages" : true
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "permission" : {}
     },
     "vueVersion" : "3",
     "h5" : {
@@ -66,6 +67,13 @@
         "router" : {
             "mode" : "hash",
             "base" : "./"
+        },
+        "sdkConfigs" : {
+            "maps" : {
+                "tencent" : {
+                    "key" : ""
+                }
+            }
         }
     }
 }

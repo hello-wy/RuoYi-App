@@ -117,16 +117,14 @@
   function loginSuccess(result) {
     // 设置用户信息
     useUserStore().getInfo().then(res => {
-      proxy.$tab.reLaunch('/pages/index')
+      proxy.$tab.reLaunch('/pages/guide/index')
     })
   }
 
   onLoad(() => {
-    //#ifdef H5
     if (getToken()) {
       proxy.$tab.reLaunch('/pages/index')
     }
-    //#endif
   })
 
   getCode()

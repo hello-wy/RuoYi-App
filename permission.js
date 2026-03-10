@@ -2,10 +2,19 @@ import { getToken } from '@/utils/auth'
 
 // 登录页面
 const loginPage = "/pages/login"
-  
+
 // 页面白名单
 const whiteList = [
-  '/pages/login', '/pages/register', '/pages/common/webview/index'
+  '/pages/login',
+  '/pages/register',
+  '/pages/common/webview/index',
+  '/pages/index',
+  '/pages/tutoring/parent/list',
+  '/pages/tutoring/tutor/list',
+  '/pages/lectures/list',
+  '/pages/jobs/list',
+  '/pages/guide/index',
+  '/pages/price/list',
 ]
 
 // 检查地址白名单

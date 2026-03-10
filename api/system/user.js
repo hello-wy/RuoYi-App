@@ -21,6 +21,12 @@ export function getUserProfile() {
     method: 'get'
   })
 }
+export function getUserEnrollment() {
+  return request({
+    url: '/system/user/profile/enrollment',
+    method: 'get'
+  })
+}
 
 // 修改用户个人信息
 export function updateUserProfile(data) {

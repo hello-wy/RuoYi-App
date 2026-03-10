@@ -1,14 +1,13 @@
 <script setup>
   import config from './config'
   import { getToken } from '@/utils/auth'
-  import { useConfigStore } from '@/store'
-  import { getCurrentInstance } from "vue"
+  import { useConfigStore, useLocationStore } from '@/store'
   import { onLaunch } from '@dcloudio/uni-app'
-
-  const { proxy } = getCurrentInstance()
+  import pcaData from '@/static/pca-code.json'
 
   onLaunch(() => {
     initApp()
+    getAreas("南京市",pcaData)
   })
 
   // 初始化应用
@@ -16,18 +15,27 @@
     // 初始化应用配置
     initConfig()
     // 检查用户登录状态
-    //#ifdef H5
     checkLogin()
-    //#endif
   }
 
   function initConfig() {
     useConfigStore().setConfig(config)
   }
 
+  function getAreas(cityName, data) {
+    // 找到城市节点（{ text, value, children }）传给 setCity
+    const allCities = data.flatMap(province => province.children)
+    const cityNode = allCities.find(city => city.text === cityName)
+
+    if (cityNode) {
+      useLocationStore().setCity(cityNode)
+    }
+  }
+
+
   function checkLogin() {
     if (!getToken()) {
-      proxy.$tab.reLaunch('/pages/login') 
+      uni.reLaunch({ url: '/pages/login' })
     }
   }
 </script>

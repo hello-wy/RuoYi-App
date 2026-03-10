@@ -1,92 +1,271 @@
 {
-  "pages": [{
-    "path": "pages/login",
-    "style": {
-      "navigationBarTitleText": "登录"
+  "pages": [
+    {
+      "path": "pages/index",
+      "style": {
+        "navigationBarTitleText": "育见成长"
+      }
+    },
+    {
+      "path": "pages/login",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/register",
+      "style": {
+        "navigationBarTitleText": "注册"
+      }
+    },
+    {
+      "path": "pages/guide/index",
+      "style": {
+        "navigationBarTitleText": "选择身份"
+      }
+    },
+    {
+      "path": "pages/price/list",
+      "style": {
+        "navigationBarTitleText": "价格"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    },
+    {
+      "path": "pages/mine/enrollment/index",
+      "style": {
+        "navigationBarTitleText": "我的学籍"
+      }
+    },
+    {
+      "path": "pages/mine/wallet/index",
+      "style": {
+        "navigationBarTitleText": "我的钱包",
+        "navigationBarBackgroundColor": "#3B82F6",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/growup/index",
+      "style": {
+        "navigationBarTitleText": "育见成长"
+      }
+    },
+    {
+      "path": "pages/growup/detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "详情"
+      }
+    },
+    {
+      "path": "pages/growup/qrcode/index",
+      "style": {
+        "navigationBarTitleText": "我的二维码"
+      }
+    },
+    {
+      "path": "pages/growup/tutor/list",
+      "style": {
+        "navigationBarTitleText": "讲师风采"
+      }
+    },
+    {
+      "path": "pages/growup/tutor/detail",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "讲师详情"
+      }
+    },
+    {
+      "path": "pages/growup/material/list",
+      "style": {
+        "navigationBarTitleText": "资料中心"
+      }
+    },
+    {
+      "path": "pages/mine/course/list",
+      "style": {
+        "navigationBarTitleText": "已报课程"
+      }
+    },
+    {
+      "path": "pages/tutoring/parent/apply",
+      "style": {
+        "navigationBarTitleText": "请家教"
+      }
+    },
+    {
+      "path": "pages/tutoring/tutor/apply",
+      "style": {
+        "navigationBarTitleText": "做家教"
+      }
+    },
+    {
+      "path": "pages/mine/avatar/index",
+      "style": {
+        "navigationBarTitleText": "修改头像"
+      }
+    },
+    {
+      "path": "pages/mine/info/index",
+      "style": {
+        "navigationBarTitleText": "个人信息"
+      }
+    },
+    {
+      "path": "pages/mine/info/edit",
+      "style": {
+        "navigationBarTitleText": "编辑资料"
+      }
+    },
+    {
+      "path": "pages/mine/pwd/index",
+      "style": {
+        "navigationBarTitleText": "修改密码"
+      }
+    },
+    {
+      "path": "pages/mine/setting/index",
+      "style": {
+        "navigationBarTitleText": "应用设置"
+      }
+    },
+    {
+      "path": "pages/mine/help/index",
+      "style": {
+        "navigationBarTitleText": "常见问题"
+      }
+    },
+    {
+      "path": "pages/mine/about/index",
+      "style": {
+        "navigationBarTitleText": "关于我们"
+      }
+    },
+    {
+      "path": "pages/common/webview/index",
+      "style": {
+        "navigationBarTitleText": "浏览网页"
+      }
+    },
+    {
+      "path": "pages/common/textview/index",
+      "style": {
+        "navigationBarTitleText": "浏览文本"
+      }
+    },
+    {
+      "path": "pages/jobs/list",
+      "style": {
+        "navigationBarTitleText": "兼职广场",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/jobs/detail",
+      "style": {
+        "navigationBarTitleText": "兼职详情"
+      }
+    },
+    {
+      "path": "pages/jobs/apply",
+      "style": {
+        "navigationBarTitleText": "发布兼职"
+      }
+    },
+    {
+      "path": "pages/tutoring/parent/list",
+      "style": {
+        "navigationBarTitleText": "家长列表"
+      }
+    },
+    {
+      "path": "pages/tutoring/parent/detail",
+      "style": {
+        "navigationBarTitleText": "家长详情"
+      }
+    },
+    {
+      "path": "pages/tutoring/tutor/list",
+      "style": {
+        "navigationBarTitleText": "家教列表"
+      }
+    },
+    {
+      "path": "pages/tutoring/tutor/detail",
+      "style": {
+        "navigationBarTitleText": "家教详情"
+      }
+    },
+    {
+      "path": "pages/common/about/contact",
+      "style": {
+        "navigationBarTitleText": "联系我们"
+      }
+    },
+    {
+      "path": "pages/common/about/company",
+      "style": {
+        "navigationBarTitleText": "公司介绍"
+      }
+    },
+    {
+      "path": "pages/common/about/disclaimer",
+      "style": {
+        "navigationBarTitleText": "免责声明"
+      }
+    },
+    {
+      "path": "pages/common/about/privacy",
+      "style": {
+        "navigationBarTitleText": "隐私政策"
+      }
+    },
+    {
+      "path": "pages/salon/list",
+      "style": {
+        "navigationBarTitleText": "活动沙龙",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/salon/detail",
+      "style": {
+        "navigationBarTitleText": "沙龙详情"
+      }
     }
-  }, {
-    "path": "pages/register",
-    "style": {
-      "navigationBarTitleText": "注册"
-    }
-  }, {
-    "path": "pages/index",
-    "style": {
-      "navigationBarTitleText": "若依移动端框架",
-      "navigationStyle": "custom"
-    }
-  }, {
-    "path": "pages/work/index",
-    "style": {
-      "navigationBarTitleText": "工作台"
-    }
-  }, {
-    "path": "pages/mine/index",
-    "style": {
-      "navigationBarTitleText": "我的"
-    }
-  }, {
-    "path": "pages/mine/avatar/index",
-    "style": {
-      "navigationBarTitleText": "修改头像"
-    }
-  }, {
-    "path": "pages/mine/info/index",
-    "style": {
-      "navigationBarTitleText": "个人信息"
-    }
-  }, {
-    "path": "pages/mine/info/edit",
-    "style": {
-      "navigationBarTitleText": "编辑资料"
-    }
-  }, {
-    "path": "pages/mine/pwd/index",
-    "style": {
-      "navigationBarTitleText": "修改密码"
-    }
-  }, {
-    "path": "pages/mine/setting/index",
-    "style": {
-      "navigationBarTitleText": "应用设置"
-    }
-  }, {
-    "path": "pages/mine/help/index",
-    "style": {
-      "navigationBarTitleText": "常见问题"
-    }
-  }, {
-    "path": "pages/mine/about/index",
-    "style": {
-      "navigationBarTitleText": "关于我们"
-    }
-  }, {
-    "path": "pages/common/webview/index",
-    "style": {
-      "navigationBarTitleText": "浏览网页"
-    }
-  }, {
-    "path": "pages/common/textview/index",
-    "style": {
-      "navigationBarTitleText": "浏览文本"
-    }
-  }],
+  ],
   "tabBar": {
     "color": "#000000",
     "selectedColor": "#000000",
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
-    "list": [{
+    "list": [
+      {
         "pagePath": "pages/index",
         "iconPath": "static/images/tabbar/home.png",
         "selectedIconPath": "static/images/tabbar/home_.png",
         "text": "首页"
-      }, {
-        "pagePath": "pages/work/index",
+      },
+      {
+        "pagePath": "pages/mine/wallet/index",
         "iconPath": "static/images/tabbar/work.png",
         "selectedIconPath": "static/images/tabbar/work_.png",
-        "text": "工作台"
-      }, {
+        "text": "钱包"
+      },
+	  {
+	    "pagePath": "pages/jobs/list",
+	    "iconPath": "static/images/tabbar/work.png",
+	    "selectedIconPath": "static/images/tabbar/work_.png",
+	    "text": "兼职日结"
+	  },
+      {
         "pagePath": "pages/mine/index",
         "iconPath": "static/images/tabbar/mine.png",
         "selectedIconPath": "static/images/tabbar/mine_.png",
