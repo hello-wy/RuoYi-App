@@ -10,9 +10,16 @@ const baseUrl = config.baseUrl
 const request = config => {
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
-  config.header = config.header || {}
+  config.header = {
+    ...(config.headers || {}),
+    ...(config.header || {})
+  }
   if (getToken() && !isToken) {
-    config.header['Authorization'] = 'Bearer ' + getToken()
+    const requestUrl = config.url || ''
+    const authHeader = requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization'
+    if (!config.header[authHeader]) {
+      config.header[authHeader] = 'Bearer ' + getToken()
+    }
   }
   // get请求映射params参数
   if (config.params) {
@@ -22,34 +29,34 @@ const request = config => {
   }
   return new Promise((resolve, reject) => {
     uni.request({
-        method: config.method || 'get',
-        timeout: config.timeout ||  timeout,
-        url: config.baseUrl || baseUrl + config.url,
-        data: config.data,
-        header: config.header,
-        dataType: 'json'
-      }).then(response => {
-        const res = response
-        const code = res.data.code || 200
-        const msg = errorCode[code] || res.data.msg || errorCode['default']
-        if (code === 401) {
-          showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
-            if (res.confirm) {
-              useUserStore().logOut().then(res => {
-                uni.reLaunch({ url: '/pages/login' })
-              })
-            }
-          })
-          reject('无效的会话，或者会话已过期，请重新登录。')
-        } else if (code === 500) {
-          toast(msg)
-          reject('500')
-        } else if (code !== 200) {
-          toast(msg)
-          reject(code)
-        }
-        resolve(res.data)
-      })
+      method: config.method || 'get',
+      timeout: config.timeout || timeout,
+      url: config.baseUrl || baseUrl + config.url,
+      data: config.data,
+      header: config.header,
+      dataType: 'json'
+    }).then(response => {
+      const res = response
+      const code = res.data.code || 200
+      const msg = errorCode[code] || res.data.msg || errorCode['default']
+      if (code === 401) {
+        showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
+          if (res.confirm) {
+            useUserStore().logOut().then(res => {
+              uni.reLaunch({ url: '/pages/login' })
+            })
+          }
+        })
+        reject('无效的会话，或者会话已过期，请重新登录。')
+      } else if (code === 500) {
+        toast(msg)
+        reject('500')
+      } else if (code !== 200) {
+        toast(msg)
+        reject(code)
+      }
+      resolve(res.data)
+    })
       .catch(error => {
         let { message } = error
         if (message === 'Network Error') {

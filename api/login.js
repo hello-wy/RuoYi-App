@@ -57,3 +57,34 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
+
+// 微信小程序登录
+export function wxminiLogin(appid, code) {
+  return request({
+    url: '/wxmini/login',
+    headers: {
+      isToken: false
+    },
+    method: 'get',
+    params: {
+      appid,
+      code
+    }
+  })
+}
+
+// 微信小程序手机号实时验证绑定
+export function bindWxminiPhone(appid, phoneCode, temporaryToken) {
+  return request({
+    url: '/wxmini/user/phone',
+    headers: {
+      isToken: false,
+      'Wx-Authorization': `Bearer ${temporaryToken}`
+    },
+    method: 'post',
+    data: {
+      appid,
+      phoneCode
+    }
+  })
+}

@@ -132,40 +132,62 @@
 
     </view>
   </scroll-view>
+
+  <login-popup
+    ref="loginPopupRef"
+    :auto-open="shouldAutoOpenLogin"
+    account-success-url=""
+    wechat-success-url=""
+    realtime-phone-success-url=""
+    @success="handleLoginSuccess"
+  />
 </template>
 
 <script setup>
+  import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
   import { useUserStore } from '@/store'
   import { storeToRefs } from 'pinia'
-  import { computed, ref, getCurrentInstance } from "vue"
+  import { ref, getCurrentInstance } from "vue"
   import { getToken } from '@/utils/auth'
   const { proxy } = getCurrentInstance()
   import { onLoad } from "@dcloudio/uni-app"
-  import { getUserEnrollment } from '@/api/system/user'
+  import { getTotalEnrollments } from '@/api/wxmini/growup.js'
   const userStore = useUserStore()
-  const { name, avatar, enrollment } = storeToRefs(userStore)
+  const { name, avatar } = storeToRefs(userStore)
   const jifen = ref(0)
   const enrollmentList = ref([])
+  const loginPopupRef = ref(null)
+  const shouldAutoOpenLogin = ref(false)
 
   function handleToInfo() {
     proxy.$tab.navigateTo('/pages/mine/info/index')
   }
 
   function handleToLogin() {
-    proxy.$tab.reLaunch('/pages/login')
+    loginPopupRef.value?.open()
   }
 
   function handleToAvatar() {
     proxy.$tab.navigateTo('/pages/mine/avatar/index')
   }
 
-  onLoad(() => {
-    if (!getToken()) {
-      proxy.$tab.reLaunch('/pages/index')
-    }
-    getUserEnrollment().then(res => {
+  function loadEnrollment() {
+    getTotalEnrollments().then(res => {
       enrollmentList.value = res.enrollment
     })
+  }
+
+  function handleLoginSuccess() {
+    shouldAutoOpenLogin.value = false
+    loadEnrollment()
+  }
+
+  onLoad(() => {
+    if (!getToken()) {
+      shouldAutoOpenLogin.value = true
+      return
+    }
+    loadEnrollment()
   })
 
   function handleToEnrollment() {
@@ -258,13 +280,13 @@
 
       .verified-icon {
         font-size: 24rpx;
-        color: rgba(255, 255, 255, 0.85);
-        margin-right: 4rpx;
+        color: #4ADE80;
       }
 
       .verified-text {
         font-size: 22rpx;
-        color: rgba(255, 255, 255, 0.85);
+        color: rgba(255, 255, 255, 0.9);
+        margin-left: 6rpx;
       }
     }
   }
@@ -272,268 +294,200 @@
   .header-right {
     display: flex;
     align-items: center;
+    background: rgba(255, 255, 255, 0.18);
+    padding: 14rpx 24rpx;
+    border-radius: 999rpx;
 
     .homepage-text {
-      font-size: 26rpx;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 24rpx;
+      color: #fff;
     }
 
     .homepage-arrow {
-      font-size: 24rpx;
-      color: rgba(255, 255, 255, 0.9);
+      font-size: 22rpx;
+      color: #fff;
+      margin-left: 8rpx;
     }
   }
 
   .stats-row {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
+    align-items: stretch;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 28rpx;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
   }
 
   .stat-item {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    padding: 28rpx 20rpx;
+    text-align: center;
+  }
 
-    .stat-num {
-      font-size: 44rpx;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-      margin-bottom: 12rpx;
-    }
+  .stat-num {
+    display: block;
+    font-size: 40rpx;
+    font-weight: 700;
+    color: #fff;
+  }
 
-    .stat-btn {
-      font-size: 22rpx;
-      color: rgba(255, 255, 255, 0.85);
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 30rpx;
-      padding: 6rpx 24rpx;
-      border: 1rpx solid rgba(255, 255, 255, 0.35);
-    }
+  .stat-btn {
+    margin-top: 10rpx;
+    font-size: 24rpx;
+    color: rgba(255, 255, 255, 0.88);
   }
 
   .stat-divider {
     width: 1rpx;
-    height: 60rpx;
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.18);
   }
 
-  /* ====== 内容区 ====== */
   .content-section {
-    position: relative;
-    top: -50rpx;
+    margin-top: -38rpx;
     padding: 0 24rpx 40rpx;
   }
 
-  /* ====== 通用卡片 ====== */
-  .card {
+  .card,
+  .menu-card {
     background: #fff;
-    border-radius: 20rpx;
-    padding: 32rpx;
+    border-radius: 28rpx;
+    box-shadow: 0 14rpx 40rpx rgba(15, 23, 42, 0.08);
+  }
+
+  .card {
+    padding: 28rpx 24rpx 18rpx;
     margin-bottom: 24rpx;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
   }
 
   .card-title {
     font-size: 30rpx;
     font-weight: 600;
-    color: #1a1a2e;
-    margin-bottom: 28rpx;
+    color: #1E293B;
+    margin-bottom: 24rpx;
   }
 
-  /* ====== 学习中心 ====== */
   .study-grid {
     display: flex;
-    gap: 20rpx;
+    gap: 18rpx;
   }
 
   .study-item {
     flex: 1;
-    border-radius: 16rpx;
-    padding: 28rpx 0 22rpx;
+    border-radius: 24rpx;
+    padding: 24rpx 16rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-
-    .study-icon-wrap {
-      width: 72rpx;
-      height: 72rpx;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 14rpx;
-
-      .study-icon {
-        font-size: 36rpx;
-        color: #fff;
-      }
-    }
-
-    .study-label {
-      font-size: 24rpx;
-      color: #fff;
-      font-weight: 500;
-    }
   }
 
   .study-blue {
-    background: linear-gradient(135deg, #5B6CF6 0%, #3B82F6 100%);
+    background: linear-gradient(180deg, #DBEAFE 0%, #EFF6FF 100%);
   }
 
   .study-green {
-    background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+    background: linear-gradient(180deg, #DCFCE7 0%, #F0FDF4 100%);
   }
 
   .study-orange {
-    background: linear-gradient(135deg, #FBBF24 0%, #F97316 100%);
+    background: linear-gradient(180deg, #FED7AA 0%, #FFF7ED 100%);
   }
 
-  /* ====== 菜单卡片 ====== */
-  .menu-card {
+  .study-icon-wrap {
+    width: 76rpx;
+    height: 76rpx;
+    border-radius: 50%;
     background: #fff;
-    border-radius: 20rpx;
-    overflow: hidden;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14rpx;
+  }
+
+  .study-icon {
+    font-size: 40rpx;
+    color: #2563EB;
+  }
+
+  .study-label {
+    font-size: 24rpx;
+    color: #334155;
+  }
+
+  .menu-card {
+    padding: 0 24rpx;
   }
 
   .menu-item {
+    min-height: 96rpx;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 30rpx 32rpx;
+  }
 
-    .menu-left {
-      display: flex;
-      align-items: center;
-      flex: 1;
-    }
-
-    .menu-text {
-      font-size: 28rpx;
-      color: #1a1a2e;
-    }
-
-    .menu-arrow {
-      font-size: 26rpx;
-      color: #c0c4cc;
-    }
-
-    .menu-right-info {
-      display: flex;
-      align-items: center;
-
-      .menu-desc {
-        font-size: 22rpx;
-        color: #9ca3af;
-        margin-right: 4rpx;
-      }
-    }
+  .menu-left {
+    display: flex;
+    align-items: center;
   }
 
   .menu-icon-wrap {
-    width: 60rpx;
-    height: 60rpx;
-    border-radius: 14rpx;
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: 20rpx;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 22rpx;
-    flex-shrink: 0;
-
-    .menu-icon-inner {
-      font-size: 30rpx;
-      color: #fff;
-    }
   }
 
-  .menu-icon-pink   { background: linear-gradient(135deg, #F472B6, #EC4899); }
-  .menu-icon-orange { background: linear-gradient(135deg, #FBBF24, #F97316); }
-  .menu-icon-blue   { background: linear-gradient(135deg, #60A5FA, #3B82F6); }
-  .menu-icon-teal   { background: linear-gradient(135deg, #34D399, #14B8A6); }
-  .menu-icon-grey   { background: linear-gradient(135deg, #9CA3AF, #6B7280); }
+  .menu-icon-pink {
+    background: #FCE7F3;
+  }
+
+  .menu-icon-orange {
+    background: #FFEDD5;
+  }
+
+  .menu-icon-blue {
+    background: #DBEAFE;
+  }
+
+  .menu-icon-teal {
+    background: #CCFBF1;
+  }
+
+  .menu-icon-grey {
+    background: #E2E8F0;
+  }
+
+  .menu-icon-inner {
+    font-size: 34rpx;
+    color: #334155;
+  }
+
+  .menu-text {
+    margin-left: 18rpx;
+    font-size: 28rpx;
+    color: #0F172A;
+  }
+
+  .menu-arrow {
+    font-size: 24rpx;
+    color: #94A3B8;
+  }
 
   .menu-divider {
     height: 1rpx;
-    background: #f3f4f6;
-    margin: 0 32rpx;
+    background: #F1F5F9;
   }
 
-  /* ====== 钱包入口卡片 ====== */
-  .wallet-card {
-    margin: 0 0 20rpx 0;
-    background: linear-gradient(135deg, #fff9f0, #fff);
-    border-radius: 24rpx;
-    padding: 28rpx 28rpx;
+  .menu-right-info {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    border: 1.5rpx solid #FDE68A;
-    box-shadow: 0 2rpx 12rpx rgba(245, 158, 11, 0.1);
-
-    &:active { background: #fffbeb; }
   }
 
-  .wallet-left {
-    display: flex;
-    align-items: center;
-    gap: 20rpx;
-  }
-
-  .wallet-icon-bg {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #F59E0B, #FBBF24);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .wallet-icon-text {
-    font-size: 36rpx;
-    font-weight: 700;
-    color: #fff;
-  }
-
-  .wallet-text-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6rpx;
-  }
-
-  .wallet-title {
-    font-size: 30rpx;
-    font-weight: 600;
-    color: #1e293b;
-  }
-
-  .wallet-sub {
+  .menu-desc {
     font-size: 22rpx;
-    color: #94a3b8;
+    color: #94A3B8;
+    margin-right: 10rpx;
   }
-
-  .wallet-right {
-    display: flex;
-    align-items: center;
-    gap: 8rpx;
-  }
-
-  .wallet-balance-hint {
-    font-size: 24rpx;
-    color: #F59E0B;
-    font-weight: 500;
-  }
-
-  .wallet-arrow {
-    font-size: 24rpx;
-    color: #F59E0B;
-  }
-
 </style>

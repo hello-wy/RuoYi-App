@@ -4,7 +4,8 @@ import config from '@/config'
 import storage from '@/utils/storage'
 import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
-import { getInfo, login, logout } from '@/api/login'
+import { bindWxminiPhone, getInfo, login, logout, wxminiLogin } from '@/api/login'
+import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import defAva from '@/static/images/profile.jpg'
 
@@ -18,6 +19,9 @@ export const useUserStore = defineStore('user', () => {
   const roles = ref(storage.get(constant.roles))
   const permissions = ref(storage.get(constant.permissions))
   const enrollment = ref(storage.get(constant.enrollment))
+  const phone = ref(storage.get(constant.phone))
+  const sessionKey = ref(storage.get(constant.sessionKey))
+  const userType = ref(storage.get(constant.userType))
 
   const SET_TOKEN = (val) => {
     token.value = val
@@ -46,6 +50,69 @@ export const useUserStore = defineStore('user', () => {
     enrollment.value = val
     storage.set(constant.enrollment, val)
   }
+  const SET_PHONE = (val) => {
+    phone.value = val
+    storage.set(constant.phone, val)
+  }
+  const SET_SESSION_KEY = (val) => {
+    sessionKey.value = val
+    storage.set(constant.sessionKey, val)
+  }
+  const SET_USER_TYPE = (val) => {
+    userType.value = val
+    storage.set(constant.userType, val)
+  }
+
+  const resolveAvatar = (avatarUrl) => {
+    if (isHttp(avatarUrl)) {
+      return avatarUrl
+    }
+    return isEmpty(avatarUrl) ? defAva : baseUrl + avatarUrl
+  }
+
+  const syncEnrollment = () => {
+    getTotalEnrollments().then(res => {
+      SET_ENROLLMENT(res.data)
+    })
+  }
+
+  const applyWxSession = (profile) => {
+    setToken(profile.apiToken)
+    SET_TOKEN(profile.apiToken)
+    SET_ROLES(['ROLE_DEFAULT'])
+    SET_PERMISSIONS([])
+    SET_SESSION_KEY(profile.sessionKey || '')
+    SET_USER_TYPE(profile.userType || '')
+    SET_PHONE(profile.phone || '')
+    SET_ID(profile.openId || '')
+    SET_NAME(profile.userName || '')
+    SET_AVATAR(resolveAvatar(profile.avatarUrl || profile.avatar || ''))
+    syncEnrollment()
+    return profile
+  }
+
+  const buildWxProfile = (loginData, phoneData = {}) => ({
+    apiToken: loginData.apiToken || '',
+    sessionKey: phoneData.sessionKey || loginData.sessionKey || '',
+    openId: phoneData.openId || loginData.openId || '',
+    userName: phoneData.userName || loginData.userName || '',
+    userType: phoneData.userType || loginData.userType || '',
+    phone: phoneData.phone || phoneData.phoneNumber || loginData.phone || '',
+    avatarUrl: phoneData.avatarUrl || loginData.avatarUrl || loginData.avatar || ''
+  })
+
+  const resetProfileState = () => {
+    SET_TOKEN('')
+    SET_ID('')
+    SET_NAME('')
+    SET_AVATAR('')
+    SET_ROLES([])
+    SET_PERMISSIONS([])
+    SET_ENROLLMENT('')
+    SET_PHONE('')
+    SET_SESSION_KEY('')
+    SET_USER_TYPE('')
+  }
 
   // 登录
   const loginAction = (userInfo) => {
@@ -64,25 +131,58 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
+  const resolveWxLogin = (appid, code) => {
+    return new Promise((resolve, reject) => {
+      wxminiLogin(appid, code).then(res => {
+        resolve(applyWxSession(buildWxProfile(res.data)))
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  }
+
+  const resolveWxPhoneLogin = ({ appid, code, phoneCode }) => {
+    return new Promise((resolve, reject) => {
+      wxminiLogin(appid, code).then(loginRes => {
+        const loginData = loginRes.data || {}
+        const temporaryToken = loginData.apiToken
+        if (!temporaryToken) {
+          reject(new Error('未获取到微信临时登录态'))
+          return
+        }
+        bindWxminiPhone(appid, phoneCode, temporaryToken).then(phoneRes => {
+          const profile = buildWxProfile(loginData, phoneRes.data || {})
+          resolve(applyWxSession(profile))
+        }).catch(error => {
+          reject(error)
+        })
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  }
+
   // 获取用户信息
   const getInfoAction = () => {
     return new Promise((resolve, reject) => {
       getInfo().then(res => {
         const user = res.user
-        let avatar = user.avatar || ""
-        if (!isHttp(avatar)) {
-          avatar = (isEmpty(avatar)) ? defAva : baseUrl + avatar
-        }
+        const avatar = resolveAvatar(user.avatar || "")
         const userid = (isEmpty(user) || isEmpty(user.userId)) ? "" : user.userId
         const username = (isEmpty(user) || isEmpty(user.userName)) ? "" : user.userName
+        const phoneNumber = (isEmpty(user) || isEmpty(user.phonenumber)) ? "" : user.phonenumber
+        const accountType = (isEmpty(user) || isEmpty(user.userType)) ? "" : user.userType
         if (res.roles && res.roles.length > 0) {
           SET_ROLES(res.roles)
           SET_PERMISSIONS(res.permissions)
         } else {
           SET_ROLES(['ROLE_DEFAULT'])
         }
-        
+
         SET_ENROLLMENT(res.user.enrollment)
+        SET_PHONE(phoneNumber)
+        SET_SESSION_KEY('')
+        SET_USER_TYPE(accountType)
         SET_ID(userid)
         SET_NAME(username)
         SET_AVATAR(avatar)
@@ -97,9 +197,7 @@ export const useUserStore = defineStore('user', () => {
   const logOutAction = () => {
     return new Promise((resolve, reject) => {
       logout(token.value).then(() => {
-        SET_TOKEN('')
-        SET_ROLES([])
-        SET_PERMISSIONS([])
+        resetProfileState()
         removeToken()
         storage.clean()
         resolve()
@@ -116,11 +214,19 @@ export const useUserStore = defineStore('user', () => {
     avatar,
     roles,
     enrollment,
+    phone,
+    sessionKey,
+    userType,
     permissions,
     SET_AVATAR,
     SET_ENROLLMENT,
+    SET_PHONE,
+    SET_SESSION_KEY,
+    SET_USER_TYPE,
     login: loginAction,
     getInfo: getInfoAction,
-    logOut: logOutAction
+    logOut: logOutAction,
+    resolveWxLogin: resolveWxLogin,
+    resolveWxPhoneLogin
   }
 })

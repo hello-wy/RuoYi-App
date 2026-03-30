@@ -8,3 +8,16 @@ export function listTutor(query) {
         params: query
     })
 }
+export function getEnrollmentsList() {
+    return request({
+        url: `/wxmini/growup/enrollments/list`,
+        method: 'get'
+    })
+}
+
+export function getTotalEnrollments() {
+    return request({
+        url: `/wxmini/growup/enrollments/total`,
+        method: 'get'
+    })
+}

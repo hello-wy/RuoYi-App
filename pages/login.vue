@@ -1,211 +1,82 @@
 <template>
-  <view class="normal-login-container">
-    <view class="logo-content align-center justify-center flex">
-      <image style="width: 100rpx;height: 100rpx;" :src="globalConfig.appInfo.logo" mode="widthFix">
-      </image>
-      <text class="title">若依移动端登录</text>
-    </view>
-    <view class="login-form-content">
-      <view class="input-item flex align-center">
-        <view class="iconfont icon-user icon"></view>
-        <input v-model="loginForm.username" class="input" type="text" placeholder="请输入账号" maxlength="30" />
-      </view>
-      <view class="input-item flex align-center">
-        <view class="iconfont icon-password icon"></view>
-        <input v-model="loginForm.password" type="password" class="input" placeholder="请输入密码" maxlength="20" />
-      </view>
-      <view class="input-item flex align-center" style="width: 60%;margin: 0px;" v-if="captchaEnabled">
-        <view class="iconfont icon-code icon"></view>
-        <input v-model="loginForm.code" type="number" class="input" placeholder="请输入验证码" maxlength="4" />
-        <view class="login-code"> 
-          <image :src="codeUrl" @click="getCode" class="login-code-img"></image>
+  <view class="login-page">
+    <view class="page-orb orb-left"></view>
+    <view class="page-orb orb-right"></view>
+
+    <view class="hero-card">
+      <view class="hero-top">
+        <image class="logo" :src="globalConfig.appInfo.logo" mode="aspectFit"></image>
+        <view class="hero-copy">
+          <text class="eyebrow">WECHAT SIGN IN</text>
+          <text class="title">微信手机号快捷验证登录</text>
+          <text class="subtitle">主入口使用微信实时手机号验证，备选保留微信登录和账号密码登录。</text>
         </view>
       </view>
-      <view class="action-btn">
-        <button @click="handleLogin" class="login-btn cu-btn block bg-blue lg round">登录</button>
+
+      <view class="feature-list">
+        <view class="feature-item">
+          <text class="feature-title">手机号快捷验证</text>
+          <text class="feature-desc">按钮直连微信手机号实时验证能力，不是运营商一键登录。</text>
+        </view>
+        <view class="feature-item">
+          <text class="feature-title">两段式登录</text>
+          <text class="feature-desc">先拿临时登录态，再绑定手机号，第二步成功后才正式落本地 token。</text>
+        </view>
       </view>
-      <view class="reg text-center" v-if="register">
-        <text class="text-grey1">没有账号？</text>
-        <text @click="handleUserRegister" class="text-blue">立即注册</text>
-      </view>
-      <view class="xieyi text-center">
-        <text class="text-grey1">登录即代表同意</text>
-        <text @click="handleUserAgrement" class="text-blue">《用户协议》</text>
-        <text @click="handlePrivacy" class="text-blue">《隐私协议》</text>
-      </view>
+
+      <button class="launch-btn" @click="openLoginPopup()">打开登录弹窗</button>
+      <text class="launch-tip">默认核心交互在弹窗内完成，你也可以随时重新打开。</text>
     </view>
-     
+
+    <login-popup
+      ref="loginPopupRef"
+      :auto-open="shouldAutoOpen"
+      :default-mode="defaultMode"
+      :initial-login-form="initialLoginForm"
+      :register="register"
+      account-success-url="/pages/index"
+      wechat-success-url="/pages/guide/index"
+      realtime-phone-success-url="/pages/guide/index"
+    />
   </view>
 </template>
 
 <script setup>
-  import { ref, getCurrentInstance } from "vue"
-  import { onLoad } from  "@dcloudio/uni-app"
-  import { getToken } from '@/utils/auth'
-  import { getCodeImg } from '@/api/login'
-  import { useConfigStore, useUserStore } from '@/store'
+import { getCurrentInstance, ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import { useConfigStore } from '@/store'
+import { getToken } from '@/utils/auth'
 
-  const { proxy } = getCurrentInstance()
-  const globalConfig = useConfigStore().config
-  const codeUrl = ref("")
-  // 验证码开关
-  const captchaEnabled = ref(true)
-  // 用户注册开关
-  const register = ref(false)
-  const loginForm = ref({
-    username: "admin",
-    password: "admin123",
-    code: "",
-    uuid: ""
-  })
+const DEFAULT_MODE = 'realtimePhone'
 
-  // 用户注册
-  function handleUserRegister() {
-    proxy.$tab.redirectTo(`/pages/register`)
+const { proxy } = getCurrentInstance()
+const globalConfig = useConfigStore().config
+const loginPopupRef = ref(null)
+const defaultMode = ref(DEFAULT_MODE)
+const register = ref(false)
+const shouldAutoOpen = ref(false)
+const initialLoginForm = Object.freeze({
+  username: 'admin',
+  password: 'admin123',
+  code: '',
+  uuid: ''
+})
+
+function openLoginPopup(mode = DEFAULT_MODE) {
+  defaultMode.value = mode
+  loginPopupRef.value?.open(mode)
+}
+
+onLoad(() => {
+  if (getToken()) {
+    proxy.$tab.reLaunch('/pages/index')
+    return
   }
-
-  // 隐私协议
-  function handlePrivacy() {
-    let site = globalConfig.appInfo.agreements[0]
-    proxy.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
-  }
-
-  // 用户协议
-  function handleUserAgrement() {
-    let site = globalConfig.appInfo.agreements[1]
-    proxy.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
-  }
-
-  // 获取图形验证码
-  function getCode() {
-    getCodeImg().then(res => {
-      captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
-        if (captchaEnabled.value) {
-          codeUrl.value = 'data:image/gif;base64,' + res.img
-          loginForm.value.uuid = res.uuid
-        }
-    })
-  }
-
-  // 登录方法
-  async function handleLogin() {
-    if (loginForm.value.username === "") {
-      proxy.$modal.msgError("请输入账号")
-    } else if (loginForm.value.password === "") {
-      proxy.$modal.msgError("请输入密码")
-    } else if (loginForm.value.code === "" && captchaEnabled.value) {
-      proxy.$modal.msgError("请输入验证码")
-    } else {
-      proxy.$modal.loading("登录中，请耐心等待...")
-      pwdLogin()
-    }
-  }
-
-  // 密码登录
-  async function pwdLogin() {
-    useUserStore().login(loginForm.value).then(() => {
-      proxy.$modal.closeLoading()
-      loginSuccess()
-    }).catch(() => {
-      if (captchaEnabled.value) {
-        getCode()
-      }
-    })
-  }
-
-  // 登录成功后，处理函数
-  function loginSuccess(result) {
-    // 设置用户信息
-    useUserStore().getInfo().then(res => {
-      proxy.$tab.reLaunch('/pages/guide/index')
-    })
-  }
-
-  onLoad(() => {
-    if (getToken()) {
-      proxy.$tab.reLaunch('/pages/index')
-    }
-  })
-
-  getCode()
+  shouldAutoOpen.value = true
+})
 </script>
 
 <style lang="scss" scoped>
-  page {
-    background-color: #ffffff;
-  }
-
-  .normal-login-container {
-    width: 100%;
-
-    .logo-content {
-      width: 100%;
-      font-size: 21px;
-      text-align: center;
-      padding-top: 15%;
-
-      image {
-        border-radius: 4px;
-      }
-
-      .title {
-        margin-left: 10px;
-      }
-    }
-
-    .login-form-content {
-      text-align: center;
-      margin: 20px auto;
-      margin-top: 15%;
-      width: 80%;
-
-      .input-item {
-        margin: 20px auto;
-        background-color: #f5f6f7;
-        height: 45px;
-        border-radius: 20px;
-
-        .icon {
-          font-size: 38rpx;
-          margin-left: 10px;
-          color: #999;
-        }
-
-        .input {
-          width: 100%;
-          font-size: 14px;
-          line-height: 20px;
-          text-align: left;
-          padding-left: 15px;
-        }
-
-      }
-
-      .login-btn {
-        margin-top: 40px;
-        height: 45px;
-      }
-      
-      .reg {
-        margin-top: 15px;
-      }
-      
-      .xieyi {
-        color: #333;
-        margin-top: 20px;
-      }
-      
-      .login-code {
-        height: 38px;
-        float: right;
-      
-        .login-code-img {
-          height: 38px;
-          position: absolute;
-          margin-left: 10px;
-          width: 200rpx;
-        }
-      }
-    }
-  }
+@import './login-page.scss';
 </style>
