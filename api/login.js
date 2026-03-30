@@ -66,9 +66,25 @@ export function wxminiLogin(appid, code) {
       isToken: false
     },
     method: 'get',
-    data: {
+    params: {
       appid,
       code
+    }
+  })
+}
+
+// 微信小程序手机号实时验证绑定
+export function bindWxminiPhone(appid, phoneCode, temporaryToken) {
+  return request({
+    url: '/wxmini/user/phone',
+    headers: {
+      isToken: false,
+      'Wx-Authorization': `Bearer ${temporaryToken}`
+    },
+    method: 'post',
+    data: {
+      appid,
+      phoneCode
     }
   })
 }

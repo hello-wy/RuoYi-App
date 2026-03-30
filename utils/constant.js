@@ -5,7 +5,9 @@ const constant = {
   roles: 'user_roles',
   permissions: 'user_permissions',
   enrollment: 'user_enrollment',
-  phone: 'user_phone'
+  phone: 'user_phone',
+  sessionKey: 'user_session_key',
+  userType: 'user_type'
  }
 
  export default constant

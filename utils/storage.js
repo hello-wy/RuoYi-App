@@ -11,7 +11,9 @@ let storageNodeKeys = [
   constant.roles,
   constant.permissions,
   constant.enrollment,
-  constant.phone
+  constant.phone,
+  constant.sessionKey,
+  constant.userType
 ]
 
 const storage = {

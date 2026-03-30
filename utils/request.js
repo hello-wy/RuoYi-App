@@ -17,7 +17,9 @@ const request = config => {
   if (getToken() && !isToken) {
     const requestUrl = config.url || ''
     const authHeader = requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization'
-    config.header[authHeader] = 'Bearer ' + getToken()
+    if (!config.header[authHeader]) {
+      config.header[authHeader] = 'Bearer ' + getToken()
+    }
   }
   // get请求映射params参数
   if (config.params) {

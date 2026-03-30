@@ -1,0 +1,410 @@
+<template>
+  <uni-popup ref="popupRef" type="bottom" :is-mask-click="false" background-color="transparent">
+    <view class="login-popup">
+      <view class="popup-handle"></view>
+      <view class="popup-header">
+        <view>
+          <text class="popup-title">登录后继续使用完整服务</text>
+          <text class="popup-subtitle">主入口为微信手机号快捷验证登录</text>
+        </view>
+        <uni-icons type="closeempty" size="20" color="#64748b" @click="close"></uni-icons>
+      </view>
+
+      <view class="mode-switch">
+        <view
+          v-for="item in modeOptions"
+          :key="item.value"
+          class="mode-item"
+          :class="{ active: activeMode === item.value }"
+          @click="setMode(item.value)"
+        >
+          {{ item.label }}
+        </view>
+      </view>
+
+      <view v-if="activeMode === 'realtimePhone'" class="panel panel-primary">
+        <text class="panel-tag">推荐</text>
+        <text class="panel-title">微信手机号快捷登录</text>
+        <text class="panel-desc">通过微信实时验证手机号完成登录，这不是运营商一键登录。</text>
+        <!-- #ifdef MP-WEIXIN -->
+        <button
+          v-if="realtimePhoneSupported"
+          class="primary-btn realtime-btn"
+          open-type="getRealtimePhoneNumber"
+          @getrealtimephonenumber="handleRealtimePhoneLogin"
+        >
+          微信手机号快捷登录
+        </button>
+        <button
+          v-else
+          class="primary-btn realtime-btn"
+          @click="handleRealtimePhoneUnsupported"
+        >
+          微信手机号快捷登录
+        </button>
+        <!-- #endif -->
+        <!-- #ifndef MP-WEIXIN -->
+        <button
+          class="primary-btn realtime-btn"
+          @click="handleRealtimePhoneUnsupported"
+        >
+          微信手机号快捷登录
+        </button>
+        <!-- #endif -->
+        <text class="panel-note">点击后会先换取微信临时登录态，再绑定手机号并完成正式登录。</text>
+      </view>
+
+      <view v-else-if="activeMode === 'wechat'" class="panel">
+        <text class="panel-title">微信授权登录</text>
+        <text class="panel-desc">无法使用手机号快捷验证时，可退回到普通微信授权登录。</text>
+        <button class="primary-btn wechat-btn" @click="handleWechatLogin">
+          微信授权登录
+        </button>
+        <text class="panel-note">该入口不会自动补手机号，后续如需手机号能力需单独授权。</text>
+      </view>
+
+      <view v-else class="panel">
+        <text class="panel-title">账号密码登录</text>
+        <view class="input-item">
+          <input
+            class="input"
+            :value="loginForm.username"
+            maxlength="30"
+            placeholder="请输入账号"
+            @input="updateLoginField('username', $event.detail.value)"
+          />
+        </view>
+        <view class="input-item">
+          <input
+            class="input"
+            :value="loginForm.password"
+            maxlength="20"
+            password
+            placeholder="请输入密码"
+            @input="updateLoginField('password', $event.detail.value)"
+          />
+        </view>
+        <view v-if="captchaEnabled" class="input-item captcha-row">
+          <input
+            class="input"
+            :value="loginForm.code"
+            maxlength="4"
+            placeholder="请输入验证码"
+            type="number"
+            @input="updateLoginField('code', $event.detail.value)"
+          />
+          <image class="captcha-img" :src="codeUrl" @click="getCode"></image>
+        </view>
+        <button class="primary-btn account-btn" @click="handleAccountLogin">
+          账号登录
+        </button>
+        <view v-if="register" class="register-row">
+          <text class="muted-text">没有账号？</text>
+          <text class="link-text" @click="handleUserRegister">立即注册</text>
+        </view>
+      </view>
+
+      <view class="agreement">
+        <text class="muted-text">登录即代表同意</text>
+        <text class="link-text" @click="openAgreement(1)">《用户协议》</text>
+        <text class="link-text" @click="openAgreement(0)">《隐私协议》</text>
+      </view>
+    </view>
+  </uni-popup>
+</template>
+
+<script setup>
+import { getCurrentInstance, onMounted, ref, watch } from 'vue'
+import { getCodeImg } from '@/api/login'
+import { useConfigStore, useUserStore } from '@/store'
+
+const modeOptions = [
+  { label: '手机号快捷登录', value: 'realtimePhone' },
+  { label: '微信登录', value: 'wechat' },
+  { label: '账号登录', value: 'account' }
+]
+
+const DEFAULT_MODE = 'realtimePhone'
+const ACCOUNT_MODE = 'account'
+const FALLBACK_WX_APP_ID = 'wx4c21998d0c65f24b'
+const DEFAULT_LOGIN_FORM = Object.freeze({
+  username: 'admin',
+  password: 'admin123',
+  code: '',
+  uuid: ''
+})
+
+const props = defineProps({
+  register: {
+    type: Boolean,
+    default: false
+  },
+  defaultMode: {
+    type: String,
+    default: DEFAULT_MODE
+  },
+  autoOpen: {
+    type: Boolean,
+    default: false
+  },
+  accountSuccessUrl: {
+    type: String,
+    default: '/pages/index'
+  },
+  wechatSuccessUrl: {
+    type: String,
+    default: '/pages/guide/index'
+  },
+  realtimePhoneSuccessUrl: {
+    type: String,
+    default: '/pages/guide/index'
+  },
+  initialLoginForm: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+const emit = defineEmits(['close', 'success'])
+
+const { proxy } = getCurrentInstance()
+const userStore = useUserStore()
+const globalConfig = useConfigStore().config
+const popupRef = ref(null)
+const activeMode = ref(props.defaultMode)
+const codeUrl = ref('')
+const captchaEnabled = ref(true)
+const realtimePhoneSupported = ref(false)
+const loginForm = ref(createLoginForm(props.initialLoginForm))
+
+watch(() => props.defaultMode, (value) => {
+  const nextMode = value || DEFAULT_MODE
+  activeMode.value = nextMode
+  if (nextMode === ACCOUNT_MODE && !codeUrl.value) {
+    getCode()
+  }
+})
+
+watch(() => props.autoOpen, (value) => {
+  if (value) {
+    open(props.defaultMode)
+  }
+})
+
+watch(() => props.initialLoginForm, (value) => {
+  loginForm.value = createLoginForm(value)
+})
+
+function updateLoginField(field, value) {
+  loginForm.value = {
+    ...loginForm.value,
+    [field]: value
+  }
+}
+
+function setMode(mode) {
+  activeMode.value = mode
+  if (mode === ACCOUNT_MODE && !codeUrl.value) {
+    getCode()
+  }
+}
+
+function open(mode = activeMode.value) {
+  setMode(mode)
+  popupRef.value?.open()
+}
+
+function close() {
+  popupRef.value?.close()
+  emit('close')
+}
+
+function createLoginForm(initialLoginForm = {}) {
+  return {
+    ...DEFAULT_LOGIN_FORM,
+    ...initialLoginForm
+  }
+}
+
+function openAgreement(index) {
+  const site = globalConfig.appInfo.agreements[index]
+  proxy.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
+}
+
+function handleUserRegister() {
+  proxy.$tab.redirectTo('/pages/register')
+}
+
+function getCode() {
+  getCodeImg().then(res => {
+    captchaEnabled.value = res.captchaEnabled === undefined ? true : res.captchaEnabled
+    if (!captchaEnabled.value) {
+      codeUrl.value = ''
+      loginForm.value = { ...loginForm.value, code: '', uuid: '' }
+      return
+    }
+    codeUrl.value = `data:image/gif;base64,${res.img}`
+    loginForm.value = { ...loginForm.value, uuid: res.uuid }
+  })
+}
+
+function handleAccountLogin() {
+  if (!loginForm.value.username) {
+    proxy.$modal.msgError('请输入账号')
+    return
+  }
+  if (!loginForm.value.password) {
+    proxy.$modal.msgError('请输入密码')
+    return
+  }
+  if (captchaEnabled.value && !loginForm.value.code) {
+    proxy.$modal.msgError('请输入验证码')
+    return
+  }
+  withLoading('登录中，请耐心等待...', async () => {
+    await userStore.login(loginForm.value)
+    await userStore.getInfo()
+    finishLogin('account')
+  }).catch(() => {
+    if (captchaEnabled.value) {
+      getCode()
+    }
+  })
+}
+
+function handleRealtimePhoneUnsupported() {
+  proxy.$modal.msgError('当前微信环境不支持手机号实时验证登录，请使用微信登录或账号密码登录')
+}
+
+function handleRealtimePhoneLogin(event) {
+  // #ifndef MP-WEIXIN
+  handleRealtimePhoneUnsupported()
+  return
+  // #endif
+
+  const phoneCode = event?.detail?.code
+  if (!phoneCode) {
+    proxy.$modal.msgError(resolvePhoneDeniedMessage(event?.detail?.errMsg))
+    return
+  }
+  withLoading('微信手机号验证中，请稍候...', async () => {
+    const appid = resolveRequiredWxAppId()
+    const code = await requestWxLoginCode()
+    const profile = await userStore.resolveWxPhoneLogin({ appid, code, phoneCode })
+    finishLogin('realtimePhone', profile)
+  }).catch(showRuntimeMessage)
+}
+
+function handleWechatLogin() {
+  // #ifndef MP-WEIXIN
+  proxy.$modal.msgError('微信登录仅支持微信小程序环境')
+  return
+  // #endif
+
+  withLoading('微信授权中，请稍候...', async () => {
+    const appid = resolveRequiredWxAppId()
+    const code = await requestWxLoginCode()
+    const profile = await userStore.resolveWxLogin(appid, code)
+    finishLogin('wechat', profile)
+  }).catch(showRuntimeMessage)
+}
+
+function finishLogin(mode, payload = null) {
+  close()
+  emit('success', { mode, payload })
+  const targetUrl = resolveSuccessUrl(mode)
+  if (targetUrl) {
+    proxy.$tab.reLaunch(targetUrl)
+  }
+}
+
+function resolveSuccessUrl(mode) {
+  if (mode === 'account') {
+    return props.accountSuccessUrl
+  }
+  if (mode === 'wechat') {
+    return props.wechatSuccessUrl
+  }
+  return props.realtimePhoneSuccessUrl
+}
+
+function resolvePhoneDeniedMessage(errMsg = '') {
+  if (errMsg.includes('deny') || errMsg.includes('cancel')) {
+    return '你已取消微信手机号授权，无法完成快捷登录'
+  }
+  return '未获取到微信手机号验证凭证，请重新授权'
+}
+
+function showRuntimeMessage(error) {
+  if (!error || typeof error === 'string') {
+    return
+  }
+  if (error.message) {
+    proxy.$modal.msgError(error.message)
+  }
+}
+
+function resolveRequiredWxAppId() {
+  const appid = resolveWxAppId()
+  if (!appid) {
+    throw new Error('未获取到小程序 AppID，请检查当前运行环境')
+  }
+  return appid
+}
+
+function resolveWxAppId() {
+  // #ifdef MP-WEIXIN
+  const accountInfo = uni.getAccountInfoSync ? uni.getAccountInfoSync() : null
+  return accountInfo?.miniProgram?.appId || FALLBACK_WX_APP_ID
+  // #endif
+  return ''
+}
+
+async function requestWxLoginCode() {
+  try {
+    const loginRes = await uni.login({ provider: 'weixin' })
+    if (!loginRes.code) {
+      throw new Error('未获取到微信登录凭证，请稍后重试')
+    }
+    return loginRes.code
+  } catch (error) {
+    throw new Error(error?.errMsg || '获取微信登录凭证失败，请稍后重试')
+  }
+}
+
+async function withLoading(message, task) {
+  proxy.$modal.loading(message)
+  try {
+    await task()
+  } finally {
+    proxy.$modal.closeLoading()
+  }
+}
+
+function detectRealtimePhoneSupport() {
+  // #ifdef MP-WEIXIN
+  if (typeof wx === 'undefined' || typeof wx.canIUse !== 'function') {
+    return false
+  }
+  return wx.canIUse('button.open-type.getRealtimePhoneNumber')
+  // #endif
+  return false
+}
+
+onMounted(() => {
+  realtimePhoneSupported.value = detectRealtimePhoneSupport()
+  if (props.autoOpen) {
+    open(props.defaultMode)
+  }
+})
+
+defineExpose({
+  close,
+  open,
+  setMode
+})
+</script>
+
+<style lang="scss" scoped>
+@import './login-popup.scss';
+</style>
