@@ -4,7 +4,8 @@ import config from '@/config'
 import storage from '@/utils/storage'
 import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
-import { getInfo, login, logout } from '@/api/login'
+import { getInfo, login, logout, wxminiLogin } from '@/api/login'
+import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import defAva from '@/static/images/profile.jpg'
 
@@ -18,6 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const roles = ref(storage.get(constant.roles))
   const permissions = ref(storage.get(constant.permissions))
   const enrollment = ref(storage.get(constant.enrollment))
+  const phone = ref(storage.get(constant.phone))
 
   const SET_TOKEN = (val) => {
     token.value = val
@@ -46,6 +48,10 @@ export const useUserStore = defineStore('user', () => {
     enrollment.value = val
     storage.set(constant.enrollment, val)
   }
+  const SET_PHONE = (val) => {
+    phone.value = val
+    storage.set(constant.phone, val)
+  }
 
   // 登录
   const loginAction = (userInfo) => {
@@ -64,6 +70,30 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
+  const resolveWxLogin = (appid, code) => {
+
+    return new Promise((resolve, reject) => {
+      wxminiLogin(appid, code).then(res => {
+        setToken(res.data.apiToken)
+        SET_TOKEN(res.data.apiToken)
+        getTotalEnrollments().then(res => {
+          SET_ENROLLMENT(res.data)
+        })
+        // 普通用户没有角色和权限，默认赋予 ROLE_DEFAULT 角色
+        SET_ROLES(['ROLE_DEFAULT'])
+        SET_PERMISSIONS([])
+
+        SET_PHONE(res.data.phone)
+        SET_ID(res.data.openId)
+        SET_NAME(res.data.userName)
+        SET_AVATAR(res.data.avatar)
+        resolve()
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  }
+
   // 获取用户信息
   const getInfoAction = () => {
     return new Promise((resolve, reject) => {
@@ -75,14 +105,16 @@ export const useUserStore = defineStore('user', () => {
         }
         const userid = (isEmpty(user) || isEmpty(user.userId)) ? "" : user.userId
         const username = (isEmpty(user) || isEmpty(user.userName)) ? "" : user.userName
+        const phoneNumber = (isEmpty(user) || isEmpty(user.phonenumber)) ? "" : user.phonenumber
         if (res.roles && res.roles.length > 0) {
           SET_ROLES(res.roles)
           SET_PERMISSIONS(res.permissions)
         } else {
           SET_ROLES(['ROLE_DEFAULT'])
         }
-        
+
         SET_ENROLLMENT(res.user.enrollment)
+        SET_PHONE(phoneNumber)
         SET_ID(userid)
         SET_NAME(username)
         SET_AVATAR(avatar)
@@ -116,11 +148,14 @@ export const useUserStore = defineStore('user', () => {
     avatar,
     roles,
     enrollment,
+    phone,
     permissions,
     SET_AVATAR,
     SET_ENROLLMENT,
+    SET_PHONE,
     login: loginAction,
     getInfo: getInfoAction,
-    logOut: logOutAction
+    logOut: logOutAction,
+    resolveWxLogin: resolveWxLogin
   }
 })

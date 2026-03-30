@@ -101,14 +101,13 @@ export default {
   display: inline-flex;
   align-items: center;
   font-size: 22rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 20rpx;
+  padding: 6rpx 10rpx;
+  border-radius: 10rpx;
   line-height: 1.4;
 }
 
 /* 内置主题 */
-.dict-tag--default {
-  background-color: #F3F4F6;
+.dict-tag--default {  background-color: #F3F4F6;
   color: #555;
 }
 .dict-tag--primary {

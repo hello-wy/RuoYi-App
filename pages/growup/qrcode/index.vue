@@ -1,6 +1,6 @@
 <template>
 	<view class="page">
-
+<!-- TODO: 改成支付订单号标注签到状态 -->
 		<view class="body" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
 			<!-- 卡片 -->
 			<view class="card">

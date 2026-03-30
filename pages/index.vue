@@ -125,7 +125,7 @@ export default {
 <style scoped>
 .home-page {
 	min-height: 100vh;
-	background-color: #F8F8F8;
+	background-color: #e2e8f0;
 }
 .city-picker {
 	display: flex;

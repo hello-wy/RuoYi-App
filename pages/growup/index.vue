@@ -41,42 +41,42 @@
 						<view class="section-dot blue-dot"></view>
 						<text class="section-title">我的课程</text>
 					</view>
-					<view class="section-more" @click="navTo('/pages/growup/detail?id=' + (myCourses[0] && myCourses[0].id))">
+					<view class="section-more" @click="navTo('/pages/growup/detail?id=' + (myCourses && myCourses.id))">
 						<text class="section-more-text">详情</text>
 						<uni-icons type="right" size="12" color="#3B82F6"></uni-icons>
 					</view>
 				</view>
 
-				<view v-if="myCourses.length === 0 && !coursesLoading" class="empty-card">
+				<view v-if="allCourses.length === 0 && !coursesLoading" class="empty-card">
 					<uni-icons type="calendar" size="28" color="#cbd5e1"></uni-icons>
 					<text class="empty-text">暂无课程信息</text>
 				</view>
 
-				<view v-if="myCourses.length > 0" class="lecture-card">
-					<view class="lecture-header" @click="navTo('/pages/growup/detail?id=' + myCourses[0].id + '&type=lecture')">
-						<text class="lecture-name">{{ myCourses[0].name }}</text>
+				<view v-if="allCourses.length > 0" class="lecture-card">
+					<view class="lecture-header" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">
+						<text class="lecture-name">{{ myCourses.name }}</text>
 					</view>
-					<!-- <text class="lecture-detail" @click="navTo('/pages/growup/detail?id=' + myCourses[0].id + '&type=lecture')">{{ myCourses[0].detail }}</text> -->
+					<!-- <text class="lecture-detail" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">{{ myCourses.detail }}</text> -->
 					<view class="lecture-footer">
 						<view class="lecture-meta-item">
 							<uni-icons type="person" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text">{{ myCourses[0].speaker }}</text>
+							<text class="lecture-meta-text">{{ myCourses.speakerNames }}</text>
 						</view>
 						<view class="lecture-meta-item">
 							<uni-icons type="calendar" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text">{{ myCourses[0].time }}</text>
+							<text class="lecture-meta-text">{{ myCourses.time }}</text>
 						</view>
 						<view class="lecture-meta-item">
 							<uni-icons type="location" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text lecture-location">{{ myCourses[0].location }}</text>
+							<text class="lecture-meta-text lecture-location">{{ myCourses.location }}</text>
 						</view>
 					</view>
 					<!-- 签到操作行 -->
 					<view class="lecture-action-row">
-						<view class="lecture-detail-btn" @click="navTo('/pages/growup/detail?id=' + myCourses[0].id + '&type=lecture')">
+						<view class="lecture-detail-btn" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">
 							<text class="lecture-detail-btn-text">查看详情</text>
 						</view>
-						<view class="lecture-signin-btn" @click="navTo('/pages/growup/qrcode/index?id=' + myCourses[0].id + '&type=lecture&action=signin')">
+						<view class="lecture-signin-btn" @click="navTo('/pages/growup/qrcode/index?id=' + myCourses.id + '&type=lecture&action=signin')">
 							<uni-icons type="checkbox" size="15" color="#fff"></uni-icons>
 							<text class="lecture-signin-btn-text">去签到</text>
 						</view>
@@ -112,10 +112,10 @@
 						<view class="section-dot green-dot"></view>
 						<text class="section-title">全部课程</text>
 					</view>
-					<view class="section-more" @click="navTo('/pages/growup/course/list')">
+					<!-- <view class="section-more" @click="navTo('/pages/growup/course/list')">
 						<text class="section-more-text">更多</text>
 						<uni-icons type="right" size="12" color="#3B82F6"></uni-icons>
-					</view>
+					</view> -->
 				</view>
 
 				<view v-if="allCourses.length === 0" class="empty-card">
@@ -135,7 +135,7 @@
 						<text class="all-course-name">{{ course.name }}</text>
 						<view class="all-course-meta">
 							<uni-icons type="person" size="12" color="#94a3b8"></uni-icons>
-							<text class="all-course-meta-text">{{ course.speaker }}</text>
+							<text class="all-course-meta-text">{{ course.speakerNames }}</text>
 						</view>
 						<view class="all-course-footer">
 							<text class="all-course-time">{{ course.time }}</text>
@@ -205,10 +205,10 @@
 						<view class="section-dot red-dot"></view>
 						<text class="section-title">问卷活动</text>
 					</view>
-					<view class="section-more" @click="navTo('/pages/growup/survey/list')">
+					<!-- <view class="section-more" @click="navTo('/pages/growup/survey/list')">
 						<text class="section-more-text">更多</text>
 						<uni-icons type="right" size="12" color="#3B82F6"></uni-icons>
-					</view>
+					</view> -->
 				</view>
 
 				<view v-if="surveys.length === 0" class="empty-card">
@@ -219,19 +219,19 @@
 					v-for="survey in surveys"
 					:key="survey.id"
 					class="survey-card"
-					@click="navTo('/pages/growup/detail?type=survey&id=' + survey.id)"
+					@click="navTo('/pages/common/webview/index?url=' + survey.url)"
 				>
 					<view class="survey-icon-wrap">
 						<uni-icons type="list" size="20" color="#EF4444"></uni-icons>
 					</view>
-					<view class="survey-info">
-						<text class="survey-name">{{ survey.name }}</text>
-						<text class="survey-deadline">截止：{{ survey.deadline }}</text>
-					</view>
-					<view class="survey-action">
+					<!-- <view class="survey-info"> -->
+						<text class="survey-name">{{ survey.topic }}</text>
+						<!-- <text class="survey-deadline">截止：{{ survey.deadline }}</text> -->
+					<!-- </view> -->
+					<!-- <view class="survey-action">
 						<text class="survey-action-text">{{ survey.answered ? '已完成' : '去填写' }}</text>
 						<uni-icons type="right" size="13" :color="survey.answered ? '#94a3b8' : '#3B82F6'"></uni-icons>
-					</view>
+					</view> -->
 				</view>
 			</view>
 		</scroll-view>
@@ -239,9 +239,10 @@
 </template>
 
 <script>
+import { login } from '../../api/login'
 import {
-	recentLectures
-} from '@/api/system/lectures'
+	listCourse
+} from '@/api/wxmini/growup'
 
 export default {
 	data() {
@@ -274,10 +275,11 @@ export default {
 		async loadRecentCourses() {
 			this.coursesLoading = true
 			try {
-				const res = await recentLectures({ pageNum: 1, pageSize: 3 })
+				const res = await listCourse({ pageNum: 1, pageSize: 3 })
 				const rows = res.rows || []
 				this.allCourses = rows
-				this.myCourses = rows.slice(0, 1)
+				this.myCourses = rows[0]
+				this.surveys = this.myCourses.questionnaire || []
 			} catch (e) {} finally {
 				this.coursesLoading = false
 			}

@@ -271,14 +271,14 @@ export default {
 }
 .avatar-wrap {
 	position: relative;
-	width: 120rpx;
-	height: 120rpx;
+	width: 150rpx;
+	height: 150rpx;
 	margin-bottom: 16rpx;
 }
 .avatar {
-	width: 120rpx;
-	height: 120rpx;
-	border-radius: 50%;
+	width: 150rpx;
+	height: 150rpx;
+	border-radius: 8rpx;
 	background: #EEE;
 }
 .cert-dot {

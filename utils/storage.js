@@ -4,10 +4,18 @@ import constant from './constant'
 let storageKey = 'storage_data'
 
 // 存储节点变量名
-let storageNodeKeys = [constant.avatar, constant.id, constant.name, constant.roles, constant.permissions]
+let storageNodeKeys = [
+  constant.avatar,
+  constant.id,
+  constant.name,
+  constant.roles,
+  constant.permissions,
+  constant.enrollment,
+  constant.phone
+]
 
 const storage = {
-  set: function(key, value) {
+  set: function (key, value) {
     if (storageNodeKeys.indexOf(key) != -1) {
       let tmp = uni.getStorageSync(storageKey)
       tmp = tmp ? tmp : {}
@@ -15,16 +23,16 @@ const storage = {
       uni.setStorageSync(storageKey, tmp)
     }
   },
-  get: function(key) {
+  get: function (key) {
     let storageData = uni.getStorageSync(storageKey) || {}
     return storageData[key] || ""
   },
-  remove: function(key) {
+  remove: function (key) {
     let storageData = uni.getStorageSync(storageKey) || {}
     delete storageData[key]
     uni.setStorageSync(storageKey, storageData)
   },
-  clean: function() {
+  clean: function () {
     uni.removeStorageSync(storageKey)
   }
 }

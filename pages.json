@@ -239,6 +239,27 @@
       "style": {
         "navigationBarTitleText": "沙龙详情"
       }
+    },
+    {
+      "path": "pages/growup/course/notice",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "报名须知"
+      }
+    },
+    {
+      "path": "pages/growup/course/enroll",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "课程报名"
+      }
+    },
+    {
+      "path": "pages/growup/course/pay",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "订单支付"
+      }
     }
   ],
   "tabBar": {
@@ -259,12 +280,6 @@
         "selectedIconPath": "static/images/tabbar/work_.png",
         "text": "钱包"
       },
-	  {
-	    "pagePath": "pages/jobs/list",
-	    "iconPath": "static/images/tabbar/work.png",
-	    "selectedIconPath": "static/images/tabbar/work_.png",
-	    "text": "兼职日结"
-	  },
       {
         "pagePath": "pages/mine/index",
         "iconPath": "static/images/tabbar/mine.png",

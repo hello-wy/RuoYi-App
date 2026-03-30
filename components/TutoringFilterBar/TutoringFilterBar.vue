@@ -32,6 +32,7 @@
 
 		<!-- 年级下拉框 -->
 		<picker
+			v-if="showGrade"
 			class="filter-picker"
 			mode="selector"
 			:range="gradeOptions"
@@ -104,6 +105,10 @@ export default {
 		methodOptions: {
 			type: Array,
 			default: () => []
+		},
+		showGrade: {
+			type: Boolean,
+			default: true
 		}
 	},
 	computed: {
@@ -130,7 +135,7 @@ export default {
 		},
 		onRegionChange(e) {
 			const idx = e.detail.value
-			const region = this.districtOptions[idx]?.text || ''
+			const region = this.districtOptions[idx]?.value || ''
 			this.$emit('change', { ...this.value, region })
 		},
 		onSubjectChange(e) {

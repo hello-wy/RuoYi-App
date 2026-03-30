@@ -58,9 +58,6 @@
 							maxlength="11"
 							type="number"
 						/>
-						<view class="use-phone-btn" @click="useLoginPhone">
-							<text class="use-phone-text">默认登录手机号</text>
-						</view>
 					</view>
 				</view>
 
@@ -229,7 +226,6 @@
 
 <script>
 import { addParents } from '@/api/system/parents'
-import { getUserProfile } from '@/api/system/user'
 import { useUserStore } from '@/store'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
@@ -289,29 +285,17 @@ export default {
 		},
 		subjectIndex() {
 			return this.subjectOptions.findIndex(o => o.value === this.form.subject)
-		}
+		},
+		userPhone() {
+			return useUserStore().phone
+		},
 	},
 	onLoad() {
-		this.loadUserPhone()
+		this.form.phone = useUserStore().phone
 	},
 	methods: {
 		goBack() {
 			uni.navigateBack()
-		},
-		async loadUserPhone() {
-			try {
-				const res = await getUserProfile()
-				this.userPhone = res.data.phonenumber || ''
-				this.form.phone = this.userPhone
-			} catch (e) {}
-		},
-		useLoginPhone() {
-			if (this.userPhone) {
-				this.form.phone = this.userPhone
-				uni.showToast({ title: '已填入登录手机号', icon: 'none' })
-			} else {
-				uni.showToast({ title: '未获取到登录手机号', icon: 'none' })
-			}
 		},
 		callService() {
 			uni.makePhoneCall({ phoneNumber: '4008888888' })

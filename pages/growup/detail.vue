@@ -3,10 +3,10 @@
 		<!-- 自定义悬浮导航 -->
 		<view class="float-bar" :style="{ top: (statusBarHeight + 8) + 'px' }">
 			<view class="float-btn" @click="goBack">
-				<uni-icons type="left" size="20" color="#1e293b"></uni-icons>
+				<uni-icons type="left" size="20" color="#fff"></uni-icons>
 			</view>
-			<view v-if="detail" class="float-btn" @click="handleShare">
-				<uni-icons type="redo" size="18" color="#1e293b"></uni-icons>
+			<view v-if="detail" class="share-btn" @click="handleShare">
+				<uni-icons type="redo" size="18" color="#fff"></uni-icons>
 			</view>
 		</view>
 
@@ -25,140 +25,135 @@
 		</view>
 
 		<block v-else-if="detail">
-			<!-- 顶部蓝色装饰区（讲座封面） -->
+			<!-- 顶部封面图 / 渐变横幅 -->
 			<view class="cover-banner">
-				<view class="cover-decor-circle c1"></view>
-				<view class="cover-decor-circle c2"></view>
-				<view class="cover-tag">
-					<text class="cover-tag-text">{{ typeLabel }}</text>
+				<image
+					v-if="detail.coverUrl"
+					:src="detail.coverUrl"
+					mode="aspectFill"
+					class="cover-image"
+				></image>
+				<view v-else class="cover-gradient">
+					<view class="cover-decor-circle c1"></view>
+					<view class="cover-decor-circle c2"></view>
+					<text class="cover-title-gradient">{{ detail.name }}</text>
+					<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
 				</view>
-				<text class="cover-title">{{ detail.name }}</text>
-				<text class="cover-date">{{ detail.time || detail.startTime || detail.date }}</text>
 			</view>
 
-			<!-- 内容区 -->
-			<scroll-view scroll-y class="content-scroll" :style="{ top: coverBannerHeight + 'px' }">
+			<!-- 内容滚动区 -->
+			<scroll-view scroll-y class="content-scroll" :style="{ top: coverHeight + 'px' }">
 				<view class="content-wrap">
 
-					<!-- 信息卡片 -->
-					<view class="info-card">
-						<!-- 时间 -->
-						<view class="info-row" v-if="detail.time || detail.startTime || detail.date">
-							<view class="info-icon-wrap blue-bg">
-								<uni-icons type="calendar" size="15" color="#3B82F6"></uni-icons>
+					<!-- 课程名称 + 基本信息 -->
+					<view class="course-info-card">
+						<text class="course-name">{{ detail.name }}</text>
+						<view class="course-meta-list">
+							<view class="course-meta-item" v-if="detail.time">
+								<view class="meta-dot"></view>
+								<text class="meta-label">上课时间：</text>
+								<text class="meta-value">{{ formatMeta(detail.time) }}-{{ formatMeta(detail.endDate) }}</text>
 							</view>
-							<view class="info-content">
-								<text class="info-label">时间</text>
-								<text class="info-value">{{ detail.time || detail.startTime || detail.date }}</text>
+							<view class="course-meta-item" v-if="detail.endDate">
+								<view class="meta-dot"></view>
+								<text class="meta-label">报名截止时间：</text>
+								<text class="meta-value">{{ detail.endDate }}</text>
 							</view>
-						</view>
-
-						<!-- 地点 -->
-						<view class="info-row" v-if="detail.location" @click="openMap">
-							<view class="info-icon-wrap green-bg">
-								<uni-icons type="location" size="15" color="#10B981"></uni-icons>
-							</view>
-							<view class="info-content">
-								<text class="info-label">地点</text>
-								<text class="info-value">{{ detail.location }}</text>
-								<view v-if="geoLat && geoLng" class="map-link-row">
-									<text class="map-link-text">点击查看地图 →</text>
-								</view>
-							</view>
-						</view>
-
-						<!-- 讲师 / 主讲人 -->
-						<view class="info-row" v-if="detail.speaker || detail.lecturer">
-							<view class="info-icon-wrap purple-bg">
-								<uni-icons type="person" size="15" color="#8B5CF6"></uni-icons>
-							</view>
-							<view class="info-content">
-								<text class="info-label">主讲人</text>
-								<text class="info-value">{{ detail.speaker || detail.lecturer }}</text>
+							<view class="course-meta-item" v-if="detail.location">
+								<view class="meta-dot"></view>
+								<text class="meta-label">上课地址：</text>
+								<text class="meta-value">{{ detail.location }}</text>
 							</view>
 						</view>
 					</view>
 
-					<view class="divider"></view>
+					<!-- 报名情况 -->
+					<view class="enroll-stat-card" v-if="detail.enrolledCount !== undefined || detail.remainCount !== undefined">
+						<view class="enroll-stat-row">
+							<view class="stat-item">
+								<text class="stat-label">已报名：</text>
+								<text class="stat-value-dark">{{ detail.enrolledCount || 0 }}人</text>
+							</view>
+							<view class="stat-divider"></view>
+							<view class="stat-item">
+								<text class="stat-label">剩余报名：</text>
+								<text class="stat-value-red">{{ detail.remainCount || 0 }}人</text>
+							</view>
+							<view class="stat-more" @click="viewEnrolledUsers">
+								<text class="stat-more-text">更多</text>
+								<uni-icons type="right" size="12" color="#94a3b8"></uni-icons>
+							</view>
+						</view>
+						<!-- 已报名头像列表 -->
+						<view class="enrolled-users" v-if="detail.enrolledUsers && detail.enrolledUsers.length">
+							<view
+								class="enrolled-user-item"
+								v-for="(user, idx) in detail.enrolledUsers.slice(0, 5)"
+								:key="idx"
+							>
+								<image
+									:src="user.avatar || '/static/images/default_avatar.png'"
+									class="enrolled-avatar"
+									mode="aspectFill"
+								></image>
+								<text class="enrolled-name">{{ user.name || user.nickName }}</text>
+							</view>
+						</view>
+					</view>
 
-					<!-- 详情介绍 -->
+					<!-- 授课老师 -->
+					<view class="section-block" v-if="detail.teachers && detail.teachers.length">
+						<text class="section-title">授课老师</text>
+						<view
+							class="teacher-card"
+							v-for="(teacher, idx) in detail.teachers"
+							:key="idx"
+							@click="viewTeacher(teacher)"
+						>
+							<image
+								:src="teacher.avatar || '/static/images/default_avatar.png'"
+								class="teacher-avatar"
+								mode="aspectFill"
+							></image>
+							<text class="teacher-name">{{ teacher.name }}</text>
+							<uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
+						</view>
+					</view>
+
+					<!-- 温馨提示 -->
+					<view class="section-block" v-if="detail.tips">
+						<text class="section-title">温馨提示</text>
+						<view class="tips-card">
+							<rich-text :nodes="detail.tips" class="tips-text"></rich-text>
+						</view>
+					</view>
+
+					<!-- 课程详情 -->
 					<view class="section-block" v-if="detail.detail || detail.description">
-						<view class="section-block-header">
-							<text class="block-title">{{ typeLabel }}详情</text>
-						</view>
-						<text class="block-text">{{ detail.detail || detail.description }}</text>
-					</view>
-
-					<!-- 注意事项（兼容旧数据） -->
-					<view class="section-block" v-if="detail.notices && detail.notices.length">
-						<view class="section-block-header">
-							<text class="block-title">注意事项</text>
-						</view>
-						<view v-for="(notice, idx) in detail.notices" :key="idx" class="notice-item">
-							<view class="notice-dot"></view>
-							<text class="notice-text">{{ notice }}</text>
-						</view>
-					</view>
-
-					<!-- 问卷题目 -->
-					<view v-if="type === 'survey' && detail.questions && detail.questions.length">
-						<view class="section-block" v-for="(q, qi) in detail.questions" :key="qi">
-							<view class="section-block-header">
-								<text class="block-title">{{ qi + 1 }}. {{ q.title }}</text>
-							</view>
-							<view v-if="q.type === 'radio' || q.type === 'checkbox'">
-								<view
-									v-for="(opt, oi) in q.options"
-									:key="oi"
-									class="survey-option"
-									:class="{ 'survey-option-active': isSelected(qi, oi) }"
-									@click="selectOption(qi, oi, q.type)"
-								>
-									<view class="option-indicator" :class="q.type === 'radio' ? 'radio-indicator' : 'check-indicator'">
-										<view v-if="isSelected(qi, oi)" class="indicator-fill"></view>
-									</view>
-									<text class="option-text">{{ opt }}</text>
-								</view>
-							</view>
-							<view v-else-if="q.type === 'text'">
-								<textarea class="survey-textarea" v-model="answers[qi]" placeholder="请输入您的回答..." :show-confirm-bar="false"></textarea>
-							</view>
+						<text class="section-title">课程详情</text>
+						<view class="detail-content">
+							<rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text>
 						</view>
 					</view>
 
 					<!-- 底部占位 -->
-					<view style="height: 110px;"></view>
+					<view style="height: 130px;"></view>
 				</view>
 			</scroll-view>
 
 			<!-- 底部操作栏 -->
 			<view class="bottom-bar">
-				<!-- 讲座/课程：签到 -->
-				<view v-if="type === 'lecture' || type === 'course'"
-					class="action-btn action-primary"
-					:class="{ 'action-disabled': detail.signed }"
-					@click="handleSignIn"
-				>
-					<uni-icons type="checkbox" size="18" color="#fff"></uni-icons>
-					<text class="action-text">{{ detail.signed ? '已签到' : '立即签到' }}</text>
-				</view>
-				<!-- 沙龙：报名 -->
-				<view v-else-if="type === 'salon'"
-					class="action-btn action-primary"
-					:class="{ 'action-disabled': detail.joined }"
-					@click="handleJoin"
-				>
-					<uni-icons type="plusempty" size="18" color="#fff"></uni-icons>
-					<text class="action-text">{{ detail.joined ? '已报名' : '立即报名' }}</text>
-				</view>
-				<!-- 问卷：提交 -->
-				<view v-else-if="type === 'survey'"
-					class="action-btn action-primary"
-					:class="{ 'action-disabled': detail.answered || submitting }"
-					@click="handleSubmitSurvey"
-				>
-					<uni-icons type="redo" size="18" color="#fff"></uni-icons>
-					<text class="action-text">{{ detail.answered ? '已提交' : (submitting ? '提交中...' : '提交问卷') }}</text>
+				<!-- <view class="bottom-tip" v-if="myEnrollmentCount !== null">
+					<text class="bottom-tip-text">温馨提示：您当前剩余学籍数：{{ myEnrollmentCount }}个</text>
+				</view> -->
+				<view class="btn-row">
+					<view
+						class="btn-enroll"
+						:class="{ 'btn-disabled': detail.enrolled }"
+						@click="handleEnroll"
+					>
+						<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
+					</view>
 				</view>
 			</view>
 		</block>
@@ -166,100 +161,67 @@
 </template>
 
 <script>
-import { getLectures } from '@/api/system/lectures'
-import { getCourse, getSalon, getSurvey, signInCourse, joinSalon } from '@/api/system/growup'
-import request from '@/utils/request'
+import { getCourse } from '@/api/wxmini/growup'
+// import { getUserEnrollment } from '@/api/system/user'
 
 export default {
 	data() {
 		return {
 			statusBarHeight: 0,
-			coverBannerHeight: 200,
-			type: 'lecture',
+			coverHeight: 240,
+			type: 'course',
 			id: '',
 			loading: true,
 			error: false,
-			submitting: false,
 			detail: null,
-			answers: [],
-			geoLat: null,
-			geoLng: null
-		}
-	},
-	computed: {
-		typeLabel() {
-			const map = { lecture: '讲座', course: '课程', salon: '活动', survey: '问卷' }
-			return map[this.type] || '活动'
+			myEnrollmentCount: 0,
 		}
 	},
 	onLoad(options) {
 		const sys = uni.getSystemInfoSync()
 		this.statusBarHeight = sys.statusBarHeight || 0
-		this.type = options.type || 'lecture'
+		this.type = options.type || 'course'
 		this.id = options.id || ''
-		// 如果带 action=signin 参数，加载完后自动触发签到提示
-		this._autoSignIn = options.action === 'signin'
 		this.loadDetail()
+		// this.loadMyEnrollment()
 	},
 	methods: {
 		goBack() {
 			uni.navigateBack()
 		},
+		formatMeta(dateStr) {
+			if (!dateStr) return ''
+			return String(dateStr).replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1.$2.$3')
+		},
+		formatDateRange(start, end) {
+			if (!start) return ''
+			const s = this.formatMeta(start)
+			const e = end ? this.formatMeta(end) : ''
+			return e ? `${s}—${e}` : s
+		},
 		async loadDetail() {
 			this.loading = true
 			this.error = false
 			try {
-				let res
-				if (this.type === 'lecture') {
-					res = await getLectures(this.id)
-					// 解析 geo 字段 "lng,lat"
-					const item = res.data || res
-					if (item && item.geo) {
-						const parts = String(item.geo).split(',')
-						if (parts.length === 2) {
-							this.geoLng = parseFloat(parts[0])
-							this.geoLat = parseFloat(parts[1])
-						}
-					}
-					this.detail = item
-				} else if (this.type === 'course') {
-					res = await getCourse(this.id)
-					this.detail = res.data || res
-				} else if (this.type === 'survey') {
-					res = await getSurvey(this.id)
-					this.detail = res.data || res
-					if (this.detail && this.detail.questions) {
-						this.answers = new Array(this.detail.questions.length).fill('')
-					}
-				} else {
-					res = await getSalon(this.id)
-					this.detail = res.data || res
-				}
-				// 自动弹签到
-				if (this._autoSignIn && (this.type === 'lecture' || this.type === 'course')) {
-					this.$nextTick(() => {
-						uni.showModal({
-							title: '确认签到',
-							content: `确认为「${this.detail && this.detail.name}」签到？`,
-							success: (r) => { if (r.confirm) this.handleSignIn() }
-						})
-					})
-				}
+				const res = await getCourse(this.id)
+				this.detail = res.data || res
 			} catch (e) {
 				this.error = true
 			} finally {
 				this.loading = false
 			}
 		},
-		openMap() {
-			if (!this.detail || !this.geoLat || !this.geoLng) return
-			uni.openLocation({
-				latitude: this.geoLat,
-				longitude: this.geoLng,
-				name: this.detail.location || '',
-				address: this.detail.location || ''
-			})
-		},
+		// async loadMyEnrollment() {
+		// 	try {
+		// 		const res = await getUserEnrollment()
+		// 		const data = res.data || res
+		// 		this.myEnrollmentCount = data.remainCount !== undefined
+		// 			? data.remainCount
+		// 			: (data.count !== undefined ? data.count : null)
+		// 	} catch (e) {
+		// 		this.myEnrollmentCount = 0
+		// 	}
+		// },
 		handleShare() {
 			// #ifdef MP-WEIXIN
 			uni.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] })
@@ -268,70 +230,23 @@ export default {
 			uni.showToast({ title: '请截图分享', icon: 'none' })
 			// #endif
 		},
-		async handleSignIn() {
-			if (!this.detail || this.detail.signed) return
-			uni.showLoading({ title: '签到中...' })
-			try {
-				await signInCourse(this.id)
-				this.detail = Object.assign({}, this.detail, { signed: true })
-				uni.hideLoading()
-				uni.showToast({ title: '签到成功', icon: 'success' })
-			} catch (e) {
-				uni.hideLoading()
-				uni.showToast({ title: '签到失败，请重试', icon: 'none' })
+		viewEnrolledUsers() {
+			uni.navigateTo({ url: `/pages/growup/course/enrolled?id=${this.id}` })
+		},
+		viewTeacher(teacher) {
+			if (teacher.id) {
+				uni.navigateTo({ url: `/pages/growup/tutor/detail?id=${teacher.id}` })
 			}
 		},
-		async handleJoin() {
-			if (!this.detail || this.detail.joined) return
-			uni.showLoading({ title: '报名中...' })
-			try {
-				await joinSalon(this.id)
-				this.detail = Object.assign({}, this.detail, { joined: true })
-				uni.hideLoading()
-				uni.showToast({ title: '报名成功', icon: 'success' })
-			} catch (e) {
-				uni.hideLoading()
-				uni.showToast({ title: '报名失败，请重试', icon: 'none' })
-			}
+		// handleGiftEnrollment() {
+		// 	uni.showToast({ title: '赠送学籍功能开发中', icon: 'none' })
+		// },
+		handleEnroll() {
+			if (!this.detail || this.detail.enrolled) return
+			uni.navigateTo({
+				url: `/pages/growup/course/notice?id=${this.id}`
+			})
 		},
-		isSelected(qi, oi) {
-			const ans = this.answers[qi]
-			if (Array.isArray(ans)) return ans.includes(oi)
-			return ans === oi
-		},
-		selectOption(qi, oi, type) {
-			if (type === 'radio') {
-				this.$set(this.answers, qi, oi)
-			} else {
-				let arr = Array.isArray(this.answers[qi]) ? [...this.answers[qi]] : []
-				const idx = arr.indexOf(oi)
-				if (idx > -1) arr.splice(idx, 1)
-				else arr.push(oi)
-				this.$set(this.answers, qi, arr)
-			}
-		},
-		async handleSubmitSurvey() {
-			if (!this.detail || this.detail.answered || this.submitting) return
-			if (this.detail.questions) {
-				for (let i = 0; i < this.detail.questions.length; i++) {
-					const q = this.detail.questions[i]
-					const ans = this.answers[i]
-					if (q.required && (ans === '' || ans === undefined || (Array.isArray(ans) && ans.length === 0))) {
-						return uni.showToast({ title: `第${i + 1}题为必填项`, icon: 'none' })
-					}
-				}
-			}
-			this.submitting = true
-			try {
-				await request({ url: '/system/growup/survey/' + this.id + '/submit', method: 'post', data: { answers: this.answers } })
-				this.detail = Object.assign({}, this.detail, { answered: true })
-				uni.showToast({ title: '问卷提交成功', icon: 'success' })
-			} catch (e) {
-				uni.showToast({ title: '提交失败，请重试', icon: 'none' })
-			} finally {
-				this.submitting = false
-			}
-		}
 	}
 }
 </script>
@@ -346,7 +261,7 @@ page {
 	background: #f4f6fb;
 }
 
-/* 悬浮按钮 */
+/* 悬浮导航 */
 .float-bar {
 	position: fixed;
 	left: 0;
@@ -358,15 +273,14 @@ page {
 	z-index: 100;
 }
 
-.float-btn {
+.float-btn, .share-btn {
 	width: 36px;
 	height: 36px;
-	background: rgba(255,255,255,0.88);
+	background: rgba(0, 0, 0, 0.35);
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
 /* 加载 / 错误 */
@@ -412,43 +326,80 @@ page {
 	overflow: hidden;
 }
 
+/* 封面 */
+.cover-banner {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 240px;
+	z-index: 0;
+}
+
+.cover-image {
+	width: 100%;
+	height: 240px;
+}
+
+.cover-gradient {
+	width: 100%;
+	height: 240px;
+	background: linear-gradient(160deg, #1e293b 0%, #3B82F6 100%);
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	padding: 0 20px 24px;
+	overflow: hidden;
+	position: relative;
+}
+
 .cover-decor-circle {
 	position: absolute;
 	border-radius: 50%;
 	background: rgba(255, 255, 255, 0.08);
 }
 
-.c1 { width: 160px; height: 160px; top: -60px; right: -40px; }
-.c2 { width: 100px; height: 100px; top: 20px; right: 60px; background: rgba(255,255,255,0.05); }
+.c1 { width: 180px; height: 180px; top: -60px; right: -40px; }
+.c2 { width: 120px; height: 120px; top: 30px; right: 70px; background: rgba(255,255,255,0.05); }
 
-.cover-tag {
-	display: inline-flex;
-	background: rgba(255,255,255,0.22);
-	border-radius: 12px;
-	padding: 3px 10px;
-	margin-bottom: 8px;
-	align-self: flex-start;
-}
-
-.cover-tag-text {
-	font-size: 12px;
-	color: #fff;
-	font-weight: 600;
-	letter-spacing: 1px;
-}
-
-.cover-title {
+.cover-title-gradient {
 	font-size: 20px;
 	font-weight: 700;
 	color: #fff;
 	line-height: 1.4;
-	text-shadow: 0 1px 8px rgba(0,0,0,0.15);
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
-.cover-date {
+.cover-date-gradient {
 	font-size: 13px;
-	color: rgba(255,255,255,0.85);
+	color: rgba(255,255,255,0.8);
+}
+
+/* 加载 / 错误 */
+.loading-wrap,
+.error-wrap {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding-top: 200px;
+	gap: 12px;
+}
+
+.error-text {
+	font-size: 14px;
+	color: #94a3b8;
+}
+
+.retry-btn {
+	background: #3B82F6;
+	border-radius: 20px;
+	padding: 8px 20px;
+}
+
+.retry-text {
+	color: #fff;
+	font-size: 14px;
 }
 
 /* 内容滚动区 */
@@ -461,286 +412,221 @@ page {
 }
 
 .content-wrap {
-	background: #fff;
-	border-radius: 24px 24px 0 0;
-	padding: 22px 18px 0;
+	background: #f4f6fb;
+	border-radius: 20px 20px 0 0;
+	padding: 16px 14px 0;
 	min-height: 100vh;
 }
 
-/* 信息卡片 */
-.info-card {
-	background: #f8fafc;
-	border-radius: 16px;
+/* 课程信息卡 */
+.course-info-card {
+	background: #fff;
+	border-radius: 14px;
 	padding: 16px;
-	margin-bottom: 16px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 
-/* 地图链接行 */
-.map-link-row {
-	margin-top: 4px;
+.course-name {
+	font-size: 17px;
+	font-weight: 700;
+	color: #1e293b;
+	line-height: 1.5;
+	display: block;
+	margin-bottom: 12px;
 }
 
-.map-link-text {
-	font-size: 12px;
-	color: #3B82F6;
+.course-meta-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
-/* 信息行 */
-.info-row {
+.course-meta-item {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	margin-bottom: 14px;
 }
 
-.info-icon-wrap {
-	width: 32px;
-	height: 32px;
-	border-radius: 8px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+.meta-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #94a3b8;
+	margin-top: 6px;
+	margin-right: 8px;
 	flex-shrink: 0;
-	margin-right: 12px;
-	margin-top: 2px;
 }
 
-.blue-bg   { background: #EFF6FF; }
-.green-bg  { background: #ECFDF5; }
-.purple-bg { background: #F5F3FF; }
-
-.info-content {
-	flex: 1;
+.meta-label {
+	font-size: 13px;
+	color: #64748b;
+	flex-shrink: 0;
 }
 
-.info-label {
-	display: block;
-	font-size: 12px;
-	color: #94a3b8;
-	margin-bottom: 2px;
-}
-
-.info-value {
-	display: block;
-	font-size: 14px;
-	font-weight: 500;
+.meta-value {
+	font-size: 13px;
 	color: #1e293b;
+	flex: 1;
 	line-height: 1.5;
 }
 
-.info-tag {
-	display: inline-flex;
-	background: #EFF6FF;
-	border-radius: 4px;
-	padding: 1px 6px;
-	margin-top: 4px;
+/* 报名情况卡 */
+.enroll-stat-card {
+	background: #fff;
+	border-radius: 14px;
+	padding: 14px 16px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 
-.info-tag-text {
-	font-size: 12px;
-	color: #3B82F6;
-}
-
-.info-sub-row {
+.enroll-stat-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	margin-top: 2px;
+	margin-bottom: 14px;
 }
 
-.info-sub-text {
-	font-size: 12px;
+.stat-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.stat-label {
+	font-size: 13px;
 	color: #64748b;
-	flex: 1;
 }
 
-.map-link {
+.stat-value-dark {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+.stat-value-red {
+	font-size: 13px;
+	font-weight: 600;
+	color: #ef4444;
+}
+
+.stat-divider {
+	width: 1px;
+	height: 14px;
+	background: #e2e8f0;
+	margin: 0 14px;
+}
+
+.stat-more {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	margin-left: auto;
 	gap: 2px;
 }
 
-.map-link-text {
-	font-size: 12px;
-	color: #3B82F6;
+.stat-more-text {
+	font-size: 13px;
+	color: #94a3b8;
 }
 
-/* 分割线 */
-.divider {
-	height: 1px;
-	background: #f1f5f9;
-	margin: 4px 0 16px;
+/* 已报名用户 */
+.enrolled-users {
+	display: flex;
+	flex-direction: row;
+	gap: 16px;
+	flex-wrap: wrap;
 }
 
-/* Section Block */
+.enrolled-user-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+}
+
+.enrolled-avatar {
+	width: 46px;
+	height: 46px;
+	border-radius: 50%;
+	background: #e2e8f0;
+}
+
+.enrolled-name {
+	font-size: 11px;
+	color: #64748b;
+	max-width: 48px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* Section 通用 */
 .section-block {
-	margin-bottom: 20px;
+	background: #fff;
+	border-radius: 14px;
+	padding: 16px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
 }
 
-.section-block-header {
+.section-title {
+	font-size: 15px;
+	font-weight: 700;
+	color: #1e293b;
+	display: block;
+	margin-bottom: 12px;
+}
+
+/* 授课老师 */
+.teacher-card {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 10px;
+	padding: 10px 12px;
+	background: #f8fafc;
+	border-radius: 12px;
+	margin-bottom: 8px;
 }
 
-.block-title {
-	font-size: 16px;
-	font-weight: 700;
+.teacher-avatar {
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	background: #e2e8f0;
+	margin-right: 14px;
+}
+
+.teacher-name {
+	font-size: 15px;
+	font-weight: 600;
 	color: #1e293b;
-	border-left: 4px solid #3B82F6;
-	padding-left: 10px;
+	flex: 1;
 }
 
-.block-text {
-	font-size: 14px;
+/* 温馨提示 */
+.tips-card {
+	background: #f8fafc;
+	border-radius: 10px;
+	padding: 12px;
+}
+
+.tips-text {
+	font-size: 13px;
 	color: #475569;
 	line-height: 1.8;
 }
 
-/* 注意事项 */
-.notice-item {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	margin-bottom: 8px;
-}
-
-.notice-dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: #3B82F6;
-	margin-top: 6px;
-	margin-right: 10px;
-	flex-shrink: 0;
-}
-
-.notice-text {
-	font-size: 13px;
-	color: #475569;
-	line-height: 1.7;
-	flex: 1;
-}
-
-/* 参与人员 */
-.participant-count-badge {
-	background: #EFF6FF;
-	border-radius: 20px;
-	padding: 2px 10px;
-}
-
-.participant-count-text {
-	font-size: 12px;
-	color: #3B82F6;
-}
-
-.participant-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-}
-
-.participant-avatar-wrap {
-	position: relative;
-}
-
-.participant-avatar {
-	width: 38px;
-	height: 38px;
-	border-radius: 50%;
-	border: 2px solid #fff;
-	background: #e2e8f0;
-}
-
-.participant-more {
-	width: 38px;
-	height: 38px;
-	border-radius: 50%;
-	background: #EFF6FF;
-	border: 2px solid #fff;
-	margin-left: -10px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.participant-more-text {
-	font-size: 11px;
-	color: #3B82F6;
-	font-weight: 600;
-}
-
-/* 问卷 */
-.survey-option {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: 10px 14px;
-	background: #f8fafc;
-	border-radius: 10px;
-	margin-bottom: 8px;
-	border: 1.5px solid #e2e8f0;
-}
-
-.survey-option-active {
-	border-color: #3B82F6;
-	background: #EFF6FF;
-}
-
-.option-indicator {
-	width: 18px;
-	height: 18px;
-	border: 2px solid #cbd5e1;
-	margin-right: 10px;
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.radio-indicator { border-radius: 50%; }
-.check-indicator { border-radius: 4px; }
-
-.survey-option-active .option-indicator {
-	border-color: #3B82F6;
-}
-
-.indicator-fill {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: #3B82F6;
-}
-
-.check-indicator .indicator-fill {
-	border-radius: 2px;
-}
-
-.option-text {
-	font-size: 14px;
-	color: #475569;
-	flex: 1;
-}
-
-.survey-option-active .option-text {
-	color: #3B82F6;
-	font-weight: 500;
-}
-
-.survey-textarea {
+/* 课程详情 */
+.detail-content {
 	width: 100%;
-	min-height: 80px;
-	background: #f8fafc;
-	border: 1.5px solid #e2e8f0;
-	border-radius: 10px;
-	padding: 10px 12px;
+}
+
+.detail-text {
 	font-size: 14px;
-	color: #1e293b;
-	box-sizing: border-box;
-	line-height: 1.6;
+	color: #475569;
+	line-height: 1.8;
 }
 
 /* 底部操作栏 */
@@ -750,37 +636,64 @@ page {
 	left: 0;
 	right: 0;
 	background: #fff;
-	padding: 12px 20px;
-	padding-bottom: calc(12px + env(safe-area-inset-bottom));
+	padding: 10px 16px;
+	padding-bottom: calc(10px + env(safe-area-inset-bottom));
 	box-shadow: 0 -1px 0 #f1f5f9;
 	z-index: 50;
 }
 
-.action-btn {
+.bottom-tip {
+	margin-bottom: 10px;
+}
+
+.bottom-tip-text {
+	font-size: 12px;
+	color: #ef4444;
+}
+
+.btn-row {
 	display: flex;
 	flex-direction: row;
+	gap: 12px;
+}
+
+.btn-gift {
+	flex: 1;
+	height: 50px;
+	border-radius: 25px;
+	border: 1.5px solid #94a3b8;
+	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 52px;
-	border-radius: 14px;
-	gap: 8px;
 }
 
-.action-primary {
-	background: #1e293b;
-}
-
-.action-disabled {
-	background: #e2e8f0;
-}
-
-.action-text {
-	color: #fff;
-	font-size: 16px;
+.btn-gift-text {
+	font-size: 15px;
+	color: #475569;
 	font-weight: 600;
 }
 
-.action-disabled .action-text {
+.btn-enroll {
+	flex: 2.5;
+	height: 50px;
+	border-radius: 25px;
+	background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.btn-enroll.btn-disabled {
+	background: #e2e8f0;
+}
+
+.btn-enroll-text {
+	font-size: 15px;
+	color: #fff;
+	font-weight: 700;
+}
+
+.btn-enroll.btn-disabled .btn-enroll-text {
 	color: #94a3b8;
 }
 </style>

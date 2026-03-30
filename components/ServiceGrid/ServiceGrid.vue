@@ -110,7 +110,7 @@ export default {
 	width: 60px;
 	height: 60px;
 	background-color: #F5F5F5;
-	border-radius: 50%;
+	border-radius: 10rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;

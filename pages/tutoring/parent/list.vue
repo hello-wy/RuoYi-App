@@ -49,7 +49,7 @@
 				<!-- 区域 -->
 				<view class="card-location">
 					<uni-icons type="location-filled" size="14" color="#888"></uni-icons>
-					<text class="card-region">{{ item.region }}</text>
+					<text class="card-region">{{ getDistrictLabel(item.region) }}</text>
 				</view>
 
 				<!-- 科目/年级标签 -->
@@ -69,7 +69,7 @@
 </template>
 
 <script>
-import { listParents } from '@/api/system/parents'
+import { listParents } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
 
@@ -159,12 +159,6 @@ export default {
 					isAsc: 'desc',
 					...this.queryParams
 				}
-				// 去除空值参数
-				Object.keys(params).forEach(k => {
-					if (params[k] === '' || params[k] === null || params[k] === undefined) {
-						delete params[k]
-					}
-				})
 				const res = await listParents(params)
 				const rows = res.rows || []
 				const total = res.total || 0
@@ -193,6 +187,10 @@ export default {
 		onFilterChange(newParams) {
 			this.queryParams = newParams
 			this.loadData(true)
+		},
+		getDistrictLabel(val) {
+			const found = this.districtOptions.find(o => o.value === val)
+			return found ? found.text : val
 		},
 		formatId(id) {
 			if (!id) return '----'

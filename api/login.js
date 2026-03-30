@@ -57,3 +57,18 @@ export function getCodeImg() {
     timeout: 20000
   })
 }
+
+// 微信小程序登录
+export function wxminiLogin(appid, code) {
+  return request({
+    url: '/wxmini/login',
+    headers: {
+      isToken: false
+    },
+    method: 'get',
+    data: {
+      appid,
+      code
+    }
+  })
+}

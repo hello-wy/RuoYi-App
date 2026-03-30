@@ -85,6 +85,34 @@ export function joinSalon(id) {
     })
 }
 
+// ==================== 课程报名 ====================
+
+// 获取课程报名须知
+export function getCourseNotice(id) {
+    return request({
+        url: '/system/growup/course/' + id + '/notice',
+        method: 'get'
+    })
+}
+
+// 报名课程
+export function enrollCourse(id, data) {
+    return request({
+        url: '/system/growup/course/' + id + '/enroll',
+        method: 'post',
+        data: data
+    })
+}
+
+// 获取课程已报名学员列表
+export function getCourseEnrolledUsers(id, query) {
+    return request({
+        url: '/system/growup/course/' + id + '/enrolled',
+        method: 'get',
+        params: query
+    })
+}
+
 // ==================== 问卷 ====================
 
 // 获取问卷活动列表

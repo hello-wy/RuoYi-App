@@ -43,13 +43,13 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getMyEnrollment } from '@/api/system/enrollment'
+import { getEnrollmentsList } from '@/api/wxmini/growup'
 
 const loading = ref(true)
 const list = ref([])
 
 onLoad(() => {
-  getMyEnrollment().then(res => {
+  getEnrollmentsList().then(res => {
     list.value = res.data || res.rows || res || []
   }).catch(() => {
     list.value = []

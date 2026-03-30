@@ -137,15 +137,15 @@
 <script setup>
   import { useUserStore } from '@/store'
   import { storeToRefs } from 'pinia'
-  import { computed, ref, getCurrentInstance } from "vue"
+  import { ref, getCurrentInstance } from "vue"
   import { getToken } from '@/utils/auth'
   const { proxy } = getCurrentInstance()
   import { onLoad } from "@dcloudio/uni-app"
-  import { getUserEnrollment } from '@/api/system/user'
+  import { getTotalEnrollments } from '@/api/wxmini/growup'
   const userStore = useUserStore()
-  const { name, avatar, enrollment } = storeToRefs(userStore)
+  const { name, avatar } = storeToRefs(userStore)
   const jifen = ref(0)
-  const enrollmentList = ref([])
+  const enrollmentList = ref(0)
 
   function handleToInfo() {
     proxy.$tab.navigateTo('/pages/mine/info/index')
@@ -162,10 +162,11 @@
   onLoad(() => {
     if (!getToken()) {
       proxy.$tab.reLaunch('/pages/index')
-    }
-    getUserEnrollment().then(res => {
-      enrollmentList.value = res.enrollment
-    })
+    }else{
+			getTotalEnrollments().then(res => {
+				enrollmentList.value = res.data
+			})
+	}
   })
 
   function handleToEnrollment() {

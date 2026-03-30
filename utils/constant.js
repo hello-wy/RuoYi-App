@@ -4,7 +4,8 @@ const constant = {
   name: 'user_name',
   roles: 'user_roles',
   permissions: 'user_permissions',
-  enrollment: 'user_enrollment'
+  enrollment: 'user_enrollment',
+  phone: 'user_phone'
  }
 
  export default constant

@@ -7,6 +7,7 @@
 			:subject-options="subjectOptions"
 			:grade-options="gradeOptions"
 			:method-options="methodOptions"
+			:show-grade="false"
 			@change="onFilterChange"
 			@reset="loadData(true)"
 		></tutoring-filter-bar>
@@ -44,9 +45,6 @@
 						:src="item.avatar || '/static/images/profile.jpg'"
 						mode="aspectFill"
 					></image>
-					<view v-if="item.isCertified === '2'" class="cert-badge">
-						<uni-icons type="checkmarkempty" size="12" color="#fff"></uni-icons>
-					</view>
 				</view>
 
 				<!-- 右：信息区 -->
@@ -57,9 +55,6 @@
 							<text class="tutor-name">
 								{{ formatName(item) }}
 							</text>
-							<view v-if="item.isCertified === '2'" class="cert-label">
-								<text class="cert-text">已认证</text>
-							</view>
 						</view>
 						<uni-icons type="right" size="16" color="#CCC"></uni-icons>
 					</view>
@@ -95,7 +90,7 @@
 </template>
 
 <script>
-import { listTutors } from '@/api/system/tutors'
+import { listTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
 
@@ -183,7 +178,8 @@ export default {
 					pageNum: this.page,
 					pageSize: this.pageSize,
 					orderByColumn: 'createDate',
-					isAsc: 'desc'
+					isAsc: 'desc',
+					...this.queryParams
 				})
 				const rows = res.rows || []
 				const total = res.total || 0
@@ -282,7 +278,7 @@ export default {
 .avatar {
 	width: 96rpx;
 	height: 96rpx;
-	border-radius: 50%;
+	border-radius: 8rpx;
 	background-color: #EEE;
 }
 .cert-badge {
