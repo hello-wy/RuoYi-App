@@ -126,7 +126,6 @@ const modeOptions = [
 
 const DEFAULT_MODE = 'realtimePhone'
 const ACCOUNT_MODE = 'account'
-const FALLBACK_WX_APP_ID = 'wx4c21998d0c65f24b'
 const DEFAULT_LOGIN_FORM = Object.freeze({
   username: 'admin',
   password: 'admin123',
@@ -355,7 +354,7 @@ function resolveRequiredWxAppId() {
 function resolveWxAppId() {
   // #ifdef MP-WEIXIN
   const accountInfo = uni.getAccountInfoSync ? uni.getAccountInfoSync() : null
-  return accountInfo?.miniProgram?.appId || FALLBACK_WX_APP_ID
+  return accountInfo?.miniProgram?.appId
   // #endif
   return ''
 }

@@ -92,7 +92,7 @@
 
         <view class="menu-divider"></view>
 
-        <view class="menu-item" @click="handleBuilding">
+<!--        <view class="menu-item" @click="handleBuilding">
           <view class="menu-left">
             <view class="menu-icon-wrap menu-icon-blue">
               <view class="iconfont icon-location menu-icon-inner"></view>
@@ -100,7 +100,7 @@
             <text class="menu-text">地址管理</text>
           </view>
           <view class="iconfont icon-right menu-arrow"></view>
-        </view>
+        </view> -->
 
         <view class="menu-divider"></view>
 

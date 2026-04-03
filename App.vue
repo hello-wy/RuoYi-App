@@ -35,7 +35,7 @@
 
   function checkLogin() {
     if (!getToken()) {
-      uni.reLaunch({ url: '/pages/login' })
+      uni.reLaunch({ url: '/pages/mine/index' })
     }
   }
 </script>

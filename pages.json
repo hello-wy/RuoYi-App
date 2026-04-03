@@ -1,5 +1,11 @@
 {
   "pages": [
+		{
+		  "path": "pages/mine/index",
+		  "style": {
+		    "navigationBarTitleText": "我的"
+		  }
+		},
     {
       "path": "pages/index",
       "style": {
@@ -28,12 +34,6 @@
       "path": "pages/price/list",
       "style": {
         "navigationBarTitleText": "价格"
-      }
-    },
-    {
-      "path": "pages/mine/index",
-      "style": {
-        "navigationBarTitleText": "我的"
       }
     },
     {
@@ -274,12 +274,12 @@
         "selectedIconPath": "static/images/tabbar/home_.png",
         "text": "首页"
       },
-      {
-        "pagePath": "pages/mine/wallet/index",
-        "iconPath": "static/images/tabbar/work.png",
-        "selectedIconPath": "static/images/tabbar/work_.png",
-        "text": "钱包"
-      },
+      // {
+      //   "pagePath": "pages/mine/wallet/index",
+      //   "iconPath": "static/images/tabbar/work.png",
+      //   "selectedIconPath": "static/images/tabbar/work_.png",
+      //   "text": "钱包"
+      // },
       {
         "pagePath": "pages/mine/index",
         "iconPath": "static/images/tabbar/mine.png",
