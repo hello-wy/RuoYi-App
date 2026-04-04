@@ -1,8 +1,65 @@
 .login-popup {
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 28%);
+  background: #ffffff;
   border-radius: 36rpx 36rpx 0 0;
   padding: 24rpx 28rpx 44rpx;
+  padding-bottom: calc(44rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -16rpx 60rpx rgba(15, 23, 42, 0.14);
+  height: 70vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 修复uni-popup底部间隙问题 */
+:deep(.uni-popup) {
+  position: fixed !important;
+}
+
+:deep(.uni-popup__wrapper) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup.type-bottom) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup__wrapper-box) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup__wrapper-box-bottom) {
+  background-color: transparent !important;
+}
+
+.login-popup::-webkit-scrollbar {
+  width: 4px;
+}
+
+.login-popup::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+.login-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 确保弹窗完全贴底部，没有灰色间隙 */
+:deep(.uni-popup__wrapper) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup.type-bottom) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup__wrapper-box) {
+  background-color: transparent !important;
+}
+
+:deep(.uni-popup__wrapper-box-bottom) {
+  background-color: transparent !important;
 }
 
 .popup-handle {
@@ -53,12 +110,13 @@
   justify-content: center;
   font-size: 24rpx;
   font-weight: 500;
+  gap: 8rpx;
 }
 
 .mode-item.active {
-  border-color: #0f766e;
-  background: #e6fffb;
-  color: #0f766e;
+  border-color: #3B82F6;
+  background: #EFF6FF;
+  color: #3B82F6;
 }
 
 .panel {
@@ -67,11 +125,14 @@
   border-radius: 28rpx;
   padding: 28rpx 24rpx;
   border: 2rpx solid #e5edf5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .panel-primary {
-  background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 42%);
-  border-color: #99f6e4;
+  background: #ffffff;
+  border-color: #3B82F6;
 }
 
 .panel-tag {
@@ -79,7 +140,7 @@
   margin-bottom: 16rpx;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: #0f766e;
+  background: #3B82F6;
   color: #ffffff;
   font-size: 22rpx;
   font-weight: 600;
@@ -106,6 +167,60 @@
   font-size: 22rpx;
   line-height: 1.6;
   color: #475569;
+}
+
+.agreement-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.agreement-checkbox.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-10rpx); }
+  20%, 40%, 60%, 80% { transform: translateX(10rpx); }
+}
+
+.checkbox-wrapper {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.checkbox-checked {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid #3B82F6;
+}
+
+.checkbox-unchecked {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #fff;
+  border: 2rpx solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+.agreement-text {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  line-height: 1.6;
 }
 
 .input-item {
@@ -154,15 +269,15 @@
 }
 
 .realtime-btn {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .wechat-btn {
-  background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .account-btn {
-  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 }
 
 .register-row,
@@ -178,5 +293,5 @@
 
 .link-text {
   margin: 0 6rpx;
-  color: #0f766e;
+  color: #3B82F6;
 }

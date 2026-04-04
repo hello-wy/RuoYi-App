@@ -1,5 +1,5 @@
 <template>
-  <uni-popup ref="popupRef" type="bottom" :is-mask-click="false" background-color="transparent">
+  <uni-popup ref="popupRef" type="bottom" :is-mask-click="true" :mask-background-color="'rgba(0, 0, 0, 0.6)'" :safe-area="false" background-color="transparent">
     <view class="login-popup">
       <view class="popup-handle"></view>
       <view class="popup-header">
@@ -18,14 +18,14 @@
           :class="{ active: activeMode === item.value }"
           @click="setMode(item.value)"
         >
-          {{ item.label }}
+          <uni-icons :type="item.icon" size="16" :color="activeMode === item.value ? '#0f766e' : '#64748b'"></uni-icons>
+          <text class="mode-text">{{ item.label }}</text>
         </view>
       </view>
 
       <view v-if="activeMode === 'realtimePhone'" class="panel panel-primary">
         <text class="panel-tag">推荐</text>
         <text class="panel-title">微信手机号快捷登录</text>
-        <text class="panel-desc">通过微信实时验证手机号完成登录，这不是运营商一键登录。</text>
         <!-- #ifdef MP-WEIXIN -->
         <button
           v-if="realtimePhoneSupported"
@@ -51,16 +51,13 @@
           微信手机号快捷登录
         </button>
         <!-- #endif -->
-        <text class="panel-note">点击后会先换取微信临时登录态，再绑定手机号并完成正式登录。</text>
       </view>
 
       <view v-else-if="activeMode === 'wechat'" class="panel">
         <text class="panel-title">微信授权登录</text>
-        <text class="panel-desc">无法使用手机号快捷验证时，可退回到普通微信授权登录。</text>
         <button class="primary-btn wechat-btn" @click="handleWechatLogin">
           微信授权登录
         </button>
-        <text class="panel-note">该入口不会自动补手机号，后续如需手机号能力需单独授权。</text>
       </view>
 
       <view v-else class="panel">
@@ -105,9 +102,20 @@
       </view>
 
       <view class="agreement">
-        <text class="muted-text">登录即代表同意</text>
-        <text class="link-text" @click="openAgreement(1)">《用户协议》</text>
-        <text class="link-text" @click="openAgreement(0)">《隐私协议》</text>
+        <view class="agreement-checkbox" @click="toggleAgreement" :class="{ shake: isShaking }">
+          <view class="checkbox-wrapper">
+            <view v-if="agreedToTerms" class="checkbox-checked">
+              <uni-icons type="checkmarkempty" size="14" color="#fff"></uni-icons>
+            </view>
+            <view v-else class="checkbox-unchecked"></view>
+          </view>
+          <view class="agreement-text">
+            <text class="muted-text">我已阅读并同意</text>
+            <text class="link-text" @click.stop="openAgreement(1)">《用户协议》</text>
+            <text class="muted-text">和</text>
+            <text class="link-text" @click.stop="openAgreement(0)">《隐私协议》</text>
+          </view>
+        </view>
       </view>
     </view>
   </uni-popup>
@@ -119,9 +127,9 @@ import { getCodeImg } from '@/api/login'
 import { useConfigStore, useUserStore } from '@/store'
 
 const modeOptions = [
-  { label: '手机号快捷登录', value: 'realtimePhone' },
-  { label: '微信登录', value: 'wechat' },
-  { label: '账号登录', value: 'account' }
+  { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },
+  { label: '微信登录', value: 'wechat', icon: 'weixin' },
+  { label: '账号登录', value: 'account', icon: 'person' }
 ]
 
 const DEFAULT_MODE = 'realtimePhone'
@@ -175,6 +183,8 @@ const codeUrl = ref('')
 const captchaEnabled = ref(true)
 const realtimePhoneSupported = ref(false)
 const loginForm = ref(createLoginForm(props.initialLoginForm))
+const agreedToTerms = ref(false)
+const isShaking = ref(false)
 
 watch(() => props.defaultMode, (value) => {
   const nextMode = value || DEFAULT_MODE
@@ -218,6 +228,22 @@ function close() {
   emit('close')
 }
 
+function toggleAgreement() {
+  agreedToTerms.value = !agreedToTerms.value
+}
+
+function checkAgreement() {
+  if (!agreedToTerms.value) {
+    isShaking.value = true
+    proxy.$modal.msgError('请先阅读并同意用户协议和隐私协议')
+    setTimeout(() => {
+      isShaking.value = false
+    }, 500)
+    return false
+  }
+  return true
+}
+
 function createLoginForm(initialLoginForm = {}) {
   return {
     ...DEFAULT_LOGIN_FORM,
@@ -248,6 +274,10 @@ function getCode() {
 }
 
 function handleAccountLogin() {
+  if (!checkAgreement()) {
+    return
+  }
+
   if (!loginForm.value.username) {
     proxy.$modal.msgError('请输入账号')
     return
@@ -276,6 +306,10 @@ function handleRealtimePhoneUnsupported() {
 }
 
 function handleRealtimePhoneLogin(event) {
+  if (!checkAgreement()) {
+    return
+  }
+
   // #ifndef MP-WEIXIN
   handleRealtimePhoneUnsupported()
   return
@@ -295,6 +329,10 @@ function handleRealtimePhoneLogin(event) {
 }
 
 function handleWechatLogin() {
+  if (!checkAgreement()) {
+    return
+  }
+
   // #ifndef MP-WEIXIN
   proxy.$modal.msgError('微信登录仅支持微信小程序环境')
   return

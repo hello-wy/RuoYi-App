@@ -1,0 +1,67 @@
+$mint-bg: #f3fbf8;
+$mint-header: #dff7f0;
+$mint-border: #c8efe4;
+$text-main: #0f172a;
+$text-sub: #4f7f78;
+
+page {
+  background-color: $mint-bg;
+}
+
+.admin-container {
+  min-height: 100vh;
+  background: $mint-bg;
+}
+
+.admin-header {
+  padding: 44rpx 32rpx 48rpx;
+  background: $mint-header;
+}
+
+.admin-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #0f766e;
+  line-height: 1.4;
+}
+
+.admin-subtitle {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+  padding: 32rpx 24rpx 48rpx;
+}
+
+.admin-action {
+  padding: 36rpx 20rpx 32rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  border: 1rpx solid $mint-border;
+  box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.action-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #ecfdf5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-label {
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: $text-main;
+  font-weight: 600;
+}

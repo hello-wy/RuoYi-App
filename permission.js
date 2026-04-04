@@ -1,11 +1,7 @@
 import { getToken } from '@/utils/auth'
 
-// 登录页面
-const loginPage = "/pages/login"
-
 // 页面白名单
 const whiteList = [
-  '/pages/login',
   '/pages/register',
   '/pages/common/webview/index',
   '/pages/index',
@@ -15,6 +11,7 @@ const whiteList = [
   '/pages/jobs/list',
   '/pages/guide/index',
   '/pages/price/list',
+  '/pages/mine/index',
 ]
 
 // 检查地址白名单
@@ -28,18 +25,16 @@ let list = ["navigateTo", "redirectTo", "reLaunch", "switchTab"]
 list.forEach(item => {
   uni.addInterceptor(item, {
     invoke(to) {
-      if (getToken()) {
-        if (to.url === loginPage) {
-          uni.reLaunch({ url: "/" })
-        }
+      // 未登录用户允许访问白名单页面，其他页面通过 LoginPopup 组件处理登录
+      if (checkWhite(to.url)) {
         return true
-      } else {
-        if (checkWhite(to.url)) {
-          return true
-        }
-        uni.reLaunch({ url: loginPage })
-        return false
       }
+      // 已登录用户可以访问所有页面
+      if (getToken()) {
+        return true
+      }
+      // 未登录用户访问非白名单页面，允许通过（页面内会使用 LoginPopup 处理登录）
+      return true
     },
     fail(err) {
       console.log(err)

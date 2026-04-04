@@ -13,12 +13,6 @@
       }
     },
     {
-      "path": "pages/login",
-      "style": {
-        "navigationBarTitleText": "登录"
-      }
-    },
-    {
       "path": "pages/register",
       "style": {
         "navigationBarTitleText": "注册"
@@ -134,6 +128,19 @@
       "path": "pages/mine/setting/index",
       "style": {
         "navigationBarTitleText": "应用设置"
+      }
+    },
+    {
+      "path": "pages/mine/admin/index",
+      "style": {
+        "navigationBarTitleText": "管理后台"
+      }
+    },
+    {
+      "path": "pages/mine/admin/tutor-review",
+      "style": {
+        "navigationBarTitleText": "教员审核",
+        "enablePullDownRefresh": true
       }
     },
     {

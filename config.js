@@ -1,8 +1,8 @@
 // 应用全局配置
 export default {
 	
-	baseUrl: 'http://192.168.31.64:8080',
-  // baseUrl: 'http://zhiyujia.xyz:8080',
+	// baseUrl: 'http://192.168.31.64:8080',
+  baseUrl: 'http://zhiyujia.xyz:8080',
   // 应用信息
   appInfo: {
     // 应用名称
@@ -12,7 +12,7 @@ export default {
     // 应用logo
     logo: "/static/logo.png",
     // 官方网站
-    site_url: "http://ruoyi.vip",
+    site_url: "http://zhiyujia.xyz:8080",
     // 政策协议
     agreements: [{
       title: "隐私政策",
