@@ -18,7 +18,7 @@
         </view>
       </view>
 
-      <view class="stats-row">
+      <view v-if="!isAdmin" class="stats-row">
         <view class="stat-item" @click="handleToEnrollment">
           <text class="stat-num">{{ enrollmentList }}</text>
           <view class="stat-btn">我的学箱</view>
