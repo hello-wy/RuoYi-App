@@ -3,10 +3,10 @@
     <view class="header-section">
       <view class="header-top">
         <view class="user-left">
-          <view v-if="!avatar" class="avatar-wrap">
+          <!-- <view v-if="!avatar" class="avatar-wrap">
             <uni-icons type="person" size="30" color="#FFFFFF" />
           </view>
-          <image v-if="avatar" @click="handleToAvatar" :src="avatar" class="avatar-img" mode="aspectFill" />
+          <image v-if="avatar" @click="handleToAvatar" :src="avatar" class="avatar-img" mode="aspectFill" /> -->
           <view class="user-detail">
             <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
             <view v-if="name" class="user-name">{{ name }}</view>
