@@ -42,7 +42,7 @@ import homebottom from '@/pages/common/bottom/bottom'
 import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
 import { useLocationStore } from '@/store'
-import pcaData from '@/static/pca-code.json'
+import { findCityNodeByName } from '@/utils/pca'
 
 export default {
 	dicts: ['sys_subject', 'sys_class', 'sys_methods'],
@@ -62,42 +62,25 @@ export default {
 	computed: {
 
 	},
-	mounted() {
-    // this.citys = pcaData.map(province => {
-    //   return {
-    //     text: province.text,
-    //     value: province.value,
-    //     children: province.children.map(city => {
-    //       return {
-    //         text: city.text,
-    //         value: city.value
-    //         // 注意：这里不再向下嵌套 children，从而只显示到市级
-    //       };
-    //     })
-    //   };
-    // });
-		this.getAreas()  
-    
+	async mounted() {
+		await this.getAreas()
 	},
 	methods: {
-		getAreas() {
-		// 找到城市节点（{ text, value, children }）传给 setCity
-		const allCities = pcaData.flatMap(province => province.children)
-		const cityNode = allCities.find(city => city.text === this.selectedCityText)
+		async getAreas() {
+			const cityNode = await findCityNodeByName(this.selectedCityText)
 
-		if (cityNode) {
-			useLocationStore().setCity(cityNode)
-		}
+			if (cityNode) {
+				useLocationStore().setCity(cityNode)
+			}
 		},
 
+		async change(e){
+			this.cityIndex = e.detail.value
+			this.selectedCityText = this.range[this.cityIndex].text
 
-		change(e){
-		this.cityIndex = e.detail.value
-		this.selectedCityText = this.range[this.cityIndex].text
-
-		this.getAreas(this.selectedCityText,pcaData)  
+			await this.getAreas()
 		},
-		
+
 		// changeCity(e) {
     //   let cityNode = null
 		// 	this.cityIndex = e.detail.value[1].value
@@ -111,12 +94,12 @@ export default {
     //   console.log(this.selectedCityText);
 
 		// 	console.log(cityNode);
-      
+
 		// 	if (cityNode) {
 		// 		// 同步到 store，更新区县列表
 		// 		useLocationStore().setCity(cityNode)
 		// 	}
-      
+
 		// }
 	}
 }

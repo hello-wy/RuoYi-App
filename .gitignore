@@ -17,3 +17,5 @@ yarn.lock
 .Ds_Store
 .github/
 .worktrees/
+scripts/
+docs/

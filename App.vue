@@ -3,11 +3,14 @@
   import { getToken } from '@/utils/auth'
   import { useConfigStore, useLocationStore } from '@/store'
   import { onLaunch } from '@dcloudio/uni-app'
-  import pcaData from '@/static/pca-code.json'
+  import { findCityNodeByName } from '@/utils/pca'
 
-  onLaunch(() => {
+  onLaunch(async () => {
     initApp()
-    getAreas("南京市",pcaData)
+    const cityNode = await findCityNodeByName('南京市')
+    if (cityNode) {
+      useLocationStore().setCity(cityNode)
+    }
   })
 
   // 初始化应用
@@ -21,17 +24,6 @@
   function initConfig() {
     useConfigStore().setConfig(config)
   }
-
-  function getAreas(cityName, data) {
-    // 找到城市节点（{ text, value, children }）传给 setCity
-    const allCities = data.flatMap(province => province.children)
-    const cityNode = allCities.find(city => city.text === cityName)
-
-    if (cityNode) {
-      useLocationStore().setCity(cityNode)
-    }
-  }
-
 
   function checkLogin() {
     if (!getToken()) {

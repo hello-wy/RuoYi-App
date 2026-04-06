@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import pcaData from '@/static/pca-code.json'
+import { loadPcaData } from '@/utils/pca'
 import { useLocationStore } from '@/store'
 
 export default {
@@ -35,6 +35,7 @@ export default {
 	emits: ['update:modelValue', 'change'],
 	data() {
 		return {
+			pcaData: [],
 			// 当前三列的选中索引
 			pickerIndexes: [0, 0, 0],
 			// 三列数据 [ 省列表, 市列表, 区列表 ]
@@ -52,21 +53,22 @@ export default {
 			return parts.join(' / ')
 		}
 	},
-	mounted() {
+	async mounted() {
+		this.pcaData = await loadPcaData()
 		this.buildColumns()
 		this.initFromStore()
 	},
 	methods: {
 		// 构建所有省份列表（第一列）
 		buildColumns() {
-			const provinces = pcaData.map(p => ({ text: p.text, value: p.value, raw: p }))
+			const provinces = this.pcaData.map(p => ({ text: p.text, value: p.value, raw: p }))
 			this.columns = [provinces, [], []]
 			this.refreshCityColumn(0)
 		},
 
 		// 根据省索引刷新市列，然后触发区列刷新
 		refreshCityColumn(provIndex) {
-			const province = pcaData[provIndex]
+			const province = this.pcaData[provIndex]
 			if (!province) return
 
 			// 直辖市判断：第一个子节点 text 为 "市辖区"
@@ -89,7 +91,7 @@ export default {
 
 		// 根据省/市索引刷新区列
 		refreshDistrictColumn(provIndex, cityIndex, isMunicipality) {
-			const province = pcaData[provIndex]
+			const province = this.pcaData[provIndex]
 			if (!province) return
 
 			let districts = []
@@ -123,10 +125,10 @@ export default {
 				indexes[2] = 0
 				this.pickerIndexes = indexes
 				const isMunicipality =
-					pcaData[value] &&
-					pcaData[value].children &&
-					pcaData[value].children[0] &&
-					pcaData[value].children[0].text === '市辖区'
+					this.pcaData[value] &&
+					this.pcaData[value].children &&
+					this.pcaData[value].children[0] &&
+					this.pcaData[value].children[0].text === '市辖区'
 				this.refreshCityColumn(value)
 				this.refreshDistrictColumn(value, 0, isMunicipality)
 			} else if (column === 1) {
@@ -135,10 +137,10 @@ export default {
 				this.pickerIndexes = indexes
 				const provIndex = indexes[0]
 				const isMunicipality =
-					pcaData[provIndex] &&
-					pcaData[provIndex].children &&
-					pcaData[provIndex].children[0] &&
-					pcaData[provIndex].children[0].text === '市辖区'
+					this.pcaData[provIndex] &&
+					this.pcaData[provIndex].children &&
+					this.pcaData[provIndex].children[0] &&
+					this.pcaData[provIndex].children[0].text === '市辖区'
 				this.refreshDistrictColumn(provIndex, value, isMunicipality)
 			} else {
 				this.pickerIndexes = indexes
@@ -178,8 +180,8 @@ export default {
 			if (!storeCity || !storeCity.name) return
 
 			// 在 pca 中找到该城市所在的省和市
-			for (let pi = 0; pi < pcaData.length; pi++) {
-				const province = pcaData[pi]
+			for (let pi = 0; pi < this.pcaData.length; pi++) {
+				const province = this.pcaData[pi]
 				const isMunicipality =
 					province.children &&
 					province.children.length > 0 &&
@@ -231,12 +233,12 @@ export default {
 			const v = this.modelValue
 			if (!v || !v.province) return
 
-			for (let pi = 0; pi < pcaData.length; pi++) {
-				if (pcaData[pi].text === v.province) {
+			for (let pi = 0; pi < this.pcaData.length; pi++) {
+				if (this.pcaData[pi].text === v.province) {
 					const isMunicipality =
-						pcaData[pi].children &&
-						pcaData[pi].children[0] &&
-						pcaData[pi].children[0].text === '市辖区'
+						this.pcaData[pi].children &&
+						this.pcaData[pi].children[0] &&
+						this.pcaData[pi].children[0].text === '市辖区'
 					this.refreshCityColumn(pi)
 
 					let ci = 0
