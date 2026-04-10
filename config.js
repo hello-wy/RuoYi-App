@@ -2,7 +2,7 @@
 export default {
 	
 	// baseUrl: 'http://192.168.31.64:8080',
-  baseUrl: 'http://zhiyujia.xyz:8080',
+  baseUrl: 'https://zhiyujia.xyz',
   // 应用信息
   appInfo: {
     // 应用名称
@@ -16,11 +16,11 @@ export default {
     // 政策协议
     agreements: [{
       title: "隐私政策",
-      url: "http://zhiyujia.xyz:8080/policy.html"
+      url: "https://zhiyujia.xyz/privacy-policy.html"
     },
     {
       title: "用户服务协议",
-      url: "http://zhiyujia.xyz:8080/service-terms.html"
+      url: "https://zhiyujia.xyz/service-terms.html"
     }
     ]
   }

@@ -5,7 +5,7 @@
       <view class="popup-header">
         <view>
           <text class="popup-title">登录后继续使用完整服务</text>
-          <text class="popup-subtitle">主入口为微信手机号快捷验证登录</text>
+          <text class="popup-subtitle"></text>
         </view>
         <uni-icons type="closeempty" size="20" color="#64748b" @click="close"></uni-icons>
       </view>
@@ -128,15 +128,15 @@ import { useConfigStore, useUserStore } from '@/store'
 
 const modeOptions = [
   { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },
-  { label: '微信登录', value: 'wechat', icon: 'weixin' },
-  { label: '账号登录', value: 'account', icon: 'person' }
+  // { label: '微信登录', value: 'wechat', icon: 'weixin' },
+  // { label: '账号登录', value: 'account', icon: 'person' }
 ]
 
 const DEFAULT_MODE = 'realtimePhone'
 const ACCOUNT_MODE = 'account'
 const DEFAULT_LOGIN_FORM = Object.freeze({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
   code: '',
   uuid: ''
 })

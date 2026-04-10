@@ -133,6 +133,7 @@
 .panel-primary {
   background: #ffffff;
   border-color: #3B82F6;
+  align-items: flex-start;
 }
 
 .panel-tag {
@@ -148,9 +149,11 @@
 
 .panel-title {
   display: block;
+  width: 100%;
   font-size: 30rpx;
   font-weight: 700;
   color: #0f172a;
+  text-align: left;
 }
 
 .panel-desc {

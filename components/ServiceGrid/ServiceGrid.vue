@@ -22,11 +22,12 @@ export default {
 		return {
 			gridColumn: 4, // 每行显示4个
 			serviceList: [
+
 				{
-					name: '学员库',
-					icon: 'person-filled',
+					name: '请家教',
+					icon: 'calendar-filled',
 					color: '#333',
-					path: '/pages/tutoring/parent/list'
+					path: '/pages/tutoring/parent/apply'
 				},
 				{
 					name: '教员库',
@@ -35,10 +36,10 @@ export default {
 					path: '/pages/tutoring/tutor/list'
 				},
 				{
-					name: '请家教',
-					icon: 'calendar-filled',
+					name: '学员库',
+					icon: 'person-filled',
 					color: '#333',
-					path: '/pages/tutoring/parent/apply'
+					path: '/pages/tutoring/parent/list'
 				},
 				{
 					name: '做教员',
@@ -47,19 +48,20 @@ export default {
 					path: '/pages/tutoring/tutor/apply'
 				},
 				{
-					name: '育见成长',
-					icon: 'star-filled',
-					color: '#333',
-					path: '/pages/growup/index'
-				},
-				{
 					name: '兼职日结',
 					icon: 'wallet-filled',
 					color: '#333',
 					path: '/pages/jobs/list'
 				},
 				{
-					name: '活动沙龙',
+					name: '育见成长',
+					icon: 'star-filled',
+					color: '#333',
+					path: '/pages/growup/index'
+				},
+
+				{
+					name: '热门沙龙',
 					icon: 'gift-filled',
 					color: '#333',
 					path: '/pages/salon/list'
