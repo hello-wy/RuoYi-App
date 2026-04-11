@@ -6,13 +6,13 @@ export default {
   // 应用信息
   appInfo: {
     // 应用名称
-    name: "ruoyi-app",
+    name: "智育傢",
     // 应用版本
     version: "1.2.0",
     // 应用logo
     logo: "/static/logo.png",
     // 官方网站
-    site_url: "http://zhiyujia.xyz:8080",
+    // site_url: "https://zhiyujia.xyz",
     // 政策协议
     agreements: [{
       title: "隐私政策",

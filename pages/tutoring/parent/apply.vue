@@ -38,11 +38,11 @@
 
 				<!-- 联系人姓名 -->
 				<view class="form-item">
-					<text class="form-label">简单描述你的需求</text>
+					<text class="form-label">简单描述你的需求（这个将作为标题）</text>
 					<input
 						class="form-input"
 						v-model="form.name"
-						placeholder="请输入您的需求描述，如：小学生数学辅导，每周三次，线上授课等..."
+						placeholder="如：小学生数学辅导，每周三次，线上授课等..."
 						maxlength="30"
 					/>
 				</view>

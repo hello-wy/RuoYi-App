@@ -1,5 +1,5 @@
 {
-    "name" : "若依移动端",
+    "name" : "智育傢",
     "appid" : "__UNI__25A9D80",
     "description" : "",
     "versionName" : "1.2.0",
@@ -54,7 +54,8 @@
             "subPackages" : true
         },
         "usingComponents" : true,
-        "permission" : {}
+        "permission" : {},
+        "__usePrivacyCheck__" : true
     },
     "vueVersion" : "3",
     "h5" : {

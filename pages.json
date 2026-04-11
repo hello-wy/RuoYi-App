@@ -9,7 +9,7 @@
     {
       "path": "pages/index",
       "style": {
-        "navigationBarTitleText": "育见成长"
+        // "navigationBarTitleText": "育见成长"
       }
     },
     {
@@ -297,7 +297,7 @@
   },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "RuoYi",
+    "navigationBarTitleText": "",
     "navigationBarBackgroundColor": "#FFFFFF"
   }
 }

@@ -25,7 +25,7 @@
 
       <view v-if="activeMode === 'realtimePhone'" class="panel panel-primary">
         <text class="panel-tag">推荐</text>
-        <text class="panel-title">微信手机号快捷登录</text>
+        <text class="panel-title">手机号快捷登录</text>
         <!-- #ifdef MP-WEIXIN -->
         <button
           v-if="realtimePhoneSupported"
@@ -33,14 +33,14 @@
           open-type="getRealtimePhoneNumber"
           @getrealtimephonenumber="handleRealtimePhoneLogin"
         >
-          微信手机号快捷登录
+          手机号快捷登录
         </button>
         <button
           v-else
           class="primary-btn realtime-btn"
           @click="handleRealtimePhoneUnsupported"
         >
-          微信手机号快捷登录
+          手机号快捷登录
         </button>
         <!-- #endif -->
         <!-- #ifndef MP-WEIXIN -->
@@ -48,7 +48,7 @@
           class="primary-btn realtime-btn"
           @click="handleRealtimePhoneUnsupported"
         >
-          微信手机号快捷登录
+          手机号快捷登录
         </button>
         <!-- #endif -->
       </view>
@@ -111,9 +111,10 @@
           </view>
           <view class="agreement-text">
             <text class="muted-text">我已阅读并同意</text>
-            <text class="link-text" @click.stop="openAgreement(1)">《用户协议》</text>
-            <text class="muted-text">和</text>
-            <text class="link-text" @click.stop="openAgreement(0)">《隐私协议》</text>
+            <template v-for="(agreement, index) in agreements" :key="agreement.title || index">
+              <text v-if="index > 0" class="muted-text">和</text>
+              <text class="link-text" @click.stop="openAgreement(index)">《{{ agreement.title }}》</text>
+            </template>
           </view>
         </view>
       </view>
@@ -177,6 +178,7 @@ const emit = defineEmits(['close', 'success'])
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
 const globalConfig = useConfigStore().config
+const agreements = globalConfig.appInfo?.agreements || []
 const popupRef = ref(null)
 const activeMode = ref(props.defaultMode)
 const codeUrl = ref('')
@@ -185,6 +187,7 @@ const realtimePhoneSupported = ref(false)
 const loginForm = ref(createLoginForm(props.initialLoginForm))
 const agreedToTerms = ref(false)
 const isShaking = ref(false)
+const agreementTitlesText = agreements.map(item => item.title).join('和')
 
 watch(() => props.defaultMode, (value) => {
   const nextMode = value || DEFAULT_MODE
@@ -235,7 +238,7 @@ function toggleAgreement() {
 function checkAgreement() {
   if (!agreedToTerms.value) {
     isShaking.value = true
-    proxy.$modal.msgError('请先阅读并同意用户协议和隐私协议')
+    proxy.$modal.msgError(`请先阅读并同意${agreementTitlesText}`)
     setTimeout(() => {
       isShaking.value = false
     }, 500)
@@ -252,7 +255,11 @@ function createLoginForm(initialLoginForm = {}) {
 }
 
 function openAgreement(index) {
-  const site = globalConfig.appInfo.agreements[index]
+  const site = agreements[index]
+  if (!site?.url) {
+    proxy.$modal.msgError('协议配置缺失')
+    return
+  }
   proxy.$tab.navigateTo(`/pages/common/webview/index?title=${site.title}&url=${site.url}`)
 }
 
