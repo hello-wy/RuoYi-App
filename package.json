@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "unh dev",
     "build": "unh build",
-    "dev:mp-weixin": "unh dev --platform mp-weixin",
-    "build:mp-weixin": "unh build --platform mp-weixin",
-    "check:mp-weixin": "test -f unpackage/dist/dev/mp-weixin/project.config.json && test -f unpackage/dist/dev/mp-weixin/app.json",
+    "dev:mp-weixin": "unh dev mp-weixin",
+    "build:mp-weixin": "unh build mp-weixin",
+    "check:mp-weixin": "test -f dist/build/mp-weixin/project.config.json && test -f dist/build/mp-weixin/app.json",
     "ci:mp-weixin": "npm run build:mp-weixin && npm run check:mp-weixin"
   },
   "dependencies": {
