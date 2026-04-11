@@ -1,0 +1,46 @@
+{
+  "name": "ruoyi-app",
+  "type": "module",
+  "version": "1.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "unh dev",
+    "build": "unh build",
+    "dev:mp-weixin": "unh dev --platform mp-weixin",
+    "build:mp-weixin": "unh build --platform mp-weixin",
+    "check:mp-weixin": "test -f unpackage/dist/dev/mp-weixin/project.config.json && test -f unpackage/dist/dev/mp-weixin/app.json",
+    "ci:mp-weixin": "npm run build:mp-weixin && npm run check:mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5000620260331001",
+    "@dcloudio/uni-app-harmony": "3.0.0-5000620260331001",
+    "@dcloudio/uni-app-plus": "3.0.0-5000620260331001",
+    "@dcloudio/uni-components": "3.0.0-5000620260331001",
+    "@dcloudio/uni-h5": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-alipay": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-baidu": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-harmony": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-jd": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-kuaishou": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-lark": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-qq": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-toutiao": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5000620260331001",
+    "@dcloudio/uni-mp-xhs": "3.0.0-5000620260331001",
+    "@dcloudio/uni-quickapp-webview": "3.0.0-5000620260331001",
+    "pinia": "2.1.7",
+    "vue": "3.4.21",
+    "vue-i18n": "9.14.5"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "3.4.28",
+    "@dcloudio/uni-cli-shared": "3.0.0-5000620260331001",
+    "@dcloudio/uni-stacktracey": "3.0.0-5000620260331001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5000620260331001",
+    "@uni-helper/plugin-uni": "0.1.0",
+    "@uni-helper/unh": "^0.3.1",
+    "@vue/runtime-core": "3.4.21",
+    "sass": "1.64.2",
+    "vite": "5.2.8"
+  }
+}

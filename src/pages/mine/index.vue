@@ -12,7 +12,7 @@
             <view v-if="name" class="user-name">{{ name }}</view>
           </view>
         </view>
-        <view class="header-right" @click="handleBuilding">
+        <view class="header-right" @click="handleToProfile">
           <text class="homepage-text">个人主页</text>
           <uni-icons type="right" size="14" color="#ECFEF6" />
         </view>
@@ -216,6 +216,10 @@ onLoad(() => {
 
 function handleToEnrollment() {
   proxy.$tab.navigateTo('/pages/mine/enrollment/index')
+}
+
+function handleToProfile() {
+  proxy.$tab.navigateTo('/pages/mine/info/index')
 }
 
 function handleBuilding() {

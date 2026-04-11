@@ -50,7 +50,7 @@
 
 <script>
 import { useUserStore } from '@/store'
-import UQRCode from '@/uni_modules/Sansnn-uQRCode/js_sdk/uqrcode/uqrcode.js'
+import UQRCode from '@uni/Sansnn-uQRCode/js_sdk/uqrcode/uqrcode.js'
 
 export default {
 	data() {

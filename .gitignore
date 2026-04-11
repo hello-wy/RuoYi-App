@@ -19,3 +19,5 @@ yarn.lock
 .worktrees/
 scripts/
 docs/
+.npm-cache/
+dist/

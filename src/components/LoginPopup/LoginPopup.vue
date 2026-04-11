@@ -129,7 +129,7 @@ import { useConfigStore, useUserStore } from '@/store'
 
 const modeOptions = [
   { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },
-  // { label: '微信登录', value: 'wechat', icon: 'weixin' },
+  { label: '微信登录', value: 'wechat', icon: 'weixin' },
   // { label: '账号登录', value: 'account', icon: 'person' }
 ]
 

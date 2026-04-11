@@ -218,6 +218,7 @@ export const useUserStore = defineStore('user', () => {
     sessionKey,
     userType,
     permissions,
+    SET_NAME,
     SET_AVATAR,
     SET_ENROLLMENT,
     SET_PHONE,
