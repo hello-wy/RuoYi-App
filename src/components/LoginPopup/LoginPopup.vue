@@ -127,9 +127,11 @@ import { getCurrentInstance, onMounted, ref, watch } from 'vue'
 import { getCodeImg } from '@/api/login'
 import { useConfigStore, useUserStore } from '@/store'
 
+const isProd = import.meta.env.PROD
+
 const modeOptions = [
   { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },
-  { label: '微信登录', value: 'wechat', icon: 'weixin' },
+  ...(!isProd ? [{ label: '微信登录', value: 'wechat', icon: 'weixin' }] : []),
   // { label: '账号登录', value: 'account', icon: 'person' }
 ]
 
@@ -178,7 +180,7 @@ const emit = defineEmits(['close', 'success'])
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
 const globalConfig = useConfigStore().config
-const agreements = globalConfig.appInfo?.agreements || []
+const agreements = (globalConfig.appInfo && globalConfig.appInfo.agreements) || []
 const popupRef = ref(null)
 const activeMode = ref(props.defaultMode)
 const codeUrl = ref('')
@@ -223,11 +225,15 @@ function setMode(mode) {
 
 function open(mode = activeMode.value) {
   setMode(mode)
-  popupRef.value?.open()
+  if (popupRef.value) {
+    popupRef.value.open()
+  }
 }
 
 function close() {
-  popupRef.value?.close()
+  if (popupRef.value) {
+    popupRef.value.close()
+  }
   emit('close')
 }
 
@@ -256,7 +262,7 @@ function createLoginForm(initialLoginForm = {}) {
 
 function openAgreement(index) {
   const site = agreements[index]
-  if (!site?.url) {
+  if (!site || !site.url) {
     proxy.$modal.msgError('协议配置缺失')
     return
   }
@@ -322,9 +328,9 @@ function handleRealtimePhoneLogin(event) {
   return
   // #endif
 
-  const phoneCode = event?.detail?.code
+  const phoneCode = event && event.detail ? event.detail.code : undefined
   if (!phoneCode) {
-    proxy.$modal.msgError(resolvePhoneDeniedMessage(event?.detail?.errMsg))
+    proxy.$modal.msgError(resolvePhoneDeniedMessage(event && event.detail ? event.detail.errMsg : undefined))
     return
   }
   withLoading('微信手机号验证中，请稍候...', async () => {
@@ -399,7 +405,7 @@ function resolveRequiredWxAppId() {
 function resolveWxAppId() {
   // #ifdef MP-WEIXIN
   const accountInfo = uni.getAccountInfoSync ? uni.getAccountInfoSync() : null
-  return accountInfo?.miniProgram?.appId
+  return accountInfo && accountInfo.miniProgram ? accountInfo.miniProgram.appId : ''
   // #endif
   return ''
 }
@@ -412,7 +418,7 @@ async function requestWxLoginCode() {
     }
     return loginRes.code
   } catch (error) {
-    throw new Error(error?.errMsg || '获取微信登录凭证失败，请稍后重试')
+    throw new Error((error && error.errMsg) || '获取微信登录凭证失败，请稍后重试')
   }
 }
 

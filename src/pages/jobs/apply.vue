@@ -293,7 +293,7 @@ export default {
 			return found ? found.label : '其他'
 		},
 		onCategoryChange(e) {
-			this.form.category = CATEGORY_OPTIONS[e.detail.value]?.value || ''
+			this.form.category = (CATEGORY_OPTIONS[e.detail.value] && CATEGORY_OPTIONS[e.detail.value].value) || ''
 		},
 		onDateChange(e) {
 			this.form.workDate = e.detail.value

@@ -106,7 +106,7 @@ function loadProfile() {
       phone: data.phone || '',
       realName: data.realName || '',
       nickName: data.nickName || '',
-      gender: data.gender ?? '',
+      gender: data.gender !== null && data.gender !== undefined ? data.gender : '',
       companyName: data.companyName || '',
       companyAddress: data.companyAddress || '',
       companyPosition: data.companyPosition || '',
@@ -139,7 +139,9 @@ onLoad(() => {
 })
 
 onReady(() => {
-  formRef.value?.setRules(rules)
+  if (formRef.value) {
+    formRef.value.setRules(rules)
+  }
 })
 </script>
 

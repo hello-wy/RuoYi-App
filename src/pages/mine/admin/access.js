@@ -15,7 +15,9 @@ export function requireAdminAccess(proxy) {
     return true
   }
 
-  proxy?.$modal?.showToast('无权限访问')
+  if (proxy && proxy.$modal) {
+    proxy.$modal.showToast('无权限访问')
+  }
   setTimeout(() => {
     const pageStack = getCurrentPages()
     if (pageStack.length > 1) {

@@ -135,22 +135,22 @@ export default {
 		},
 		onRegionChange(e) {
 			const idx = e.detail.value
-			const region = this.districtOptions[idx]?.value || ''
+			const region = (this.districtOptions[idx] && this.districtOptions[idx].value) || ''
 			this.$emit('change', { ...this.value, region })
 		},
 		onSubjectChange(e) {
 			const idx = e.detail.value
-			const subject = this.subjectOptions[idx]?.value || ''
+			const subject = (this.subjectOptions[idx] && this.subjectOptions[idx].value) || ''
 			this.$emit('change', { ...this.value, subject })
 		},
 		onGradeChange(e) {
 			const idx = e.detail.value
-			const grade = this.gradeOptions[idx]?.value || ''
+			const grade = (this.gradeOptions[idx] && this.gradeOptions[idx].value) || ''
 			this.$emit('change', { ...this.value, grade })
 		},
 		onMethodChange(e) {
 			const idx = e.detail.value
-			const methods = this.methodOptions[idx]?.value || ''
+			const methods = (this.methodOptions[idx] && this.methodOptions[idx].value) || ''
 			this.$emit('change', { ...this.value, methods })
 		},
 		onReset() {

@@ -25,13 +25,13 @@
 				<view>C</view>
 			</swiper-item>
 		</swiper>
-		
+
 		<!-- 服务项目组件 -->
 		<service-grid></service-grid>
-		
+
 		<!-- 分类速查组件 -->
 		<category-quick-search></category-quick-search>
-		
+
 		<!-- 底部组件 -->
 		<homebottom></homebottom>
 	</view>
@@ -45,7 +45,6 @@ import { useLocationStore } from '@/store'
 import { findCityNodeByName } from '@/utils/pca'
 
 export default {
-	dicts: ['sys_subject', 'sys_class', 'sys_methods'],
 	components: {
 		homebottom,
 		CategoryQuickSearch,
@@ -54,9 +53,10 @@ export default {
 	data() {
 		return {
 			cityIndex: 0,
-			range: [{text:"南京市",value:"3201"}],
-			citys:[],
-			selectedCityText:"南京市"
+			range: [{ text: '南京市', value: '3201' }],
+			citys: [],
+			selectedCityText: '南京市',
+			duration: 500
 		}
 	},
 	computed: {
@@ -74,7 +74,7 @@ export default {
 			}
 		},
 
-		async change(e){
+		async change(e) {
 			this.cityIndex = e.detail.value
 			this.selectedCityText = this.range[this.cityIndex].text
 

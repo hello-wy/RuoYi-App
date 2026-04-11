@@ -1,17 +1,17 @@
 <template>
 	<view class="service-grid">
-        <uni-section title="服务项目" type="line" titleFontSize="18px"></uni-section>
-		<!-- <view class="section-title">服务项目</view> -->
-		<uni-grid :column="gridColumn" :showBorder="false" :square="false" :highlight="true">
-			<uni-grid-item v-for="(item, index) in serviceList" :key="index">
-				<view class="grid-item" @click="handleClick(item)">
-					<view class="icon-wrapper">
-						<uni-icons :type="item.icon" size="32" :color="item.color"></uni-icons>
-					</view>
-					<text class="item-text">{{ item.name }}</text>
+		<view class="section-title-wrap">
+			<view class="section-title-bar"></view>
+			<text class="section-title">服务项目</text>
+		</view>
+		<view class="grid-list">
+			<view v-for="(item, index) in serviceList" :key="index" class="grid-cell" @click="handleClick(item)">
+				<view class="icon-wrapper">
+					<uni-icons :type="item.icon" size="32" :color="item.color"></uni-icons>
 				</view>
-			</uni-grid-item>
-		</uni-grid>
+				<text class="item-text">{{ item.name }}</text>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -20,9 +20,7 @@ export default {
 	name: 'ServiceGrid',
 	data() {
 		return {
-			gridColumn: 4, // 每行显示4个
 			serviceList: [
-
 				{
 					name: '请家教',
 					icon: 'calendar-filled',
@@ -59,7 +57,6 @@ export default {
 					color: '#333',
 					path: '/pages/growup/index'
 				},
-
 				{
 					name: '热门沙龙',
 					icon: 'gift-filled',
@@ -77,7 +74,6 @@ export default {
 	},
 	methods: {
 		handleClick(item) {
-			// 路由跳转
 			uni.navigateTo({
 				url: item.path
 			})
@@ -93,25 +89,45 @@ export default {
 	margin-bottom: 10px;
 }
 
+.section-title-wrap {
+	display: flex;
+	align-items: center;
+	margin-bottom: 15px;
+}
+
+.section-title-bar {
+	width: 8rpx;
+	height: 32rpx;
+	background-color: #3b82f6;
+	border-radius: 999rpx;
+	margin-right: 12rpx;
+}
+
 .section-title {
 	font-size: 18px;
 	font-weight: bold;
 	color: #333;
-	margin-bottom: 15px;
 }
 
-.grid-item {
+.grid-list {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.grid-cell {
+	width: 25%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	padding: 15px 0;
+	box-sizing: border-box;
 }
 
 .icon-wrapper {
 	width: 60px;
 	height: 60px;
-	background-color: #F5F5F5;
+	background-color: #f5f5f5;
 	border-radius: 10rpx;
 	display: flex;
 	align-items: center;

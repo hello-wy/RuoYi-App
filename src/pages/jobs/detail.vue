@@ -186,23 +186,23 @@ export default {
 	},
 	computed: {
 		catLabel() {
-			return CAT_MAP[String(this.detail?.category)] || '其他'
+			return CAT_MAP[String(this.detail && this.detail.category)] || '其他'
 		},
 		heroClass() {
-			return HERO_CLASSES[String(this.detail?.category)] || 'hero-slate'
+			return HERO_CLASSES[String(this.detail && this.detail.category)] || 'hero-slate'
 		},
 		statusLabel() {
-			return STATUS_LABEL[String(this.detail?.status)] || '--'
+			return STATUS_LABEL[String(this.detail && this.detail.status)] || '--'
 		},
 		statusBadgeClass() {
-			return STATUS_BADGE_CLASS[String(this.detail?.status)] || ''
+			return STATUS_BADGE_CLASS[String(this.detail && this.detail.status)] || ''
 		},
 		markers() {
 			if (!this.mapLat || !this.mapLng) return []
 			return [{ id: 1, latitude: this.mapLat, longitude: this.mapLng }]
 		},
 		avatarChar() {
-			const name = this.detail?.contacts || ''
+			const name = (this.detail && this.detail.contacts) || ''
 			return name ? name.slice(-1) : '人'
 		}
 	},
@@ -250,11 +250,11 @@ export default {
 			uni.openLocation({
 				latitude: this.mapLat,
 				longitude: this.mapLng,
-				name: this.detail?.location || '工作地点'
+				name: (this.detail && this.detail.location) || '工作地点'
 			})
 		},
 		callPhone() {
-			const phone = this.detail?.phone || ''
+			const phone = (this.detail && this.detail.phone) || ''
 			if (!phone) return uni.showToast({ title: '暂无联系电话', icon: 'none' })
 			uni.makePhoneCall({ phoneNumber: phone })
 		}

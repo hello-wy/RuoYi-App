@@ -298,6 +298,8 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "",
-    "navigationBarBackgroundColor": "#FFFFFF"
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "enableShareAppMessage": true,
+    "enableShareTimeline": true
   }
 }

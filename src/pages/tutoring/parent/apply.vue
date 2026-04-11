@@ -305,10 +305,10 @@ export default {
 			return item ? item.label : value
 		},
 		onGradeChange(e) {
-			this.form.grade = this.gradeOptions[e.detail.value]?.value || ''
+			this.form.grade = (this.gradeOptions[e.detail.value] && this.gradeOptions[e.detail.value].value) || ''
 		},
 		onSubjectChange(e) {
-			this.form.subject = this.subjectOptions[e.detail.value]?.value || ''
+			this.form.subject = (this.subjectOptions[e.detail.value] && this.subjectOptions[e.detail.value].value) || ''
 		},
 		toggleMethod(value) {
 			this.form.methods = this.form.methods === value ? '' : value

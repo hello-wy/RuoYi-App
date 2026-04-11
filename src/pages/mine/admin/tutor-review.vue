@@ -159,7 +159,7 @@ export default {
       this.loadTutorList(false)
     },
     getCertificateImages(item) {
-      return String(item?.certificates || '')
+      return String((item && item.certificates) || '')
         .split(',')
         .map(url => this.resolveImageUrl(url.trim()))
         .filter(Boolean)
@@ -171,10 +171,10 @@ export default {
       return isHttp(url) ? url : config.baseUrl + url
     },
     formatTutorName(item) {
-      return item?.realName || item?.nickname || '未填写姓名'
+      return (item && item.realName) || (item && item.nickname) || '未填写姓名'
     },
     hasTeachingMethod(item) {
-      return item?.methods !== null && item?.methods !== undefined && item?.methods !== ''
+      return item && item.methods !== null && item.methods !== undefined && item.methods !== ''
     },
     previewCertificate(item) {
       const urls = this.getCertificateImages(item)

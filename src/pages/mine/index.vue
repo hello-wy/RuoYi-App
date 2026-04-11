@@ -183,16 +183,34 @@ const menuItems = computed(() => {
   ]
 })
 
+function withLogin(action) {
+  if (!getToken()) {
+    if (loginPopupRef.value) {
+      loginPopupRef.value.open()
+    }
+    return
+  }
+  if (typeof action === 'function') {
+    action()
+  }
+}
+
 function handleToLogin() {
-  loginPopupRef.value?.open()
+  if (loginPopupRef.value) {
+    loginPopupRef.value.open()
+  }
 }
 
 function handleToAvatar() {
-  proxy.$tab.navigateTo('/pages/mine/avatar/index')
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/avatar/index')
+  })
 }
 
 function handleToCourse() {
-  uni.navigateTo({ url: '/pages/mine/course/list' })
+  withLogin(() => {
+    uni.navigateTo({ url: '/pages/mine/course/list' })
+  })
 }
 
 function loadEnrollment() {
@@ -208,30 +226,40 @@ function handleLoginSuccess() {
 
 onLoad(() => {
   if (!getToken()) {
-    shouldAutoOpenLogin.value = true
+    shouldAutoOpenLogin.value = false
     return
   }
   loadEnrollment()
 })
 
 function handleToEnrollment() {
-  proxy.$tab.navigateTo('/pages/mine/enrollment/index')
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/enrollment/index')
+  })
 }
 
 function handleToProfile() {
-  proxy.$tab.navigateTo('/pages/mine/info/index')
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/info/index')
+  })
 }
 
 function handleBuilding() {
-  proxy.$modal.showToast('功能正在建设中~')
+  withLogin(() => {
+    proxy.$modal.showToast('功能正在建设中~')
+  })
 }
 
 function handleToSetting() {
-  proxy.$tab.navigateTo('/pages/mine/setting/index')
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/setting/index')
+  })
 }
 
 function handleToAdmin() {
-  proxy.$tab.navigateTo('/pages/mine/admin/index')
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/admin/index')
+  })
 }
 </script>
 

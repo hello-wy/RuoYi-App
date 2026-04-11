@@ -4,3 +4,10 @@
 @import "@/static/scss/colorui.css";
 // iconfont
 @import "@/static/font/iconfont.css";
+// uni-icons: src 迁移后，显式引入字体资源，确保构建产物包含 uniicons.ttf
+@import "@uni/uni-icons/components/uni-icons/uniicons.css";
+
+@font-face {
+  font-family: 'uniicons';
+  src: url('@uni/uni-icons/components/uni-icons/uniicons.ttf') format('truetype');
+}
