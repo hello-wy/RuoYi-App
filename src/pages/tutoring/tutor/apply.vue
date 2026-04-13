@@ -349,7 +349,7 @@
 </template>
 
 <script>
-import { addTutors } from '@/api/system/tutors'
+import { addTutors } from '@/api/wxmini/tutoring'
 import upload from '@/utils/upload'
 import { useLocationStore, useUserStore } from '@/store'
 import config from '@/config'
@@ -548,7 +548,6 @@ export default {
 			this.submitting = true
 			try {
 				const res = await addTutors({
-					uid: useUserStore().id,
 					realName: this.form.realName,
 					idCard: this.form.idCard,
 					live: this.form.live,

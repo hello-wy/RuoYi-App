@@ -176,7 +176,7 @@
 </template>
 
 <script>
-import { getTutors } from '@/api/system/tutors'
+import { getTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 
 export default {

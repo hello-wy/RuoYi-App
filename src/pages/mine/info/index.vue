@@ -3,8 +3,8 @@
     <view class="profile-hero">
       <view class="hero-top">
         <view class="hero-main">
-          <text class="hero-name">{{ profile.displayName || '--' }}</text>
-          <view class="hero-badge" v-if="profile.verified">
+          <text class="hero-name">{{ profile.displayName || '' }}</text>
+          <view class="hero-badge" v-if="showVerifiedBadge()">
             <uni-icons type="checkmarkempty" size="14" color="#4f46e5" />
             <text class="hero-badge-text">实名认证用户</text>
           </view>
@@ -56,7 +56,11 @@ function handleEdit() {
 }
 
 function formatValue(value) {
-  return value === null || value === undefined || value === '' ? '--' : value
+  return value === null || value === undefined || value === '' ? '' : value
+}
+
+function showVerifiedBadge() {
+  return false
 }
 
 function genderText(value) {

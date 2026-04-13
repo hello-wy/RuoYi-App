@@ -9,7 +9,7 @@
 		<view class="hotline-section">
 			<text class="hotline-title">南京家教热线</text>
 			<view class="phone-button" @click="makePhoneCall">
-				<text class="phone-text">400-697-3036</text>
+				<text class="phone-text">17327736231</text>
 			</view>
 			<text class="phone-tip">欢迎点击拨打南京家教热线</text>
 			<text class="work-time">工作时间: 9:00-20:00 节假无休</text>
@@ -46,7 +46,7 @@ export default {
 	methods: {
 		makePhoneCall() {
 			uni.makePhoneCall({
-				phoneNumber: '400-697-3036',
+				phoneNumber: '17327736231',
 				fail: (err) => {
 					console.error('拨打电话失败', err);
 					uni.showToast({

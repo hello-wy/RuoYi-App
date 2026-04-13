@@ -130,7 +130,7 @@
 </template>
 
 <script>
-import { getParents } from '@/api/system/parents'
+import { getParents } from '@/api/wxmini/tutoring'
 
 export default {
 	dicts: ['sys_subject', 'sys_class', 'sys_methods'],

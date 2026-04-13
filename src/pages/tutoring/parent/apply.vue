@@ -13,7 +13,7 @@
 				<text class="method-desc">致电我们的客服顾问，由专人为您登记家教需求，快捷省心。</text>
 				<view class="phone-btn" @click="callService">
 					<uni-icons type="phone-filled" size="18" color="#fff"></uni-icons>
-					<text class="phone-btn-text">立即拨打：400-888-8888</text>
+					<text class="phone-btn-text">立即拨打：17327736231</text>
 				</view>
 			</view>
 
@@ -32,9 +32,6 @@
 					</view>
 					<text class="method-title">在线填写需求表单</text>
 				</view>
-
-				<!-- 实人认证入口 -->
-				<real-verify v-model:verified="verified"></real-verify>
 
 				<!-- 联系人姓名 -->
 				<view class="form-item">
@@ -225,17 +222,15 @@
 </template>
 
 <script>
-import { addParents } from '@/api/system/parents'
+import { addParents } from '@/api/wxmini/tutoring'
 import { useUserStore } from '@/store'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
-import RealVerify from '@/components/RealVerify/RealVerify.vue'
 export default {
-	components: { AreaPicker, AddressSearch, RealVerify },
+	components: { AreaPicker, AddressSearch },
 	dicts: ['sys_class', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
-			verified: false,
 			submitting: false,
 			userPhone: '',
 			weekDays: [
@@ -298,7 +293,7 @@ export default {
 			uni.navigateBack()
 		},
 		callService() {
-			uni.makePhoneCall({ phoneNumber: '4008888888' })
+			uni.makePhoneCall({ phoneNumber: '17327736231' })
 		},
 		getLabel(options, value) {
 			const item = (options || []).find(o => o.value === value)
@@ -364,7 +359,7 @@ export default {
 		},
 		validate() {
 			if (!this.form.name.trim()) {
-				uni.showToast({ title: '请填写联系人姓名', icon: 'none' })
+				uni.showToast({ title: '请填写需求描述', icon: 'none' })
 				return false
 			}
 			if (!/^1[3-9]\d{9}$/.test(this.form.phone)) {
@@ -415,7 +410,6 @@ export default {
 			this.submitting = true
 			try {
 				const res = await addParents({
-					uid: useUserStore().id,
 					name: this.form.name,
 					phone: this.form.phone,
 					grade: this.form.grade,
@@ -429,8 +423,7 @@ export default {
 					endTime: this.form.endTime,
 					methods: this.form.methods,
 					brief: this.form.description,
-					requirements: this.form.requirements,
-					verified: this.verified ? '1' : '0'
+					requirements: this.form.requirements
 				})
 				uni.showToast({ title: '发布成功，等待审核', icon: 'success' })
 				setTimeout(() => {

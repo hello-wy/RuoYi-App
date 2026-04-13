@@ -13,7 +13,7 @@
           <uni-data-checkbox v-model="form.gender" :localdata="genderOptions" />
         </uni-forms-item>
         <uni-forms-item label="手机号码" name="phone">
-          <uni-easyinput v-model="form.phone" placeholder="请输入手机号码" />
+          <uni-easyinput v-model="form.phone" placeholder="请输入手机号码" disabled/>
         </uni-forms-item>
         <uni-forms-item label="公司名称" name="companyName">
           <uni-easyinput v-model="form.companyName" placeholder="请输入公司名称" />

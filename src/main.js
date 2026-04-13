@@ -8,7 +8,7 @@ import { dictMixin } from '@/mixins/dict'
 import DictTag from '@/components/dict-tag/DictTag.vue'
 
 const shareContent = {
-  title: '智育傢 - 家教兼职与成长服务平台',
+  title: '学优职傢 - 家教兼职与成长服务平台',
   path: '/pages/index'
 }
 
