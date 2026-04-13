@@ -4,13 +4,13 @@
 		<view class="section notice-section">
 			<view class="section-title">服务须知:</view>
 			<view class="notice-content">
-				<text class="notice-item">1、天天家教网从数万教员库择优为您服务。</text>
-				<text class="notice-item">2、在教员前去执教前,天天家教网会对教员进行严格认证。</text>
+				<text class="notice-item">1、学优职傢网从数万教员库择优为您服务。</text>
+				<text class="notice-item">2、在教员前去执教前,学优职傢网会对教员进行严格认证。</text>
 				<text class="notice-item">3、本站对教员所做的每一份家教都有详细记录,供家长/学员选择教员时参考。</text>
 				<text class="notice-item">4、家教课时费建议<text class="highlight">上门次结一次,勿提前预支</text>,以免引起不必要的纠纷。</text>
 				<view class="notice-item">
 					<text>5、如有任何疑问</text>
-					<view class="hotline-btn">拨打热线</view>
+					<view class="hotline-btn" @click="callHotline">拨打热线</view>
 				</view>
 			</view>
 		</view>
@@ -19,7 +19,7 @@
 		<view class="section standard-section">
 			<view class="section-title">教员课时费参考标准:</view>
 			<view class="tips-content">
-				<text class="tips-text">特别提示:本价格为付给教员的参考价格,具体价格需天天家教网的工作人员与学员(家长)协商,根据</text>
+				<text class="tips-text">特别提示:本价格为付给教员的参考价格,具体价格需学优职傢网的工作人员与学员(家长)协商,根据</text>
 				<text class="highlight">路程、课程难易、对教员的水平要求、是否全英文授课、是否付给车贴等因素</text>
 				<text class="tips-text">而定。此价格默认的不付给教员车贴。</text>
 			</view>
@@ -190,7 +190,25 @@
 export default {
 	name: 'PriceList',
 	data() {
-		return {}
+		return {
+			hotlinePhone: '17327736231'
+		}
+	},
+	methods: {
+		callHotline() {
+			uni.makePhoneCall({
+				phoneNumber: this.hotlinePhone,
+				success: () => {
+					console.log('拨打热线成功');
+				},
+				fail: () => {
+					uni.showToast({
+						title: '拨打失败',
+						icon: 'error'
+					});
+				}
+			});
+		}
 	}
 }
 </script>
@@ -245,6 +263,7 @@ export default {
 	border-radius: 4px;
 	font-size: 14px;
 	margin-left: 8px;
+	cursor: pointer;
 }
 
 /* 标准说明 */

@@ -18,12 +18,12 @@
 		<!-- 服务信息区域 -->
 		<!-- <view class="service-section">
 			<text class="service-text">微信服务号：</text>
-			<text class="service-name">天天家教网</text>
+			<text class="service-name">学优职傢网</text>
 		</view> -->
 
 		<!-- 版权信息 -->
 		<!-- <view class="copyright-section">
-			<text class="copyright-text">© 2003-2026 天天家教网</text>
+			<text class="copyright-text">© 2003-2026 学优职傢网</text>
 		</view> -->
 
 		<!-- 链接导航区域 -->

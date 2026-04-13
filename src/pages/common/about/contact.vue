@@ -9,7 +9,7 @@
 					@click="makePhoneCall"
 				>
 					<template v-slot:footer>
-						<text class="phone-number">400-697-3036</text>
+						<text class="phone-number">17327736231</text>
 					</template>
 				</uni-list-item>
 
@@ -18,7 +18,7 @@
 					:show-arrow="false"
 				>
 					<template v-slot:footer>
-						<text class="service-name">天天家教网</text>
+						<text class="service-name">学优职傢网</text>
 					</template>
 				</uni-list-item>
 
@@ -60,7 +60,7 @@ export default {
 	methods: {
 		makePhoneCall() {
 			uni.makePhoneCall({
-				phoneNumber: '400-697-3036',
+				phoneNumber: '17327736231',
 				fail: (err) => {
 					console.error('拨打电话失败', err);
 					uni.showToast({

@@ -63,7 +63,7 @@
 				</view>
 
 				<view class="contact-info">
-					<text class="contact-text">如有任何疑问，请联系我们：400-697-3036</text>
+					<text class="contact-text">如有任何疑问，请联系我们：17327736231</text>
 				</view>
 			</uni-card>
 		</scroll-view>

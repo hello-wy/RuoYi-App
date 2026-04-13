@@ -4,14 +4,14 @@
 			<view class="content-section">
 				<text class="section-title">企业愿景</text>
 				<text class="section-content">
-					天天家教网致力于成为国内领先的教育服务平台，为学生和家长提供优质的家教资源，帮助每一个孩子实现学业梦想，共同成长每一天！
+					学优职傢网致力于成为国内领先的教育服务平台，为学生和家长提供优质的家教资源，帮助每一个孩子实现学业梦想，共同成长每一天！
 				</text>
 			</view>
 
 			<view class="content-section">
 				<text class="section-title">发展历程</text>
 				<text class="section-content">
-					自2003年成立以来，天天家教网已经服务了数万名学生和家长，积累了丰富的教育资源和服务经验。我们始终坚持以用户为中心，不断优化服务质量，为教育事业贡献力量。
+					自2003年成立以来，学优职傢网已经服务了数万名学生和家长，积累了丰富的教育资源和服务经验。我们始终坚持以用户为中心，不断优化服务质量，为教育事业贡献力量。
 				</text>
 			</view>
 

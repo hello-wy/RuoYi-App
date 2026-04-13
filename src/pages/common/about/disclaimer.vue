@@ -5,7 +5,7 @@
 				<view class="content-section">
 					<text class="section-title">1. 服务范围</text>
 					<text class="section-content">
-						天天家教网作为教育服务信息平台，致力于为学生和家长提供家教信息咨询服务。我们提供的服务仅限于信息发布、匹配推荐等，不直接参与教学活动。
+						学优职傢网作为教育服务信息平台，致力于为学生和家长提供家教信息咨询服务。我们提供的服务仅限于信息发布、匹配推荐等，不直接参与教学活动。
 					</text>
 				</view>
 
@@ -70,8 +70,8 @@
 				</view>
 
 				<view class="footer-note">
-					<text class="note-text">本声明的最终解释权归天天家教网所有</text>
-					<text class="note-text">如有疑问请联系：400-697-3036</text>
+					<text class="note-text">本声明的最终解释权归学优职傢网所有</text>
+					<text class="note-text">如有疑问请联系：17327736231</text>
 				</view>
 			</uni-card>
 		</scroll-view>
