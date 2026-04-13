@@ -9,7 +9,8 @@
     "dev:mp-weixin": "unh dev mp-weixin",
     "build:mp-weixin": "unh build mp-weixin",
     "check:mp-weixin": "test -f dist/build/mp-weixin/project.config.json && test -f dist/build/mp-weixin/app.json",
-    "ci:mp-weixin": "npm run build:mp-weixin && npm run check:mp-weixin"
+    "ci:mp-weixin": "npm run build:mp-weixin && npm run check:mp-weixin",
+    "upload:mp-weixin": "node conf/upload.cjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5000620260331001",
@@ -28,6 +29,7 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-5000620260331001",
     "@dcloudio/uni-mp-xhs": "3.0.0-5000620260331001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-5000620260331001",
+    "miniprogram-ci": "^2.1.31",
     "pinia": "2.1.7",
     "vue": "3.4.21",
     "vue-i18n": "9.14.5"
