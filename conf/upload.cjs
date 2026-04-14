@@ -4,7 +4,7 @@ const ci = require('miniprogram-ci')
 
 const appid = process.env.WECHAT_APPID || 'wx0ac1366c34e4ce68'
 const uploadVersion = process.env.WECHAT_UPLOAD_VERSION || `ci-${Date.now()}`
-const uploadDesc = process.env.WECHAT_UPLOAD_DESC || `yunxiao auto upload ${new Date().toISOString()}`
+const uploadDesc = process.env.WECHAT_UPLOAD_DESC || process.env.CI_COMMIT_TITLE || `yunxiao auto upload ${new Date().toISOString()}`
 const outputPath = process.env.WECHAT_PROJECT_PATH || path.join(process.cwd(), 'dist/build/mp-weixin')
 const keyPath = process.env.WECHAT_PRIVATE_KEY_PATH || path.join(process.cwd(), `conf/private.${appid}.key`)
 

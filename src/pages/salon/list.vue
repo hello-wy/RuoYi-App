@@ -202,22 +202,20 @@ export default {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
+	justify-content: space-between;
 	padding: 20rpx 16rpx 0;
 	box-sizing: border-box;
 }
 
-/* 每张卡片约占一半宽度，留出间距 */
+/* 固定为每行两个，避免不同设备下因 margin/calc 误差换行 */
 .card {
-	width: calc(50% - 10rpx);
+	width: calc((100% - 20rpx) / 2);
+	box-sizing: border-box;
 	background: #fff;
 	border-radius: 16rpx;
 	overflow: hidden;
 	margin-bottom: 20rpx;
 	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
-}
-
-.card:nth-child(odd) {
-	margin-right: 20rpx;
 }
 
 .card-cover {
