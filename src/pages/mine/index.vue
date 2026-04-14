@@ -3,19 +3,29 @@
     <view class="header-section">
       <view class="header-top">
         <view class="user-left">
-          <!-- <view v-if="!avatar" class="avatar-wrap">
-            <uni-icons type="person" size="30" color="#FFFFFF" />
-          </view>
-          <image v-if="avatar" @click="handleToAvatar" :src="avatar" class="avatar-img" mode="aspectFill" /> -->
           <view class="user-detail">
             <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
-            <view v-if="name" class="user-name">{{ name }}</view>
+            <view v-else class="user-name-row">
+              <text class="user-name">{{ name }}</text>
+              <view class="user-type-chip" @click.stop="handleTypeSwitch">
+                <text class="user-type-chip-text">{{ currentUserTypeLabel }}</text>
+                <uni-icons v-if="canSwitchUserType" type="bottom" size="12" color="#ffffff" />
+              </view>
+            </view>
           </view>
         </view>
         <view class="header-right" @click="handleToProfile">
           <text class="homepage-text">个人主页</text>
           <uni-icons type="right" size="14" color="#ECFEF6" />
         </view>
+      </view>
+
+      <view v-if="showPrimaryCard" class="primary-cta-card" @click="handlePrimaryAction">
+        <view>
+          <view class="primary-cta-title">{{ primaryActionTitle }}</view>
+          <view class="primary-cta-desc">{{ primaryActionDesc }}</view>
+        </view>
+        <view class="primary-cta-btn">立即前往</view>
       </view>
 
       <view v-if="!isAdmin" class="stats-row">
@@ -83,128 +93,77 @@
 
 <script setup>
 import { computed, getCurrentInstance, ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { useUserStore } from '@/store'
 import { getToken } from '@/utils/auth'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
+import { getWxUserProfileDetail, switchWxUserType } from '@/api/wxmini/profile'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const { name, avatar, roles } = storeToRefs(userStore)
+const { name, roles, userType } = storeToRefs(userStore)
 const jifen = ref(0)
 const enrollmentList = ref(0)
 const loginPopupRef = ref(null)
 const shouldAutoOpenLogin = ref(false)
+const profileDetail = ref(null)
 
 const isAdmin = computed(() => {
   const currentRoles = Array.isArray(roles.value) ? roles.value : []
   return Boolean(getToken()) && currentRoles.includes('admin')
 })
 
+const currentUserTypeLabel = computed(() => {
+  const labels = { '0': '家长', '1': '学生', '2': '商家' }
+  return labels[userType.value] || '选身份'
+})
+
+const canSwitchUserType = computed(() => userType.value !== '2')
+const showPrimaryCard = computed(() => Boolean(getToken()) && !isAdmin.value)
+const primaryActionPath = computed(() => profileDetail.value?.primaryAction || '/pages/guide/index')
+const primaryActionTitle = computed(() => {
+  if (userType.value === '0') return '发布需求'
+  if (userType.value === '1') return '做家教'
+  if (userType.value === '2') return '发布招聘'
+  return '选择身份'
+})
+const primaryActionDesc = computed(() => {
+  if (userType.value === '0') return '快速发布请家教需求，匹配优质教员'
+  if (userType.value === '1') return '完善资料并申请做家教'
+  if (userType.value === '2') return '发布招聘信息，快速招募人才'
+  return '先选择身份，再进入你的主要功能'
+})
+
 const studyItems = [
-  {
-    key: 'course',
-    label: '已报课程',
-    icon: 'calendar-filled',
-    iconColor: '#0F9D8F',
-    cardClass: 'study-course',
-    onClick: handleToCourse
-  },
-  {
-    key: 'order',
-    label: '我的订单',
-    icon: 'list',
-    iconColor: '#16A34A',
-    cardClass: 'study-order',
-    onClick: handleBuilding
-  },
-  {
-    key: 'notes',
-    label: '课程笔记',
-    icon: 'compose',
-    iconColor: '#0EA5A4',
-    cardClass: 'study-note',
-    onClick: handleBuilding
-  }
+  { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
+  { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleBuilding },
+  { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleBuilding }
 ]
 
 const baseMenuItems = [
-  {
-    key: 'feedback',
-    label: '课程建议及评价',
-    icon: 'heart-filled',
-    iconColor: '#0F9D8F',
-    iconClass: 'menu-icon-primary',
-    onClick: handleBuilding
-  },
-  {
-    key: 'salon',
-    label: '我的沙龙活动',
-    icon: 'staff-filled',
-    iconColor: '#14B8A6',
-    iconClass: 'menu-icon-soft',
-    onClick: handleBuilding
-  },
-  {
-    key: 'service',
-    label: '客服电话',
-    icon: 'headphones',
-    iconColor: '#059669',
-    iconClass: 'menu-icon-light',
-    description: '周一至周日 09:00-24:00',
-    onClick: handleBuilding
-  },
-  {
-    key: 'setting',
-    label: '设置',
-    icon: 'gear-filled',
-    iconColor: '#0F766E',
-    iconClass: 'menu-icon-muted',
-    onClick: handleToSetting
-  }
+  { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
+  { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
+  { key: 'service', label: '客服电话', icon: 'headphones', iconColor: '#059669', iconClass: 'menu-icon-light', description: '周一至周日 09:00-24:00', onClick: handleBuilding },
+  { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
 ]
 
 const menuItems = computed(() => {
-  if (!isAdmin.value) {
-    return baseMenuItems
-  }
-  return [
-    {
-      key: 'admin',
-      label: '管理后台',
-      icon: 'staff-filled',
-      iconColor: '#047857',
-      iconClass: 'menu-icon-primary',
-      onClick: handleToAdmin
-    },
-    ...baseMenuItems
-  ]
+  if (!isAdmin.value) return baseMenuItems
+  return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin }, ...baseMenuItems]
 })
 
 function withLogin(action) {
   if (!getToken()) {
-    if (loginPopupRef.value) {
-      loginPopupRef.value.open()
-    }
+    loginPopupRef.value?.open()
     return
   }
-  if (typeof action === 'function') {
-    action()
-  }
+  if (typeof action === 'function') action()
 }
 
 function handleToLogin() {
-  if (loginPopupRef.value) {
-    loginPopupRef.value.open()
-  }
-}
-
-function handleToAvatar() {
-  withLogin(() => {
-    proxy.$tab.navigateTo('/pages/mine/avatar/index')
-  })
+  loginPopupRef.value?.open()
 }
 
 function handleToCourse() {
@@ -219,18 +178,26 @@ function loadEnrollment() {
   })
 }
 
+async function loadProfileDetail() {
+  if (!getToken()) return
+  const res = await getWxUserProfileDetail()
+  profileDetail.value = res.data
+  userStore.updateWxProfileState(res.data)
+}
+
+async function ensureUserTypeReady() {
+  if (!getToken() || isAdmin.value) return
+  await loadProfileDetail()
+  if (!userType.value) {
+    proxy.$tab.navigateTo('/pages/guide/index')
+  }
+}
+
 function handleLoginSuccess() {
   shouldAutoOpenLogin.value = false
   loadEnrollment()
+  ensureUserTypeReady()
 }
-
-onLoad(() => {
-  if (!getToken()) {
-    shouldAutoOpenLogin.value = false
-    return
-  }
-  loadEnrollment()
-})
 
 function handleToEnrollment() {
   withLogin(() => {
@@ -261,6 +228,46 @@ function handleToAdmin() {
     proxy.$tab.navigateTo('/pages/mine/admin/index')
   })
 }
+
+function handlePrimaryAction() {
+  withLogin(() => {
+    const target = userType.value ? primaryActionPath.value : '/pages/guide/index'
+    proxy.$tab.navigateTo(target)
+  })
+}
+
+function handleTypeSwitch() {
+  withLogin(() => {
+    if (!canSwitchUserType.value) return
+    uni.showActionSheet({
+      itemList: ['切换为家长', '切换为学生'],
+      success: async ({ tapIndex }) => {
+        const nextType = tapIndex === 0 ? '0' : '1'
+        if (nextType === userType.value) return
+        await switchWxUserType({ userType: nextType })
+        userStore.updateWxProfileState({ userType: nextType })
+        await loadProfileDetail()
+        uni.showToast({ title: '切换成功', icon: 'success' })
+      }
+    })
+  })
+}
+
+onLoad(() => {
+  if (!getToken()) {
+    shouldAutoOpenLogin.value = false
+    return
+  }
+  loadEnrollment()
+  ensureUserTypeReady()
+})
+
+onShow(() => {
+  if (getToken()) {
+    loadEnrollment()
+    ensureUserTypeReady()
+  }
+})
 </script>
 
 <style lang="scss" scoped src="./index.scss"></style>

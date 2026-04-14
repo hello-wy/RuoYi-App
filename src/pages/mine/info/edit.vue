@@ -15,24 +15,29 @@
         <uni-forms-item label="手机号码" name="phone">
           <uni-easyinput v-model="form.phone" placeholder="请输入手机号码" disabled/>
         </uni-forms-item>
-        <uni-forms-item label="公司名称" name="companyName">
-          <uni-easyinput v-model="form.companyName" placeholder="请输入公司名称" />
+        <uni-forms-item label="用户类型" name="userTypeText">
+          <uni-easyinput :value="userTypeText" disabled />
         </uni-forms-item>
-        <uni-forms-item label="公司地址" name="companyAddress">
-          <uni-easyinput v-model="form.companyAddress" placeholder="请输入公司地址" />
-        </uni-forms-item>
-        <uni-forms-item label="公司职务" name="companyPosition">
-          <uni-easyinput v-model="form.companyPosition" placeholder="请输入公司职务" />
-        </uni-forms-item>
-        <uni-forms-item label="所属行业" name="industry">
-          <uni-easyinput v-model="form.industry" placeholder="请输入所属行业" />
-        </uni-forms-item>
-        <uni-forms-item label="工作年限" name="workYears">
-          <uni-easyinput v-model="form.workYears" placeholder="如：5年" />
-        </uni-forms-item>
-        <uni-forms-item label="个人简介" name="personalIntro">
-          <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请输入个人简介" :inputBorder="false" />
-        </uni-forms-item>
+        <template v-if="isMerchant">
+          <uni-forms-item label="公司名称" name="companyName">
+            <uni-easyinput v-model="form.companyName" placeholder="请输入公司名称" />
+          </uni-forms-item>
+          <uni-forms-item label="公司地址" name="companyAddress">
+            <uni-easyinput v-model="form.companyAddress" placeholder="请输入公司地址" />
+          </uni-forms-item>
+          <uni-forms-item label="公司职务" name="companyPosition">
+            <uni-easyinput v-model="form.companyPosition" placeholder="请输入公司职务" />
+          </uni-forms-item>
+          <uni-forms-item label="所属行业" name="industry">
+            <uni-easyinput v-model="form.industry" placeholder="请输入所属行业" />
+          </uni-forms-item>
+          <uni-forms-item label="工作年限" name="workYears">
+            <uni-easyinput v-model="form.workYears" placeholder="如：5年" />
+          </uni-forms-item>
+          <uni-forms-item label="个人简介" name="personalIntro">
+            <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请输入个人简介" :inputBorder="false" />
+          </uni-forms-item>
+        </template>
       </uni-forms>
     </view>
 
@@ -43,7 +48,7 @@
 </template>
 
 <script setup>
-import { getCurrentInstance, ref } from 'vue'
+import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad, onReady } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store'
 import { getWxUserProfileDetail, updateWxUserProfile } from '@/api/wxmini/profile'
@@ -54,6 +59,7 @@ const formRef = ref(null)
 const form = ref({
   userName: '',
   phone: '',
+  userType: '',
   realName: '',
   nickName: '',
   gender: '',
@@ -63,6 +69,14 @@ const form = ref({
   industry: '',
   workYears: '',
   personalIntro: ''
+})
+
+const isMerchant = computed(() => form.value.userType === '2')
+const userTypeText = computed(() => {
+  if (form.value.userType === '0') return '家长'
+  if (form.value.userType === '1') return '学生'
+  if (form.value.userType === '2') return '商家'
+  return '家长 / 学生'
 })
 
 const genderOptions = [
@@ -104,6 +118,7 @@ function loadProfile() {
     form.value = {
       userName: data.userName || '',
       phone: data.phone || '',
+      userType: data.userType || '',
       realName: data.realName || '',
       nickName: data.nickName || '',
       gender: data.gender !== null && data.gender !== undefined ? data.gender : '',
@@ -121,9 +136,37 @@ function resolveDisplayName() {
   return form.value.realName || form.value.nickName || form.value.userName || ''
 }
 
+function buildSubmitPayload() {
+  const payload = {
+    userName: form.value.userName,
+    phone: form.value.phone,
+    realName: form.value.realName,
+    nickName: form.value.nickName,
+    gender: form.value.gender
+  }
+
+  if (isMerchant.value) {
+    payload.companyName = form.value.companyName
+    payload.companyAddress = form.value.companyAddress
+    payload.companyPosition = form.value.companyPosition
+    payload.industry = form.value.industry
+    payload.workYears = form.value.workYears
+    payload.personalIntro = form.value.personalIntro
+  } else {
+    payload.companyName = ''
+    payload.companyAddress = ''
+    payload.companyPosition = ''
+    payload.industry = ''
+    payload.workYears = ''
+    payload.personalIntro = ''
+  }
+
+  return payload
+}
+
 function handleSubmit() {
   formRef.value.validate().then(() => {
-    updateWxUserProfile(form.value).then(() => {
+    updateWxUserProfile(buildSubmitPayload()).then(() => {
       userStore.SET_NAME(resolveDisplayName())
       userStore.SET_PHONE(form.value.phone || '')
       proxy.$modal.msgSuccess('保存成功')

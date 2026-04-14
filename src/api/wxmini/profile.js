@@ -14,3 +14,19 @@ export function updateWxUserProfile(data) {
     data
   })
 }
+
+export function initWxUserType(data) {
+  return request({
+    url: '/wxmini/profile/user-type/init',
+    method: 'post',
+    data
+  })
+}
+
+export function switchWxUserType(data) {
+  return request({
+    url: '/wxmini/profile/user-type',
+    method: 'put',
+    data
+  })
+}

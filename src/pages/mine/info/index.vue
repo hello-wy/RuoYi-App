@@ -32,18 +32,29 @@ import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 
 const profile = ref({})
 
-const fieldList = computed(() => [
-  { key: 'realName', label: '姓名', value: profile.value.realName },
-  { key: 'nickName', label: '昵称', value: profile.value.nickName },
-  { key: 'gender', label: '性别', value: genderText(profile.value.gender) },
-  { key: 'phone', label: '手机号码', value: profile.value.phone },
-  { key: 'companyName', label: '公司名称', value: profile.value.companyName },
-  { key: 'companyAddress', label: '公司地址', value: profile.value.companyAddress },
-  { key: 'companyPosition', label: '公司职务', value: profile.value.companyPosition },
-  { key: 'industry', label: '所属行业', value: profile.value.industry },
-  { key: 'workYears', label: '工作年限', value: profile.value.workYears },
-  { key: 'personalIntro', label: '个人简介', value: profile.value.personalIntro, multiline: true }
-])
+const fieldList = computed(() => {
+  const baseFields = [
+    { key: 'realName', label: '姓名', value: profile.value.realName },
+    { key: 'nickName', label: '昵称', value: profile.value.nickName },
+    { key: 'gender', label: '性别', value: genderText(profile.value.gender) },
+    { key: 'phone', label: '手机号码', value: profile.value.phone },
+    { key: 'userType', label: '用户类型', value: userTypeText(profile.value.userType) }
+  ]
+
+  if (profile.value.userType !== '2') {
+    return baseFields
+  }
+
+  return [
+    ...baseFields,
+    { key: 'companyName', label: '公司名称', value: profile.value.companyName },
+    { key: 'companyAddress', label: '公司地址', value: profile.value.companyAddress },
+    { key: 'companyPosition', label: '公司职务', value: profile.value.companyPosition },
+    { key: 'industry', label: '所属行业', value: profile.value.industry },
+    { key: 'workYears', label: '工作年限', value: profile.value.workYears },
+    { key: 'personalIntro', label: '个人简介', value: profile.value.personalIntro, multiline: true }
+  ]
+})
 
 function loadProfile() {
   getWxUserProfileDetail().then(res => {
@@ -68,6 +79,13 @@ function genderText(value) {
   if (value === 1 || value === '1') return '女'
   if (value === 2 || value === '2') return '未知'
   return ''
+}
+
+function userTypeText(value) {
+  if (value === '0') return '家长'
+  if (value === '1') return '学生'
+  if (value === '2') return '商家'
+  return '家长 / 学生'
 }
 
 onShow(() => {

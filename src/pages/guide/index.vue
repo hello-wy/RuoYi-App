@@ -1,76 +1,89 @@
 <template>
   <view class="guide-container">
-    <!-- 顶部标题区域 -->
     <view class="header-box">
       <text class="header-title">请选择您的身份</text>
       <text class="header-subtitle">选择合适的身份以获取最佳体验</text>
     </view>
 
-    <!-- 身份选项列表 -->
     <view class="role-list">
-      <!-- 家长/学员选项 -->
       <view
         class="role-item"
-        :class="{ active: selectedRole === 'parent' }"
-        @click="selectRole('parent')"
+        :class="{ active: selectedRole === '0' }"
+        @click="selectRole('0')"
       >
         <view class="role-icon-wrap">
-          <uni-icons type="staff" size="28" :color="selectedRole === 'parent' ? '#1677FF' : '#666'"></uni-icons>
+          <uni-icons type="staff" size="28" :color="selectedRole === '0' ? '#1677FF' : '#666'"></uni-icons>
         </view>
         <view class="role-info">
-          <text class="role-name">我是家长/学员</text>
-          <text class="role-desc">寻找优质教员</text>
+          <text class="role-name">我是家长</text>
+          <text class="role-desc">发布需求，寻找优质教员</text>
         </view>
-        <view v-if="selectedRole === 'parent'" class="check-icon">
+        <view v-if="selectedRole === '0'" class="check-icon">
           <uni-icons type="checkmarkempty" size="20" color="#1677FF"></uni-icons>
         </view>
       </view>
 
-      <!-- 教员选项 -->
       <view
         class="role-item"
-        :class="{ active: selectedRole === 'tutor' }"
-        @click="selectRole('tutor')"
+        :class="{ active: selectedRole === '1' }"
+        @click="selectRole('1')"
       >
         <view class="role-icon-wrap">
-          <uni-icons type="contact" size="28" :color="selectedRole === 'tutor' ? '#1677FF' : '#666'"></uni-icons>
+          <uni-icons type="contact" size="28" :color="selectedRole === '1' ? '#1677FF' : '#666'"></uni-icons>
         </view>
         <view class="role-info">
-          <text class="role-name">我是教员</text>
-          <text class="role-desc">开启教学之旅</text>
+          <text class="role-name">我是学生</text>
+          <text class="role-desc">做家教，开启教学之旅</text>
         </view>
-        <view v-if="selectedRole === 'tutor'" class="check-icon">
+        <view v-if="selectedRole === '1'" class="check-icon">
           <uni-icons type="checkmarkempty" size="20" color="#1677FF"></uni-icons>
         </view>
       </view>
     </view>
 
-    <!-- 下一步按钮 -->
     <view class="footer-btn">
-      <button class="next-btn" @click="handleNext">下一步</button>
+      <button class="next-btn" :disabled="submitting" @click="handleNext">
+        {{ submitting ? '提交中...' : '下一步' }}
+      </button>
     </view>
   </view>
 </template>
 
 <script setup>
 import { ref, getCurrentInstance } from 'vue'
+import { useUserStore } from '@/store'
+import { initWxUserType } from '@/api/wxmini/profile'
 
 const { proxy } = getCurrentInstance()
-const selectedRole = ref('parent')
+const userStore = useUserStore()
+const selectedRole = ref('0')
+const submitting = ref(false)
 
 function selectRole(role) {
   selectedRole.value = role
 }
 
-function handleNext() {
+function resolveTarget(userType) {
+  return userType === '0' ? '/pages/tutoring/parent/apply' : '/pages/tutoring/tutor/apply'
+}
+
+async function handleNext() {
   if (!selectedRole.value) {
     proxy.$modal.msgError('请选择您的身份')
     return
   }
-  if (selectedRole.value === 'parent') {
-    proxy.$tab.redirectTo('/pages/tutoring/parent/apply')
-  } else {
-    proxy.$tab.redirectTo('/pages/tutoring/tutor/apply')
+  if (submitting.value) {
+    return
+  }
+  submitting.value = true
+  try {
+    await initWxUserType({ userType: selectedRole.value })
+    userStore.updateWxProfileState({ userType: selectedRole.value })
+    proxy.$tab.redirectTo(resolveTarget(selectedRole.value))
+  } catch (error) {
+    proxy.$modal.msgError(error?.msg || '身份设置失败')
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -89,11 +102,10 @@ page {
   flex-direction: column;
 }
 
-/* 顶部标题 */
 .header-box {
   background-color: #ffffff;
   border-radius: 16rpx;
-  border: 2rpx solid ;
+  border: 2rpx solid;
   padding: 40rpx 36rpx;
   margin-bottom: 32rpx;
 
@@ -112,7 +124,6 @@ page {
   }
 }
 
-/* 身份选项列表 */
 .role-list {
   display: flex;
   flex-direction: column;
@@ -174,7 +185,6 @@ page {
   }
 }
 
-/* 底部按钮 */
 .footer-btn {
   margin-top: auto;
   padding-top: 80rpx;

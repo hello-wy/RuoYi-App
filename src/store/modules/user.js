@@ -114,6 +114,20 @@ export const useUserStore = defineStore('user', () => {
     SET_USER_TYPE('')
   }
 
+  const updateWxProfileState = (profile = {}) => {
+    if (Object.prototype.hasOwnProperty.call(profile, 'userType')) {
+      SET_USER_TYPE(profile.userType || '')
+    }
+    if (Object.prototype.hasOwnProperty.call(profile, 'phone')) {
+      SET_PHONE(profile.phone || '')
+    }
+    if (Object.prototype.hasOwnProperty.call(profile, 'displayName')) {
+      SET_NAME(profile.displayName || '')
+    } else if (Object.prototype.hasOwnProperty.call(profile, 'userName')) {
+      SET_NAME(profile.userName || '')
+    }
+  }
+
   // 登录
   const loginAction = (userInfo) => {
     const username = userInfo.username.trim()
@@ -224,6 +238,7 @@ export const useUserStore = defineStore('user', () => {
     SET_PHONE,
     SET_SESSION_KEY,
     SET_USER_TYPE,
+    updateWxProfileState,
     login: loginAction,
     getInfo: getInfoAction,
     logOut: logOutAction,
