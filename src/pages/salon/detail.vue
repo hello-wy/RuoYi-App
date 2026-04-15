@@ -88,6 +88,7 @@
 
 <script>
 import { getInfo } from '@/api/system/info'
+import { createSalonPayOrder, querySalonPayOrder } from '@/api/wxmini/salonPay'
 
 export default {
 	data() {
@@ -122,14 +123,36 @@ export default {
 			if (this.joining || !this.detail || this.detail.status != 1) return
 			this.joining = true
 			try {
-				await joinSalon(this.salonId)
-				uni.showToast({ title: '报名成功', icon: 'success' })
+				const res = await createSalonPayOrder({ salonId: Number(this.salonId) })
+				const payload = res.data || res
+				const payParam = payload.payParam || {}
+				await uni.requestPayment({
+					provider: 'wxpay',
+					timeStamp: payParam.timeStamp,
+					nonceStr: payParam.nonceStr,
+					package: payParam.packageValue,
+					signType: 'RSA',
+					paySign: payParam.paySign
+				})
+				await this.confirmPaidAndNavigate(payload.orderNo)
 			} catch (e) {
-				uni.showToast({ title: '报名失败，请稍后重试', icon: 'none' })
-				console.error('报名沙龙失败', e)
+				uni.showToast({ title: '支付未完成', icon: 'none' })
+				console.error('支付沙龙失败', e)
 			} finally {
 				this.joining = false
 			}
+		},
+		async confirmPaidAndNavigate(orderNo) {
+			for (let i = 0; i < 5; i++) {
+				const res = await querySalonPayOrder(orderNo)
+				const order = res.data || res
+				if (order.status === 'PAID') {
+					uni.navigateTo({ url: `/pages/salon/order-detail?orderNo=${orderNo}` })
+					return
+				}
+				await new Promise(resolve => setTimeout(resolve, 800))
+			}
+			uni.showToast({ title: '支付结果确认中，请稍后查看', icon: 'none' })
 		},
 		formatPrice(val) {
 			if (val === null || val === undefined) return '0.00'
