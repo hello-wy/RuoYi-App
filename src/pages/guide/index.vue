@@ -1,85 +1,141 @@
 <template>
-  <view class="guide-container">
-    <view class="header-box">
-      <text class="header-title">请选择您的身份</text>
-      <text class="header-subtitle">选择合适的身份以获取最佳体验</text>
-    </view>
+  <view class="guide-page">
+    <view class="orb orb-a"></view>
+    <view class="orb orb-b"></view>
+    <view class="grid-noise"></view>
 
-    <view class="role-list">
-      <view
-        class="role-item"
-        :class="{ active: selectedRole === '0' }"
-        @click="selectRole('0')"
-      >
-        <view class="role-icon-wrap">
-          <uni-icons type="staff" size="28" :color="selectedRole === '0' ? '#1677FF' : '#666'"></uni-icons>
-        </view>
-        <view class="role-info">
-          <text class="role-name">我是家长</text>
-          <text class="role-desc">发布需求，寻找优质教员</text>
-        </view>
-        <view v-if="selectedRole === '0'" class="check-icon">
-          <uni-icons type="checkmarkempty" size="20" color="#1677FF"></uni-icons>
-        </view>
+    <view class="hero-card" :class="currentRole.theme">
+      <view class="badge-row">
+        <text class="badge-dot"></text>
+        <text class="badge-text">ZHI YU JIA</text>
       </view>
 
-      <view
-        class="role-item"
-        :class="{ active: selectedRole === '1' }"
-        @click="selectRole('1')"
-      >
-        <view class="role-icon-wrap">
-          <uni-icons type="contact" size="28" :color="selectedRole === '1' ? '#1677FF' : '#666'"></uni-icons>
+      <view class="illustration-wrap">
+        <view class="halo halo-one"></view>
+        <view class="halo halo-two"></view>
+        <view class="floor-shadow"></view>
+
+        <view class="character">
+          <view class="head">
+            <view class="hair hair-left"></view>
+            <view class="hair hair-right"></view>
+            <view class="face">
+              <view class="eye eye-left"></view>
+              <view class="eye eye-right"></view>
+              <view class="smile"></view>
+            </view>
+          </view>
+          <view class="neck"></view>
+          <view class="body">
+            <view class="collar"></view>
+            <view class="arm arm-left"></view>
+            <view class="arm arm-right"></view>
+            <view class="book">
+              <view class="book-line"></view>
+              <view class="book-line short"></view>
+            </view>
+          </view>
         </view>
-        <view class="role-info">
-          <text class="role-name">我是学生</text>
-          <text class="role-desc">做家教，开启教学之旅</text>
+
+        <view class="float-card card-left">
+          <uni-icons :type="currentRole.leftIcon" size="20" color="#24324a"></uni-icons>
+          <text>{{ currentRole.leftText }}</text>
         </view>
-        <view v-if="selectedRole === '1'" class="check-icon">
-          <uni-icons type="checkmarkempty" size="20" color="#1677FF"></uni-icons>
+        <view class="float-card card-right">
+          <uni-icons :type="currentRole.rightIcon" size="20" color="#24324a"></uni-icons>
+          <text>{{ currentRole.rightText }}</text>
         </view>
+        <view class="pencil"></view>
+        <view class="spark spark-a"></view>
+        <view class="spark spark-b"></view>
+      </view>
+
+      <view class="copy-box">
+        <text class="title">家教兼职与成长服务平台</text>
+        <text class="subtitle">从遇见到预见</text>
+        <text class="role-note">当前身份 · {{ currentRole.name }}</text>
       </view>
     </view>
 
-    <view class="footer-btn">
-      <button class="next-btn" :disabled="submitting" @click="handleNext">
-        {{ submitting ? '提交中...' : '下一步' }}
+    <view class="role-dock">
+      <button
+        v-for="role in roles"
+        :key="role.value"
+        class="role-btn"
+        :class="[{ active: selectedRole === role.value }, role.theme]"
+        :disabled="submitting"
+        @click="handleRoleClick(role.value)"
+      >
+        <uni-icons :type="role.icon" size="20" :color="selectedRole === role.value ? '#ffffff' : role.color"></uni-icons>
+        <text>{{ submitting && selectedRole === role.value ? '切换中' : role.name }}</text>
       </button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, getCurrentInstance } from 'vue'
+import { computed, ref, getCurrentInstance } from 'vue'
 import { useUserStore } from '@/store'
-import { initWxUserType } from '@/api/wxmini/profile'
+import { switchWxUserType } from '@/api/wxmini/profile'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const selectedRole = ref('0')
+const selectedRole = ref(0)
 const submitting = ref(false)
 
-function selectRole(role) {
-  selectedRole.value = role
-}
+const roles = [
+  {
+    value: 0,
+    name: '家长',
+    theme: 'parent-theme',
+    icon: 'staff',
+    color: '#2f7df6',
+    leftIcon: 'home',
+    leftText: '精准找老师',
+    rightIcon: 'calendar',
+    rightText: '成长规划'
+  },
+  {
+    value: 1,
+    name: '学生',
+    theme: 'student-theme',
+    icon: 'contact',
+    color: '#f28b2e',
+    leftIcon: 'compose',
+    leftText: '家教兼职',
+    rightIcon: 'star',
+    rightText: '能力提升'
+  },
+  {
+    value: 2,
+    name: '商家',
+    theme: 'merchant-theme',
+    icon: 'shop',
+    color: '#19a974',
+    leftIcon: 'shop',
+    leftText: '发布岗位',
+    rightIcon: 'paperplane',
+    rightText: '链接人才'
+  }
+]
+
+const currentRole = computed(() => roles.find(item => item.value === selectedRole.value) || roles[0])
 
 function resolveTarget(userType) {
-  return userType === '0' ? '/pages/tutoring/parent/apply' : '/pages/tutoring/tutor/apply'
+  if (userType === 0) return '/pages/tutoring/parent/apply'
+  if (userType === 1) return '/pages/tutoring/tutor/apply'
+  return '/pages/jobs/apply'
 }
 
-async function handleNext() {
-  if (!selectedRole.value) {
-    proxy.$modal.msgError('请选择您的身份')
-    return
-  }
-  if (submitting.value) {
-    return
-  }
+async function handleRoleClick(role) {
+  selectedRole.value = role
+  if (submitting.value) return
+
   submitting.value = true
   try {
-    await initWxUserType({ userType: selectedRole.value })
-    userStore.updateWxProfileState({ userType: selectedRole.value })
-    proxy.$tab.redirectTo(resolveTarget(selectedRole.value))
+    await switchWxUserType({ userType: role })
+    userStore.updateWxProfileState({ userType: role })
+    proxy.$tab.redirectTo(resolveTarget(role))
   } catch (error) {
     proxy.$modal.msgError(error?.msg || '身份设置失败')
   } finally {
@@ -90,119 +146,472 @@ async function handleNext() {
 
 <style lang="scss" scoped>
 page {
-  background-color: #f5f6f8;
+  background: #f8efe1;
 }
 
-.guide-container {
+.guide-page {
+  position: relative;
   min-height: 100vh;
-  background-color: #f5f6f8;
-  padding: 40rpx 32rpx;
+  padding: 56rpx 34rpx 44rpx;
   box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 195, 102, 0.42), transparent 30%),
+    radial-gradient(circle at 90% 18%, rgba(80, 154, 255, 0.26), transparent 28%),
+    linear-gradient(155deg, #fff8ec 0%, #f6ead9 46%, #eef6ff 100%);
 }
 
-.header-box {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  border: 2rpx solid;
-  padding: 40rpx 36rpx;
-  margin-bottom: 32rpx;
-
-  .header-title {
-    display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin-bottom: 12rpx;
-  }
-
-  .header-subtitle {
-    display: block;
-    font-size: 26rpx;
-    color: #888;
-  }
+.orb {
+  position: absolute;
+  border-radius: 999rpx;
+  filter: blur(2rpx);
+  opacity: 0.9;
 }
 
-.role-list {
-  display: flex;
-  flex-direction: column;
-  gap: 24rpx;
+.orb-a {
+  width: 260rpx;
+  height: 260rpx;
+  left: -110rpx;
+  top: 210rpx;
+  background: rgba(255, 183, 77, 0.36);
 }
 
-.role-item {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  border: 2rpx solid #e8e8e8;
-  padding: 32rpx 36rpx;
+.orb-b {
+  width: 340rpx;
+  height: 340rpx;
+  right: -160rpx;
+  bottom: 220rpx;
+  background: rgba(76, 174, 255, 0.2);
+}
+
+.grid-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  background-image:
+    linear-gradient(rgba(34, 48, 74, 0.06) 1rpx, transparent 1rpx),
+    linear-gradient(90deg, rgba(34, 48, 74, 0.06) 1rpx, transparent 1rpx);
+  background-size: 54rpx 54rpx;
+}
+
+.hero-card {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 760rpx;
+  padding: 34rpx 30rpx 46rpx;
+  border-radius: 52rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 3rpx solid rgba(36, 50, 74, 0.12);
+  box-shadow: 0 34rpx 90rpx rgba(85, 69, 45, 0.16), inset 0 0 0 2rpx rgba(255, 255, 255, 0.55);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 245, 225, 0.72));
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  width: 480rpx;
+  height: 480rpx;
+  right: -180rpx;
+  top: -120rpx;
+  border-radius: 999rpx;
+  background: var(--theme-soft);
+}
+
+.parent-theme {
+  --theme-main: #2f7df6;
+  --theme-soft: rgba(47, 125, 246, 0.18);
+  --theme-warm: #ffd271;
+}
+
+.student-theme {
+  --theme-main: #f28b2e;
+  --theme-soft: rgba(242, 139, 46, 0.22);
+  --theme-warm: #8bd6ff;
+}
+
+.merchant-theme {
+  --theme-main: #19a974;
+  --theme-soft: rgba(25, 169, 116, 0.2);
+  --theme-warm: #ffc36b;
+}
+
+.badge-row {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  transition: border-color 0.2s;
-
-  &.active {
-    border-color: #1677FF;
-  }
-
-  .role-icon-wrap {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-    background-color: #f0f5ff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 24rpx;
-    flex-shrink: 0;
-  }
-
-  .role-info {
-    flex: 1;
-
-    .role-name {
-      display: block;
-      font-size: 30rpx;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 8rpx;
-    }
-
-    .role-desc {
-      display: block;
-      font-size: 24rpx;
-      color: #999;
-    }
-  }
-
-  .check-icon {
-    width: 44rpx;
-    height: 44rpx;
-    border-radius: 50%;
-    background-color: #1677FF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+  gap: 12rpx;
 }
 
-.footer-btn {
-  margin-top: auto;
-  padding-top: 80rpx;
+.badge-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: var(--theme-main);
+  box-shadow: 0 0 0 12rpx var(--theme-soft);
+}
 
-  .next-btn {
-    width: 100%;
-    height: 96rpx;
-    line-height: 96rpx;
-    background-color: #1a1a1a;
-    color: #ffffff;
-    font-size: 32rpx;
-    font-weight: 600;
-    border-radius: 48rpx;
-    border: none;
+.badge-text {
+  font-size: 22rpx;
+  letter-spacing: 5rpx;
+  color: rgba(36, 50, 74, 0.58);
+  font-weight: 700;
+}
 
-    &::after {
-      border: none;
-    }
-  }
+.illustration-wrap {
+  position: relative;
+  height: 520rpx;
+  margin-top: 18rpx;
+}
+
+.halo {
+  position: absolute;
+  left: 50%;
+  border-radius: 999rpx;
+  transform: translateX(-50%);
+}
+
+.halo-one {
+  width: 420rpx;
+  height: 420rpx;
+  top: 38rpx;
+  background: linear-gradient(145deg, var(--theme-soft), rgba(255, 255, 255, 0.12));
+}
+
+.halo-two {
+  width: 300rpx;
+  height: 300rpx;
+  top: 98rpx;
+  border: 3rpx dashed rgba(36, 50, 74, 0.14);
+  animation: rotateHalo 18s linear infinite;
+}
+
+.floor-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 34rpx;
+  width: 360rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: rgba(37, 45, 68, 0.16);
+  transform: translateX(-50%);
+  filter: blur(2rpx);
+}
+
+.character {
+  position: absolute;
+  left: 50%;
+  bottom: 70rpx;
+  width: 260rpx;
+  height: 380rpx;
+  transform: translateX(-50%);
+  animation: floatPerson 3.8s ease-in-out infinite;
+}
+
+.head {
+  position: absolute;
+  left: 65rpx;
+  top: 0;
+  width: 130rpx;
+  height: 136rpx;
+}
+
+.hair-left,
+.hair-right {
+  position: absolute;
+  background: #24324a;
+  z-index: 2;
+}
+
+.hair-left {
+  left: 0;
+  top: 10rpx;
+  width: 78rpx;
+  height: 92rpx;
+  border-radius: 58rpx 34rpx 40rpx 36rpx;
+  transform: rotate(-14deg);
+}
+
+.hair-right {
+  right: 0;
+  top: 6rpx;
+  width: 84rpx;
+  height: 96rpx;
+  border-radius: 42rpx 62rpx 38rpx 50rpx;
+  transform: rotate(13deg);
+}
+
+.face {
+  position: absolute;
+  left: 15rpx;
+  top: 32rpx;
+  z-index: 3;
+  width: 100rpx;
+  height: 98rpx;
+  border-radius: 42rpx 42rpx 48rpx 48rpx;
+  background: #ffd8b8;
+  box-shadow: inset -8rpx -8rpx 0 rgba(225, 122, 88, 0.12);
+}
+
+.eye {
+  position: absolute;
+  top: 40rpx;
+  width: 9rpx;
+  height: 13rpx;
+  border-radius: 50%;
+  background: #24324a;
+}
+
+.eye-left { left: 30rpx; }
+.eye-right { right: 30rpx; }
+
+.smile {
+  position: absolute;
+  left: 39rpx;
+  top: 64rpx;
+  width: 24rpx;
+  height: 12rpx;
+  border-bottom: 4rpx solid #d56d60;
+  border-radius: 0 0 24rpx 24rpx;
+}
+
+.neck {
+  position: absolute;
+  left: 112rpx;
+  top: 120rpx;
+  width: 36rpx;
+  height: 42rpx;
+  background: #ffc7a2;
+  border-radius: 0 0 16rpx 16rpx;
+}
+
+.body {
+  position: absolute;
+  left: 46rpx;
+  top: 150rpx;
+  width: 168rpx;
+  height: 210rpx;
+  border-radius: 54rpx 54rpx 36rpx 36rpx;
+  background: linear-gradient(150deg, var(--theme-main), #24324a);
+  box-shadow: 0 22rpx 44rpx rgba(36, 50, 74, 0.24);
+}
+
+.collar {
+  position: absolute;
+  left: 52rpx;
+  top: 0;
+  width: 64rpx;
+  height: 42rpx;
+  border-radius: 0 0 34rpx 34rpx;
+  background: #fff7ea;
+}
+
+.arm {
+  position: absolute;
+  top: 48rpx;
+  width: 38rpx;
+  height: 142rpx;
+  border-radius: 22rpx;
+  background: #ffc7a2;
+}
+
+.arm-left {
+  left: -14rpx;
+  transform: rotate(22deg);
+}
+
+.arm-right {
+  right: -14rpx;
+  transform: rotate(-22deg);
+}
+
+.book {
+  position: absolute;
+  left: 35rpx;
+  bottom: 40rpx;
+  width: 98rpx;
+  height: 72rpx;
+  border-radius: 12rpx;
+  transform: rotate(-5deg);
+  background: #fff7ea;
+  box-shadow: -8rpx 8rpx 0 var(--theme-warm);
+}
+
+.book-line {
+  width: 58rpx;
+  height: 5rpx;
+  margin: 22rpx 0 0 20rpx;
+  border-radius: 8rpx;
+  background: rgba(36, 50, 74, 0.28);
+}
+
+.book-line.short {
+  width: 38rpx;
+  margin-top: 12rpx;
+}
+
+.float-card {
+  position: absolute;
+  z-index: 5;
+  min-width: 158rpx;
+  height: 62rpx;
+  padding: 0 18rpx;
+  border-radius: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  background: rgba(255, 255, 255, 0.72);
+  border: 2rpx solid rgba(36, 50, 74, 0.1);
+  box-shadow: 0 18rpx 42rpx rgba(36, 50, 74, 0.12);
+  backdrop-filter: blur(12rpx);
+}
+
+.float-card text {
+  font-size: 23rpx;
+  font-weight: 700;
+  color: #24324a;
+  white-space: nowrap;
+}
+
+.card-left {
+  left: 8rpx;
+  top: 180rpx;
+  transform: rotate(-6deg);
+}
+
+.card-right {
+  right: 2rpx;
+  top: 104rpx;
+  transform: rotate(7deg);
+}
+
+.pencil {
+  position: absolute;
+  right: 94rpx;
+  bottom: 96rpx;
+  width: 24rpx;
+  height: 132rpx;
+  border-radius: 14rpx;
+  background: linear-gradient(to bottom, #24324a 0 14%, var(--theme-warm) 14% 78%, #f6a56f 78% 100%);
+  transform: rotate(28deg);
+  box-shadow: 0 12rpx 26rpx rgba(36, 50, 74, 0.2);
+}
+
+.spark {
+  position: absolute;
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: var(--theme-main);
+}
+
+.spark-a {
+  left: 138rpx;
+  top: 78rpx;
+  box-shadow: 52rpx 34rpx 0 var(--theme-warm);
+}
+
+.spark-b {
+  right: 112rpx;
+  bottom: 176rpx;
+  background: var(--theme-warm);
+  box-shadow: 44rpx -28rpx 0 var(--theme-main);
+}
+
+.copy-box {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 4rpx 8rpx 0;
+}
+
+.title {
+  display: block;
+  font-size: 46rpx;
+  line-height: 1.22;
+  font-weight: 900;
+  color: #1f2b3f;
+  letter-spacing: 1rpx;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 18rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: rgba(31, 43, 63, 0.62);
+  letter-spacing: 8rpx;
+}
+
+.role-note {
+  display: inline-flex;
+  margin-top: 28rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: var(--theme-main);
+  background: var(--theme-soft);
+}
+
+.role-dock {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  margin-top: 34rpx;
+  padding: 18rpx;
+  border-radius: 36rpx;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24rpx 60rpx rgba(76, 62, 43, 0.14);
+  backdrop-filter: blur(18rpx);
+}
+
+.role-btn {
+  height: 92rpx;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #24324a;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: inset 0 0 0 2rpx rgba(36, 50, 74, 0.08);
+}
+
+.role-btn::after {
+  border: none;
+}
+
+.role-btn.active {
+  color: #ffffff;
+  background: linear-gradient(145deg, var(--theme-main), #24324a);
+  box-shadow: 0 18rpx 34rpx var(--theme-soft);
+}
+
+.role-btn[disabled] {
+  opacity: 0.72;
+}
+
+@keyframes floatPerson {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-16rpx); }
+}
+
+@keyframes rotateHalo {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
 }
 </style>

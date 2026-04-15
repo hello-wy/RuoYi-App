@@ -71,11 +71,11 @@ const form = ref({
   personalIntro: ''
 })
 
-const isMerchant = computed(() => form.value.userType === '2')
+const isMerchant = computed(() => form.value.userType === 2)
 const userTypeText = computed(() => {
-  if (form.value.userType === '0') return '家长'
-  if (form.value.userType === '1') return '学生'
-  if (form.value.userType === '2') return '商家'
+  if (form.value.userType === 0) return '家长'
+  if (form.value.userType === 1) return '学生'
+  if (form.value.userType === 2) return '商家'
   return '家长 / 学生'
 })
 
@@ -118,7 +118,7 @@ function loadProfile() {
     form.value = {
       userName: data.userName || '',
       phone: data.phone || '',
-      userType: data.userType || '',
+      userType: data.userType === null || data.userType === undefined ? '' : Number(data.userType),
       realName: data.realName || '',
       nickName: data.nickName || '',
       gender: data.gender !== null && data.gender !== undefined ? data.gender : '',

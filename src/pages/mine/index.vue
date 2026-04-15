@@ -7,9 +7,8 @@
             <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
             <view v-else class="user-name-row">
               <text class="user-name">{{ name }}</text>
-              <view class="user-type-chip" @click.stop="handleTypeSwitch">
-                <text class="user-type-chip-text">{{ currentUserTypeLabel }}</text>
-                <uni-icons v-if="canSwitchUserType" type="bottom" size="12" color="#ffffff" />
+              <view class="user-identity-tag" :class="`tag-${userType}`">
+                <text class="tag-text">{{ userIdentityLabel }}</text>
               </view>
             </view>
           </view>
@@ -31,7 +30,7 @@
       <view v-if="!isAdmin" class="stats-row">
         <view class="stat-item" @click="handleToEnrollment">
           <text class="stat-num">{{ enrollmentList }}</text>
-          <view class="stat-btn">我的学箱</view>
+          <view class="stat-btn">我的学籍</view>
         </view>
         <view class="stat-divider"></view>
         <view class="stat-item" @click="handleBuilding">
@@ -99,7 +98,7 @@ import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { useUserStore } from '@/store'
 import { getToken } from '@/utils/auth'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
-import { getWxUserProfileDetail, switchWxUserType } from '@/api/wxmini/profile'
+import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
@@ -114,25 +113,24 @@ const isAdmin = computed(() => {
   return Boolean(getToken()) && currentRoles.includes('admin')
 })
 
-const currentUserTypeLabel = computed(() => {
-  const labels = { '0': '家长', '1': '学生', '2': '商家' }
-  return labels[userType.value] || '选身份'
+const userIdentityLabel = computed(() => {
+  const labels = { 0: '家长', 1: '学生', 2: '商家' }
+  return labels[userType.value] || '未设置'
 })
 
-const canSwitchUserType = computed(() => userType.value !== '2')
 const showPrimaryCard = computed(() => Boolean(getToken()) && !isAdmin.value)
 const primaryActionPath = computed(() => profileDetail.value?.primaryAction || '/pages/guide/index')
 const primaryActionTitle = computed(() => {
-  if (userType.value === '0') return '发布需求'
-  if (userType.value === '1') return '做家教'
-  if (userType.value === '2') return '发布招聘'
+  if (userType.value === 0) return '发布需求'
+  if (userType.value === 1) return '做家教'
+  if (userType.value === 2) return '发布招聘'
   return '选择身份'
 })
 const primaryActionDesc = computed(() => {
-  if (userType.value === '0') return '快速发布请家教需求，匹配优质教员'
-  if (userType.value === '1') return '完善资料并申请做家教'
-  if (userType.value === '2') return '发布招聘信息，快速招募人才'
-  return '先选择身份，再进入你的主要功能'
+  if (userType.value === 0) return '快速发布请家教需求，匹配优质教员'
+  if (userType.value === 1) return '完善资料并申请做家教'
+  if (userType.value === 2) return '发布招聘信息，快速招募人才'
+  return '先选择身份，为您推荐更适合的内容和服务'
 })
 
 const studyItems = [
@@ -229,25 +227,8 @@ function handleToAdmin() {
 
 function handlePrimaryAction() {
   withLogin(() => {
-    const target = userType.value ? primaryActionPath.value : '/pages/guide/index'
+    const target = primaryActionPath.value
     proxy.$tab.navigateTo(target)
-  })
-}
-
-function handleTypeSwitch() {
-  withLogin(() => {
-    if (!canSwitchUserType.value) return
-    uni.showActionSheet({
-      itemList: ['切换为家长', '切换为学生'],
-      success: async ({ tapIndex }) => {
-        const nextType = tapIndex === 0 ? '0' : '1'
-        if (nextType === userType.value) return
-        await switchWxUserType({ userType: nextType })
-        userStore.updateWxProfileState({ userType: nextType })
-        await loadProfileDetail()
-        uni.showToast({ title: '切换成功', icon: 'success' })
-      }
-    })
   })
 }
 

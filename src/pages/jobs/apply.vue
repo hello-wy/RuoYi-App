@@ -181,7 +181,7 @@ export default {
 	methods: {
 		guardMerchant() {
 			const userStore = useUserStore()
-			if (userStore.userType !== '2') {
+			if (userStore.userType !== 2) {
 				uni.showToast({ title: '仅商家可发布招聘', icon: 'none' })
 				setTimeout(() => {
 					uni.navigateBack({ delta: 1 })
