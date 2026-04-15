@@ -248,6 +248,12 @@
       }
     },
     {
+      "path": "pages/salon/order-detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
       "path": "pages/growup/course/notice",
       "style": {
         "navigationStyle": "custom",
