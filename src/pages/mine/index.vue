@@ -107,7 +107,6 @@ const { name, roles, userType } = storeToRefs(userStore)
 const jifen = ref(0)
 const enrollmentList = ref(0)
 const loginPopupRef = ref(null)
-const shouldAutoOpenLogin = ref(false)
 const profileDetail = ref(null)
 
 const isAdmin = computed(() => {
@@ -194,7 +193,6 @@ async function ensureUserTypeReady() {
 }
 
 function handleLoginSuccess() {
-  shouldAutoOpenLogin.value = false
   loadEnrollment()
   ensureUserTypeReady()
 }
@@ -255,7 +253,6 @@ function handleTypeSwitch() {
 
 onLoad(() => {
   if (!getToken()) {
-    shouldAutoOpenLogin.value = false
     return
   }
   loadEnrollment()

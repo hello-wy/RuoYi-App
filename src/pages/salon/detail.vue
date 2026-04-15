@@ -83,12 +83,16 @@
 				{{ detail.status == 1 ? '立即报名' : '已结束' }}
 			</button>
 		</view>
+		<!-- 登录弹窗 -->
+		<LoginPopup ref="loginPopupRef"/>
 	</view>
 </template>
 
 <script>
 import { getInfo } from '@/api/system/info'
 import { createSalonPayOrder, querySalonPayOrder } from '@/api/wxmini/salonPay'
+import { useUserStore } from '@/store';
+import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 
 export default {
 	data() {
@@ -121,6 +125,13 @@ export default {
 		},
 		async handleJoin() {
 			if (this.joining || !this.detail || this.detail.status != 1) return
+			// # 判断用户是否登录
+			const userStore = useUserStore()
+			if (!userStore.token) {
+				uni.showToast({ title: '请先登录', icon: 'none' })
+				this.$refs.loginPopupRef.open()
+				return
+			}
 			this.joining = true
 			try {
 				const res = await createSalonPayOrder({ salonId: Number(this.salonId) })
