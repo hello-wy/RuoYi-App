@@ -24,37 +24,61 @@
 			:refresher-enabled="true"
 			:refresher-triggered="refreshing"
 		>
-			<!-- 卡片网格区域：两列 -->
-			<view class="card-grid">
-				<view
-					v-for="(item, index) in list"
-					:key="item.id || index"
-					class="card"
-					@click="goDetail(item.id)"
-				>
-					<!-- 封面图 -->
-					<image
-						class="card-cover"
-						:src="item.coverImg || '/static/images/banner/default.jpg'"
-						mode="aspectFill"
-					></image>
+			<view class="waterfall">
+				<view class="waterfall-column">
+					<view
+						v-for="(item, index) in leftList"
+						:key="item.id || `left-${index}`"
+						class="card"
+						@click="goDetail(item.id)"
+					>
+						<image
+							class="card-cover"
+							:src="item.coverImg || '/static/images/banner/default.jpg'"
+							mode="widthFix"
+						></image>
 
-					<!-- 卡片信息区 -->
-					<view class="card-body">
-						<!-- 标题 -->
-						<text class="card-title">{{ item.title }}</text>
-						<!-- 副标题/标签 -->
-						<text class="card-subtitle">{{ item.subtitle }}</text>
+						<view class="card-body">
+							<text class="card-title">{{ item.title }}</text>
+							<text class="card-subtitle">{{ item.subtitle }}</text>
 
-						<!-- 价格行 -->
-						<view class="price-row">
-							<text class="price-current">¥{{ formatPrice(item.currentPrice) }}</text>
-							<text class="price-original" v-if="item.originalPrice">¥{{ formatPrice(item.originalPrice) }}</text>
+							<view class="price-row">
+								<text class="price-current">¥{{ formatPrice(item.currentPrice) }}</text>
+								<text class="price-original" v-if="item.originalPrice">¥{{ formatPrice(item.originalPrice) }}</text>
+							</view>
+
+							<view class="meta-row">
+								<text class="meta-text">{{ buildMetaText(item) }}</text>
+							</view>
 						</view>
+					</view>
+				</view>
 
-						<!-- 底部元信息 -->
-						<view class="meta-row">
-							<text class="meta-text">{{ buildMetaText(item) }}</text>
+				<view class="waterfall-column">
+					<view
+						v-for="(item, index) in rightList"
+						:key="item.id || `right-${index}`"
+						class="card"
+						@click="goDetail(item.id)"
+					>
+						<image
+							class="card-cover"
+							:src="item.coverImg || '/static/images/banner/default.jpg'"
+							mode="widthFix"
+						></image>
+
+						<view class="card-body">
+							<text class="card-title">{{ item.title }}</text>
+							<text class="card-subtitle">{{ item.subtitle }}</text>
+
+							<view class="price-row">
+								<text class="price-current">¥{{ formatPrice(item.currentPrice) }}</text>
+								<text class="price-original" v-if="item.originalPrice">¥{{ formatPrice(item.originalPrice) }}</text>
+							</view>
+
+							<view class="meta-row">
+								<text class="meta-text">{{ buildMetaText(item) }}</text>
+							</view>
 						</view>
 					</view>
 				</view>
@@ -89,6 +113,12 @@ export default {
 			if (this.loading && this.list.length > 0) return 'loading'
 			if (!this.hasMore) return 'noMore'
 			return 'more'
+		},
+		leftList() {
+			return this.list.filter((_, index) => index % 2 === 0)
+		},
+		rightList() {
+			return this.list.filter((_, index) => index % 2 === 1)
 		}
 	},
 	onLoad() {
@@ -197,20 +227,21 @@ export default {
 	height: 100vh;
 }
 
-/* 两列网格 */
-.card-grid {
+.waterfall {
 	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
+	align-items: flex-start;
 	justify-content: space-between;
+	gap: 20rpx;
 	padding: 20rpx 16rpx 0;
 	box-sizing: border-box;
 }
 
-/* 固定为每行两个，避免不同设备下因 margin/calc 误差换行 */
+.waterfall-column {
+	flex: 1;
+	min-width: 0;
+}
+
 .card {
-	width: calc((100% - 20rpx) / 2);
-	box-sizing: border-box;
 	background: #fff;
 	border-radius: 16rpx;
 	overflow: hidden;
@@ -220,7 +251,6 @@ export default {
 
 .card-cover {
 	width: 100%;
-	height: 320rpx;
 	display: block;
 }
 
@@ -235,7 +265,6 @@ export default {
 	color: #1a1a1a;
 	line-height: 1.4;
 	margin-bottom: 6rpx;
-	/* 最多两行 */
 	overflow: hidden;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
