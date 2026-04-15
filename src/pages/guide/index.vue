@@ -7,7 +7,7 @@
     <view class="hero-card" :class="currentRole.theme">
       <view class="badge-row">
         <text class="badge-dot"></text>
-        <text class="badge-text">ZHI YU JIA</text>
+        <text class="badge-text">学优职傢</text>
       </view>
 
       <view class="illustration-wrap">
@@ -64,12 +64,17 @@
         class="role-btn"
         :class="[{ active: selectedRole === role.value }, role.theme]"
         :disabled="submitting"
-        @click="handleRoleClick(role.value)"
+        @click="selectRole(role.value)"
       >
         <uni-icons :type="role.icon" size="20" :color="selectedRole === role.value ? '#ffffff' : role.color"></uni-icons>
-        <text>{{ submitting && selectedRole === role.value ? '切换中' : role.name }}</text>
+        <text>{{ role.name }}</text>
       </button>
     </view>
+
+    <button class="continue-btn" :class="currentRole.theme" :disabled="submitting" @click="handleContinue">
+      <text>{{ submitting ? '处理中' : '继续' }}</text>
+      <uni-icons type="right" size="18" color="#ffffff"></uni-icons>
+    </button>
   </view>
 </template>
 
@@ -127,15 +132,18 @@ function resolveTarget(userType) {
   return '/pages/jobs/apply'
 }
 
-async function handleRoleClick(role) {
+function selectRole(role) {
   selectedRole.value = role
+}
+
+async function handleContinue() {
   if (submitting.value) return
 
   submitting.value = true
   try {
-    await switchWxUserType({ userType: role })
-    userStore.updateWxProfileState({ userType: role })
-    proxy.$tab.redirectTo(resolveTarget(role))
+    await switchWxUserType({ userType: selectedRole.value })
+    userStore.updateWxProfileState({ userType: selectedRole.value })
+    proxy.$tab.redirectTo(resolveTarget(selectedRole.value))
   } catch (error) {
     proxy.$modal.msgError(error?.msg || '身份设置失败')
   } finally {
@@ -152,7 +160,7 @@ page {
 .guide-page {
   position: relative;
   min-height: 100vh;
-  padding: 56rpx 34rpx 44rpx;
+  padding: 56rpx 34rpx 36rpx;
   box-sizing: border-box;
   overflow: hidden;
   display: flex;
@@ -199,9 +207,9 @@ page {
 .hero-card {
   position: relative;
   z-index: 1;
-  flex: 1;
-  min-height: 760rpx;
-  padding: 34rpx 30rpx 46rpx;
+  flex: 0 0 auto;
+  min-height: 540rpx;
+  padding: 28rpx 30rpx 30rpx;
   border-radius: 52rpx;
   overflow: hidden;
   box-sizing: border-box;
@@ -256,16 +264,18 @@ page {
 }
 
 .badge-text {
-  font-size: 22rpx;
-  letter-spacing: 5rpx;
-  color: rgba(36, 50, 74, 0.58);
-  font-weight: 700;
+  font-size: 28rpx;
+  letter-spacing: 3rpx;
+  color: rgba(36, 50, 74, 0.7);
+  font-weight: 800;
 }
 
 .illustration-wrap {
   position: relative;
-  height: 520rpx;
-  margin-top: 18rpx;
+  height: 430rpx;
+  margin-top: 8rpx;
+  transform: scale(0.86);
+  transform-origin: top center;
 }
 
 .halo {
@@ -566,7 +576,8 @@ page {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16rpx;
-  margin-top: 34rpx;
+  margin-top: 22rpx;
+  margin-bottom: 24rpx;
   padding: 18rpx;
   border-radius: 36rpx;
   background: rgba(255, 255, 255, 0.7);
@@ -602,6 +613,34 @@ page {
 }
 
 .role-btn[disabled] {
+  opacity: 0.72;
+}
+
+.continue-btn {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 100%;
+  height: 96rpx;
+  margin: 0;
+  border: none;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  font-size: 32rpx;
+  font-weight: 900;
+  color: #ffffff;
+  background: linear-gradient(145deg, var(--theme-main), #24324a);
+  box-shadow: 0 22rpx 46rpx var(--theme-soft);
+}
+
+.continue-btn::after {
+  border: none;
+}
+
+.continue-btn[disabled] {
   opacity: 0.72;
 }
 
