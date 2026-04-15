@@ -7,6 +7,7 @@ import { isHttp, isEmpty } from "@/utils/validate"
 import { bindWxminiPhone, getInfo, login, logout, wxminiLogin } from '@/api/login'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
+import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
 import defAva from '@/static/images/profile.jpg'
 
 const baseUrl = config.baseUrl
@@ -21,7 +22,7 @@ export const useUserStore = defineStore('user', () => {
   const enrollment = ref(storage.get(constant.enrollment))
   const phone = ref(storage.get(constant.phone))
   const sessionKey = ref(storage.get(constant.sessionKey))
-  const userType = ref(storage.get(constant.userType))
+  const userType = ref(normalizeUserType(storage.get(constant.userType)))
 
   const SET_TOKEN = (val) => {
     token.value = val
@@ -59,8 +60,9 @@ export const useUserStore = defineStore('user', () => {
     storage.set(constant.sessionKey, val)
   }
   const SET_USER_TYPE = (val) => {
-    userType.value = val
-    storage.set(constant.userType, val)
+    const normalizedValue = normalizeUserType(val)
+    userType.value = normalizedValue
+    storage.set(constant.userType, normalizedValue)
   }
 
   const resolveAvatar = (avatarUrl) => {
@@ -76,13 +78,17 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
+  const resolveUserTypeValue = (primary, fallback = EMPTY_USER_TYPE) => {
+    return hasUserType(primary) ? primary : fallback
+  }
+
   const applyWxSession = (profile) => {
     setToken(profile.apiToken)
     SET_TOKEN(profile.apiToken)
     SET_ROLES(['ROLE_DEFAULT'])
     SET_PERMISSIONS([])
     SET_SESSION_KEY(profile.sessionKey || '')
-    SET_USER_TYPE(profile.userType || '')
+    SET_USER_TYPE(profile.userType)
     SET_PHONE(profile.phone || '')
     SET_ID(profile.openId || '')
     SET_NAME(profile.userName || '')
@@ -96,7 +102,7 @@ export const useUserStore = defineStore('user', () => {
     sessionKey: phoneData.sessionKey || loginData.sessionKey || '',
     openId: phoneData.openId || loginData.openId || '',
     userName: phoneData.userName || loginData.userName || '',
-    userType: phoneData.userType || loginData.userType || '',
+    userType: resolveUserTypeValue(phoneData.userType, loginData.userType),
     phone: phoneData.phone || phoneData.phoneNumber || loginData.phone || '',
     avatarUrl: phoneData.avatarUrl || loginData.avatarUrl || loginData.avatar || ''
   })
@@ -116,7 +122,7 @@ export const useUserStore = defineStore('user', () => {
 
   const updateWxProfileState = (profile = {}) => {
     if (Object.prototype.hasOwnProperty.call(profile, 'userType')) {
-      SET_USER_TYPE(profile.userType || '')
+      SET_USER_TYPE(profile.userType)
     }
     if (Object.prototype.hasOwnProperty.call(profile, 'phone')) {
       SET_PHONE(profile.phone || '')
@@ -185,7 +191,7 @@ export const useUserStore = defineStore('user', () => {
         const userid = (isEmpty(user) || isEmpty(user.userId)) ? "" : user.userId
         const username = (isEmpty(user) || isEmpty(user.userName)) ? "" : user.userName
         const phoneNumber = (isEmpty(user) || isEmpty(user.phonenumber)) ? "" : user.phonenumber
-        const accountType = (isEmpty(user) || isEmpty(user.userType)) ? "" : user.userType
+        const accountType = (isEmpty(user) || !hasUserType(user.userType)) ? "" : user.userType
         if (res.roles && res.roles.length > 0) {
           SET_ROLES(res.roles)
           SET_PERMISSIONS(res.permissions)

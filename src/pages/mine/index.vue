@@ -96,40 +96,44 @@ import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { useUserStore } from '@/store'
-import { getToken } from '@/utils/auth'
+import { hasUserType, normalizeUserType, USER_TYPES } from '@/utils/userType'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const { name, roles, userType } = storeToRefs(userStore)
+const { name, roles, token, userType } = storeToRefs(userStore)
 const jifen = ref(0)
 const enrollmentList = ref(0)
 const loginPopupRef = ref(null)
 const profileDetail = ref(null)
 
+const hasLogin = computed(() => Boolean(token.value))
+const normalizedUserType = computed(() => normalizeUserType(userType.value))
+const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value))
+
 const isAdmin = computed(() => {
   const currentRoles = Array.isArray(roles.value) ? roles.value : []
-  return Boolean(getToken()) && currentRoles.includes('admin')
+  return hasLogin.value && currentRoles.includes('admin')
 })
 
 const userIdentityLabel = computed(() => {
-  const labels = { 0: '家长', 1: '学生', 2: '商家' }
-  return labels[userType.value] || '未设置'
+  const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家' }
+  return labels[normalizedUserType.value] || '未设置'
 })
 
-const showPrimaryCard = computed(() => Boolean(getToken()) && !isAdmin.value)
+const showPrimaryCard = computed(() => hasLogin.value && !isAdmin.value)
 const primaryActionPath = computed(() => profileDetail.value?.primaryAction || '/pages/guide/index')
 const primaryActionTitle = computed(() => {
-  if (userType.value === 0) return '发布需求'
-  if (userType.value === 1) return '做家教'
-  if (userType.value === 2) return '发布招聘'
+  if (normalizedUserType.value === USER_TYPES.PARENT) return '发布需求'
+  if (normalizedUserType.value === USER_TYPES.STUDENT) return '做家教'
+  if (normalizedUserType.value === USER_TYPES.MERCHANT) return '发布招聘'
   return '选择身份'
 })
 const primaryActionDesc = computed(() => {
-  if (userType.value === 0) return '快速发布请家教需求，匹配优质教员'
-  if (userType.value === 1) return '完善资料并申请做家教'
-  if (userType.value === 2) return '发布招聘信息，快速招募人才'
+  if (normalizedUserType.value === USER_TYPES.PARENT) return '快速发布请家教需求，匹配优质教员'
+  if (normalizedUserType.value === USER_TYPES.STUDENT) return '完善资料并申请做家教'
+  if (normalizedUserType.value === USER_TYPES.MERCHANT) return '发布招聘信息，快速招募人才'
   return '先选择身份，为您推荐更适合的内容和服务'
 })
 
@@ -152,7 +156,7 @@ const menuItems = computed(() => {
 })
 
 function withLogin(action) {
-  if (!getToken()) {
+  if (!hasLogin.value) {
     loginPopupRef.value?.open()
     return
   }
@@ -176,16 +180,16 @@ function loadEnrollment() {
 }
 
 async function loadProfileDetail() {
-  if (!getToken()) return
+  if (!hasLogin.value) return
   const res = await getWxUserProfileDetail()
   profileDetail.value = res.data
   userStore.updateWxProfileState(res.data)
 }
 
 async function ensureUserTypeReady() {
-  if (!getToken() || isAdmin.value) return
+  if (!hasLogin.value || isAdmin.value) return
   await loadProfileDetail()
-  if (!userType.value) {
+  if (!hasSelectedUserType.value) {
     proxy.$tab.navigateTo('/pages/guide/index')
   }
 }
@@ -233,7 +237,7 @@ function handlePrimaryAction() {
 }
 
 onLoad(() => {
-  if (!getToken()) {
+  if (!hasLogin.value) {
     return
   }
   loadEnrollment()
@@ -241,7 +245,7 @@ onLoad(() => {
 })
 
 onShow(() => {
-  if (getToken()) {
+  if (hasLogin.value) {
     loadEnrollment()
     ensureUserTypeReady()
   }
