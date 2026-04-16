@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import Uni from '@uni-helper/plugin-uni'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   esbuild: {
     target: 'es2015'
   },
@@ -16,5 +16,13 @@ export default defineConfig({
       '@uni': fileURLToPath(new URL('./uni_modules', import.meta.url))
     }
   },
-  plugins: [Uni()]
-})
+  test: {
+    environment: 'node',
+    globals: true,
+    coverage: {
+      provider: 'v8'
+    }
+  },
+  plugins: mode === 'test' ? [] : [Uni()]
+}))
+

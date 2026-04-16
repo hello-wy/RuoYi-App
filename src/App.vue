@@ -4,8 +4,14 @@
   import { useConfigStore, useLocationStore } from '@/store'
   import { onLaunch } from '@dcloudio/uni-app'
   import { findCityNodeByName } from '@/utils/pca'
+  // #ifdef MP-WEIXIN
+  import { setupMiniProgramUpdate } from '@/utils/update-manager'
+  // #endif
 
   onLaunch(async () => {
+    // #ifdef MP-WEIXIN
+    setupMiniProgramUpdate()
+    // #endif
     initApp()
     const cityNode = await findCityNodeByName('南京市')
     if (cityNode) {
