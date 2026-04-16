@@ -7,10 +7,7 @@
 		  }
 		},
     {
-      "path": "pages/index",
-      "style": {
-        // "navigationBarTitleText": "育见成长"
-      }
+      "path": "pages/index"
     },
     {
       "path": "pages/register",
@@ -187,6 +184,13 @@
       }
     },
     {
+      "path": "pages/jobs/notice",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "兼职报名须知"
+      }
+    },
+    {
       "path": "pages/tutoring/parent/list",
       "style": {
         "navigationBarTitleText": "家长列表"
@@ -287,12 +291,6 @@
         "selectedIconPath": "static/images/tabbar/home_.png",
         "text": "首页"
       },
-      // {
-      //   "pagePath": "pages/mine/wallet/index",
-      //   "iconPath": "static/images/tabbar/work.png",
-      //   "selectedIconPath": "static/images/tabbar/work_.png",
-      //   "text": "钱包"
-      // },
       {
         "pagePath": "pages/mine/index",
         "iconPath": "static/images/tabbar/mine.png",

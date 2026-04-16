@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useJobSignupOrderStore } from './jobSignupOrder'
 import config from '@/config'
 import storage from '@/utils/storage'
 import constant from '@/utils/constant'
@@ -83,6 +84,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const applyWxSession = (profile) => {
+    const jobSignupOrderStore = useJobSignupOrderStore()
     setToken(profile.apiToken)
     SET_TOKEN(profile.apiToken)
     SET_ROLES(['ROLE_DEFAULT'])
@@ -94,6 +96,9 @@ export const useUserStore = defineStore('user', () => {
     SET_NAME(profile.userName || '')
     SET_AVATAR(resolveAvatar(profile.avatarUrl || profile.avatar || ''))
     syncEnrollment()
+    if (profile.apiToken) {
+      jobSignupOrderStore.refresh().catch(() => {})
+    }
     return profile
   }
 
@@ -215,11 +220,13 @@ export const useUserStore = defineStore('user', () => {
 
   // 退出系统
   const logOutAction = () => {
+    const jobSignupOrderStore = useJobSignupOrderStore()
     return new Promise((resolve, reject) => {
       logout(token.value).then(() => {
         resetProfileState()
         removeToken()
         storage.clean()
+        jobSignupOrderStore.clear()
         resolve()
       }).catch(error => {
         reject(error)

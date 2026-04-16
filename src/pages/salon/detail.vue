@@ -84,7 +84,7 @@
 			</button>
 		</view>
 		<!-- 登录弹窗 -->
-		<LoginPopup ref="loginPopupRef"/>
+		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose"/>
 	</view>
 </template>
 
@@ -101,7 +101,8 @@ export default {
 			detail: null,
 			loading: false,
 			error: false,
-			joining: false
+			joining: false,
+			shouldAutoOpenLogin: false
 		}
 	},
 	onLoad(options) {
@@ -129,7 +130,7 @@ export default {
 			const userStore = useUserStore()
 			if (!userStore.token) {
 				uni.showToast({ title: '请先登录', icon: 'none' })
-				this.$refs.loginPopupRef.open()
+				this.shouldAutoOpenLogin = true
 				return
 			}
 			this.joining = true
@@ -152,6 +153,9 @@ export default {
 			} finally {
 				this.joining = false
 			}
+		},
+		handleLoginPopupClose() {
+			this.shouldAutoOpenLogin = false
 		},
 		async confirmPaidAndNavigate(orderNo) {
 			for (let i = 0; i < 5; i++) {
@@ -261,32 +265,31 @@ export default {
 
 /* 标题区域 */
 .title-section {
-	padding: 0 28rpx 24rpx;
 	background: #fff;
+	padding: 0 28rpx 24rpx;
 }
 
 .main-title {
-	display: block;
-	font-size: 36rpx;
+	font-size: 34rpx;
 	font-weight: 700;
-	color: #1a1a1a;
-	line-height: 1.5;
-	margin-bottom: 8rpx;
+	color: #1f2937;
+	line-height: 1.45;
+	display: block;
 }
 
 .sub-title {
-	display: block;
 	font-size: 26rpx;
-	color: #888;
+	color: #6b7280;
+	margin-top: 12rpx;
+	display: block;
+	line-height: 1.5;
 }
 
-/* 分割线 */
 .divider {
-	height: 16rpx;
+	height: 20rpx;
 	background: #f5f6fa;
 }
 
-/* 信息行 */
 .info-row {
 	display: flex;
 	flex-direction: row;
@@ -296,15 +299,14 @@ export default {
 }
 
 .info-icon-wrap {
-	width: 56rpx;
-	height: 56rpx;
-	background: #EEF3FF;
-	border-radius: 28rpx;
+	width: 64rpx;
+	height: 64rpx;
+	border-radius: 18rpx;
+	background: #EFF6FF;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	margin-right: 20rpx;
-	flex-shrink: 0;
 }
 
 .info-text-wrap {
@@ -314,111 +316,97 @@ export default {
 }
 
 .info-label {
-	font-size: 22rpx;
-	color: #999;
-	margin-bottom: 4rpx;
+	font-size: 24rpx;
+	color: #94A3B8;
 }
 
 .info-value {
-	font-size: 28rpx;
-	color: #333;
-	font-weight: 500;
+	font-size: 30rpx;
+	font-weight: 600;
+	color: #1f2937;
+	margin-top: 8rpx;
 }
 
-/* 详情区 */
 .detail-section {
 	background: #fff;
-	padding: 28rpx;
-	margin-top: 16rpx;
+	padding: 32rpx 28rpx;
 }
 
 .section-title-row {
 	display: flex;
-	flex-direction: row;
 	align-items: center;
 	margin-bottom: 24rpx;
 }
 
 .section-title-bar {
 	width: 8rpx;
-	height: 36rpx;
-	background: #E53E3E;
-	border-radius: 4rpx;
+	height: 32rpx;
+	border-radius: 999rpx;
+	background: linear-gradient(180deg, #3B82F6 0%, #60A5FA 100%);
 	margin-right: 16rpx;
 }
 
 .section-title-text {
 	font-size: 32rpx;
 	font-weight: 700;
-	color: #1a1a1a;
+	color: #111827;
 }
 
 .rich-content {
 	font-size: 28rpx;
-	color: #333;
 	line-height: 1.8;
+	color: #374151;
 }
 
-/* 底部操作栏 */
+.bottom-placeholder {
+	height: 160rpx;
+}
+
 .bottom-bar {
 	position: fixed;
 	left: 0;
 	right: 0;
 	bottom: 0;
 	background: #fff;
+	box-shadow: 0 -8rpx 24rpx rgba(15, 23, 42, 0.08);
+	padding: 20rpx 28rpx calc(20rpx + env(safe-area-inset-bottom));
 	display: flex;
-	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	padding: 20rpx 28rpx;
-	padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-	box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.08);
-	box-sizing: border-box;
 }
 
 .bottom-price-wrap {
 	display: flex;
-	flex-direction: row;
 	align-items: baseline;
+	gap: 12rpx;
 }
 
 .bottom-price {
 	font-size: 44rpx;
-	font-weight: 700;
+	font-weight: 800;
 	color: #E53E3E;
 }
 
 .bottom-price-original {
 	font-size: 24rpx;
-	color: #aaa;
+	color: #9CA3AF;
 	text-decoration: line-through;
-	margin-left: 10rpx;
 }
 
 .join-btn {
-	width: 280rpx;
-	height: 80rpx;
-	line-height: 80rpx;
-	background: #E53E3E;
+	margin: 0;
+	min-width: 280rpx;
+	height: 88rpx;
+	line-height: 88rpx;
+	border-radius: 999rpx;
+	background: linear-gradient(135deg, #2563EB, #3B82F6);
 	color: #fff;
 	font-size: 30rpx;
-	font-weight: 600;
-	border-radius: 40rpx;
-	text-align: center;
-	border: none;
+	font-weight: 700;
 }
 
 .join-btn-disabled {
-	background: #ccc;
-	color: #fff;
-}
-
-.join-btn::after {
-	border: none;
-}
-
-/* 底部安全区占位 */
-.bottom-placeholder {
-	height: calc(120rpx + env(safe-area-inset-bottom));
+	background: #CBD5E1 !important;
+	color: #fff !important;
 }
 </style>
