@@ -81,11 +81,11 @@
   </scroll-view>
 
   <login-popup
-    ref="loginPopupRef"
     :auto-open="shouldAutoOpenLogin"
     account-success-url=""
     wechat-success-url=""
     realtime-phone-success-url=""
+    @close="handleLoginPopupClose"
     @success="handleLoginSuccess"
   />
 </template>
@@ -105,7 +105,7 @@ const userStore = useUserStore()
 const { name, roles, token, userType } = storeToRefs(userStore)
 const jifen = ref(0)
 const enrollmentList = ref(0)
-const loginPopupRef = ref(null)
+const shouldAutoOpenLogin = ref(false)
 const profileDetail = ref(null)
 
 const hasLogin = computed(() => Boolean(token.value))
@@ -157,14 +157,18 @@ const menuItems = computed(() => {
 
 function withLogin(action) {
   if (!hasLogin.value) {
-    loginPopupRef.value?.open()
+    shouldAutoOpenLogin.value = true
     return
   }
   if (typeof action === 'function') action()
 }
 
 function handleToLogin() {
-  loginPopupRef.value?.open()
+  shouldAutoOpenLogin.value = true
+}
+
+function handleLoginPopupClose() {
+  shouldAutoOpenLogin.value = false
 }
 
 function handleToCourse() {
@@ -195,6 +199,7 @@ async function ensureUserTypeReady() {
 }
 
 function handleLoginSuccess() {
+  shouldAutoOpenLogin.value = false
   loadEnrollment()
   ensureUserTypeReady()
 }

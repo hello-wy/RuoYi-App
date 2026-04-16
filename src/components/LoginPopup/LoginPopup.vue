@@ -178,8 +178,9 @@ const emit = defineEmits(['close', 'success'])
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const globalConfig = useConfigStore().config
-const agreements = (globalConfig.appInfo && globalConfig.appInfo.agreements) || []
+const configStore = useConfigStore()
+const globalConfig = configStore.config || {}
+const agreements = (globalConfig && globalConfig.appInfo && globalConfig.appInfo.agreements) || []
 const popupRef = ref(null)
 const activeMode = ref(props.defaultMode)
 const codeUrl = ref('')
