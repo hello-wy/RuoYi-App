@@ -80,6 +80,12 @@
       }
     },
     {
+      "path": "pages/mine/order-center/index",
+      "style": {
+        "navigationBarTitleText": "订单中心"
+      }
+    },
+    {
       "path": "pages/mine/course/list",
       "style": {
         "navigationBarTitleText": "已报课程"
@@ -279,6 +285,12 @@
       }
     }
   ],
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^uni-(.*)": "@/uni_modules/uni-$1/components/uni-$1/uni-$1.vue"
+    }
+  },
   "tabBar": {
     "color": "#000000",
     "selectedColor": "#000000",

@@ -139,7 +139,7 @@ const primaryActionDesc = computed(() => {
 
 const studyItems = [
   { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
-  { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleBuilding },
+  { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleToOrderCenter },
   { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleBuilding }
 ]
 
@@ -213,6 +213,12 @@ function handleToEnrollment() {
 function handleToProfile() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/info/index')
+  })
+}
+
+function handleToOrderCenter() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/order-center/index')
   })
 }
 

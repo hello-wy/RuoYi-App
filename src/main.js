@@ -6,6 +6,7 @@ import './permission' // permission
 import { useDict } from '@/utils/dict'
 import { dictMixin } from '@/mixins/dict'
 import DictTag from '@/components/dict-tag/DictTag.vue'
+import UniIcons from '@/uni_modules/uni-icons/components/uni-icons/uni-icons.vue'
 
 const shareContent = {
   title: '学优职傢 - 家教兼职与成长服务平台',
@@ -30,6 +31,8 @@ export function createApp() {
   app.mixin(shareMixin)
   // 全局注册 dict-tag 组件
   app.component('DictTag', DictTag)
+  // 全局注册 uni-icons，确保小程序端能正确注入 usingComponents
+  app.component('uni-icons', UniIcons)
   install(app)
   return {
     app

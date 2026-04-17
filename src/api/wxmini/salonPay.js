@@ -1,5 +1,12 @@
 import request from '@/utils/request'
 
+export function listMySalonOrders() {
+  return request({
+    url: '/wxmini/pay/salon/orders/my',
+    method: 'get'
+  })
+}
+
 export function createSalonPayOrder(data) {
   return request({
     url: '/wxmini/pay/salon/orders/create',
