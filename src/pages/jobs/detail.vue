@@ -105,7 +105,7 @@
 				{{ applyButtonText }}
 			</button>
 		</view>
-		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
+		<LoginPopup v-if="shouldAutoOpenLogin" :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
 	</view>
 </template>
 
