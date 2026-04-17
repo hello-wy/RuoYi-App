@@ -81,8 +81,9 @@ page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8rpx;
   margin-left: 10rpx;
-  padding: 6rpx 16rpx;
+  padding: 8rpx 16rpx;
   border-radius: 13rpx;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(4px);
@@ -92,6 +93,11 @@ page {
   font-size: 25rpx;
   color: #fff;
   font-weight: 500;
+}
+
+.user-identity-tag :deep(.uni-icons) {
+  display: flex;
+  align-items: center;
 }
 
 .tag-0 {

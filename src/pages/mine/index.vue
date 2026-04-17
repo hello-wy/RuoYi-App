@@ -7,8 +7,9 @@
             <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
             <view v-else class="user-name-row">
               <text class="user-name">{{ name }}</text>
-              <view class="user-identity-tag" :class="`tag-${userType}`">
+              <view class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
                 <text class="tag-text">{{ userIdentityLabel }}</text>
+                <uni-icons type="redo" size="12" color="#ffffff" />
               </view>
             </view>
           </view>
@@ -213,6 +214,12 @@ function handleToEnrollment() {
 function handleToProfile() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/info/index')
+  })
+}
+
+function handleSwitchIdentity() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/guide/index')
   })
 }
 
