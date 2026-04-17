@@ -1,7 +1,7 @@
 <template>
   <view class="page">
     <view class="card" v-if="order">
-      <view class="title">报名成功</view>
+      <view class="title">{{ pageTitle }}</view>
       <view class="row">
         <text class="label">沙龙标题</text>
         <text class="value">{{ order.title || '--' }}</text>
@@ -30,6 +30,14 @@ export default {
     return {
       orderNo: '',
       order: null
+    }
+  },
+  computed: {
+    pageTitle() {
+      const status = String(this.order?.status || '').toUpperCase()
+      if (status === 'PAID') return '报名成功'
+      if (status === 'REFUNDED') return '已退款'
+      return '已取消'
     }
   },
   onLoad(options) {

@@ -6,37 +6,30 @@
           <text class="hero-title">订单中心</text>
           <text class="hero-subtitle">统一查看沙龙与兼职订单</text>
         </view>
-        <view class="hero-badge">
-          <text class="hero-badge-text">{{ visibleList.length }} 笔</text>
-        </view>
       </view>
       <view class="summary-row">
-        <view class="summary-item">
-          <text class="summary-value">{{ allList.length }}</text>
-          <text class="summary-label">全部订单</text>
-        </view>
-        <view class="summary-divider"></view>
-        <view class="summary-item">
-          <text class="summary-value">{{ salonList.length }}</text>
-          <text class="summary-label">沙龙订单</text>
-        </view>
-        <view class="summary-divider"></view>
-        <view class="summary-item">
-          <text class="summary-value">{{ jobList.length }}</text>
-          <text class="summary-label">兼职订单</text>
+        <view
+          v-for="item in summaryOptions"
+          :key="item.key"
+          class="summary-item"
+          :class="activeType === item.key ? 'summary-item-active' : ''"
+          @click="switchType(item.key)"
+        >
+          <text class="summary-value">{{ summaryCountMap[item.key] }}</text>
+          <text class="summary-label">{{ item.label }}</text>
         </view>
       </view>
     </view>
 
     <view class="tab-bar">
       <view
-        v-for="(tab, idx) in tabs"
+        v-for="tab in statusTabs"
         :key="tab.key"
         class="tab-item"
-        :class="activeTab === idx ? 'tab-active' : ''"
-        @click="switchTab(idx)"
+        :class="activeStatus === tab.key ? 'tab-active' : ''"
+        @click="switchStatus(tab.key)"
       >
-        <text class="tab-text" :class="activeTab === idx ? 'tab-text-active' : ''">{{ tab.label }}</text>
+        <text class="tab-text" :class="activeStatus === tab.key ? 'tab-text-active' : ''">{{ tab.label }}</text>
       </view>
     </view>
 
@@ -110,33 +103,39 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { listMySalonOrders } from '@/api/wxmini/salonPay'
 import { useJobSignupOrderStore } from '@/store'
+import {
+  ORDER_TYPE_OPTIONS,
+  STATUS_FILTER_OPTIONS,
+  filterOrdersByStatus,
+  filterOrdersByType,
+  getEmptyText,
+  getStatusLabel,
+  mapJobStatus,
+  mapSalonStatus,
+  sortOrders
+} from './orderCenter'
 
-const tabs = [
-  { key: 'all', label: '全部' },
-  { key: 'salon', label: '沙龙' },
-  { key: 'job', label: '兼职' }
-]
-
-const activeTab = ref(0)
+const summaryOptions = ORDER_TYPE_OPTIONS
+const statusTabs = STATUS_FILTER_OPTIONS
+const activeType = ref('all')
+const activeStatus = ref('all')
 const loading = ref(false)
 const refreshing = ref(false)
 const jobList = ref([])
 const salonList = ref([])
 const allList = ref([])
 
-const visibleList = computed(() => {
-  const key = tabs[activeTab.value]?.key
-  if (key === 'salon') return salonList.value
-  if (key === 'job') return jobList.value
-  return allList.value
-})
+const typedList = computed(() => filterOrdersByType(allList.value, activeType.value))
 
-const emptyText = computed(() => {
-  const key = tabs[activeTab.value]?.key
-  if (key === 'salon') return '暂无沙龙订单'
-  if (key === 'job') return '暂无兼职订单'
-  return '暂无订单'
-})
+const visibleList = computed(() => filterOrdersByStatus(typedList.value, activeStatus.value))
+
+const summaryCountMap = computed(() => ({
+  all: allList.value.length,
+  salon: salonList.value.length,
+  job: jobList.value.length
+}))
+
+const emptyText = computed(() => getEmptyText(activeType.value, activeStatus.value))
 
 onLoad(() => {
   loadOrders()
@@ -199,54 +198,16 @@ function normalizeSalonOrders(list) {
   })))
 }
 
-function sortOrders(list) {
-  return [...list].sort((a, b) => getSortTime(b) - getSortTime(a))
-}
-
-function getSortTime(item) {
-  return parseTime(item.payTime) || parseTime(item.createTime) || 0
-}
-
-function parseTime(value) {
-  if (!value) return 0
-  const ts = new Date(value).getTime()
-  return Number.isNaN(ts) ? 0 : ts
-}
-
-function mapSalonStatus(status) {
-  const current = String(status || '').toUpperCase()
-  if (current === 'PAID') return 'paid'
-  if (current === 'CANCELED') return 'canceled'
-  if (current === 'REFUNDED') return 'refunded'
-  return 'pending'
-}
-
-function mapJobStatus(status) {
-  const current = Number(status)
-  if (current === 1) return 'paid'
-  if (current === 2) return 'canceled'
-  if (current === 3) return 'refunding'
-  if (current === 4) return 'refunded'
-  return 'pending'
-}
-
-function getStatusLabel(statusKey) {
-  const map = {
-    pending: '待支付',
-    paid: '已支付',
-    canceled: '已取消',
-    refunding: '退款中',
-    refunded: '已退款'
-  }
-  return map[statusKey] || '待支付'
-}
-
 function statusClass(statusKey) {
   return `status-${statusKey}`
 }
 
-function switchTab(idx) {
-  activeTab.value = idx
+function switchType(typeKey) {
+  activeType.value = typeKey
+}
+
+function switchStatus(statusKey) {
+  activeStatus.value = statusKey
 }
 
 async function onRefresh() {
@@ -310,7 +271,6 @@ page {
 .hero-top {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
 }
 
 .hero-title {
@@ -327,24 +287,12 @@ page {
   color: rgba(255, 255, 255, 0.85);
 }
 
-.hero-badge {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1rpx solid rgba(255, 255, 255, 0.22);
-}
-
-.hero-badge-text {
-  font-size: 24rpx;
-  font-weight: 600;
-  color: #fff;
-}
-
 .summary-row {
   margin-top: 28rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
 }
 
 .summary-item {
@@ -352,6 +300,14 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 18rpx 0;
+  border-radius: 22rpx;
+  transition: all 0.2s ease;
+}
+
+.summary-item-active {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.18);
 }
 
 .summary-value {
