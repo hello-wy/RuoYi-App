@@ -165,10 +165,7 @@ page {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(circle at 12% 10%, rgba(255, 195, 102, 0.42), transparent 30%),
-    radial-gradient(circle at 90% 18%, rgba(80, 154, 255, 0.26), transparent 28%),
-    linear-gradient(155deg, #fff8ec 0%, #f6ead9 46%, #eef6ff 100%);
+  background: #f6ead9;
 }
 
 .orb {
