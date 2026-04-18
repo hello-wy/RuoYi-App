@@ -34,7 +34,7 @@
 					>
 						<image
 							class="card-cover"
-							:src="item.coverImg || '/static/images/banner/default.jpg'"
+							:src="resolveCover(item.coverImg)"
 							mode="widthFix"
 						></image>
 
@@ -63,7 +63,7 @@
 					>
 						<image
 							class="card-cover"
-							:src="item.coverImg || '/static/images/banner/default.jpg'"
+							:src="resolveCover(item.coverImg)"
 							mode="widthFix"
 						></image>
 
@@ -173,6 +173,16 @@ export default {
 		},
 		goDetail(id) {
 			uni.navigateTo({ url: '/pages/salon/detail?id=' + id })
+		},
+		resolveCover(url) {
+			const fallback = 'https://zhiyujia.xyz/salon/webp/salon-01.webp'
+			if (!url) return fallback
+
+			let normalized = String(url)
+			normalized = normalized.replace('/salon/', '/salon/webp/')
+			normalized = normalized.replace(/\.[^./?#]+(?=([?#].*)?$)/, '.webp')
+
+			return normalized
 		},
 		formatPrice(val) {
 			if (val === null || val === undefined) return '0.00'
