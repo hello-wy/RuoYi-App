@@ -157,8 +157,13 @@ const baseMenuItems = [
 ]
 
 const menuItems = computed(() => {
-  if (!isAdmin.value) return baseMenuItems
-  return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin }, ...baseMenuItems]
+  const visibleBaseMenuItems = baseMenuItems.filter(item => {
+    if (item.key !== 'baby') return true
+    return normalizedUserType.value === USER_TYPES.PARENT
+  })
+
+  if (!isAdmin.value) return visibleBaseMenuItems
+  return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin }, ...visibleBaseMenuItems]
 })
 
 function withLogin(action) {
