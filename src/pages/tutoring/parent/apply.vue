@@ -218,6 +218,9 @@
 			</view>
 
 		</view>
+
+		<!-- 登录弹窗 -->
+		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
 	</view>
 </template>
 
@@ -226,12 +229,14 @@ import { addParents } from '@/api/wxmini/tutoring'
 import { useUserStore } from '@/store'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
+import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 export default {
-	components: { AreaPicker, AddressSearch },
+	components: { AreaPicker, AddressSearch, LoginPopup },
 	dicts: ['sys_class', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
 			submitting: false,
+			shouldAutoOpenLogin: false,
 			userPhone: '',
 			weekDays: [
 				{ label: '周一', value: '1' },
@@ -404,7 +409,15 @@ export default {
 			}
 			return true
 		},
+		handleLoginPopupClose() {
+			this.shouldAutoOpenLogin = false
+		},
 		async handleSubmit() {
+			const userStore = useUserStore()
+			if (!userStore.token) {
+				this.shouldAutoOpenLogin = true
+				return
+			}
 			if (!this.validate()) return
 			if (this.submitting) return
 			this.submitting = true

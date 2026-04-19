@@ -119,7 +119,7 @@
 				<view class="form-item">
 					<view class="label-row">
 						<text class="form-label">可教科目</text>
-						<view class="add-btn" @click="$refs.subjectPopup.open()">
+						<view class="add-btn" @click="openSubjectPopup">
 							<uni-icons type="plusempty" size="14" color="#3B82F6"></uni-icons>
 							<text class="add-btn-text">添加科目</text>
 						</view>
@@ -148,7 +148,7 @@
 				<view class="form-item">
 					<view class="label-row">
 						<text class="form-label">可授课区域</text>
-						<view class="add-btn" @click="$refs.areaPopup.open()">
+						<view class="add-btn" @click="openAreaPopup">
 							<uni-icons type="plusempty" size="14" color="#3B82F6"></uni-icons>
 							<text class="add-btn-text">添加区域</text>
 						</view>
@@ -294,57 +294,63 @@
 
 		</view>
 
-		<!-- 区域选择弹窗 -->
-		<uni-popup ref="areaPopup" type="bottom">
-			<view class="subject-popup">
-				<view class="popup-header">
-					<text class="popup-title">选择可授课区域</text>
-					<view class="popup-close" @click="$refs.areaPopup.close()">
-						<uni-icons type="closeempty" size="20" color="#666"></uni-icons>
+		<!-- 区域选择弹窗 —— 自定义 overlay，不依赖 uni-popup -->
+		<view v-if="areaPopupVisible" class="picker-overlay" @touchmove.stop.prevent>
+			<view class="picker-mask" :class="{ 'picker-mask--active': areaPopupShown }" @click="closeAreaPopup"></view>
+			<view class="picker-sheet" :class="{ 'picker-sheet--active': areaPopupShown }">
+				<view class="subject-popup">
+					<view class="popup-header">
+						<text class="popup-title">选择可授课区域</text>
+						<view class="popup-close" @click="closeAreaPopup">
+							<uni-icons type="closeempty" size="20" color="#666"></uni-icons>
+						</view>
 					</view>
-				</view>
-				<view class="subject-grid">
-					<view
-						v-for="item in districtOptions"
-						:key="item.value"
-						class="subject-option"
-						:class="{ 'subject-option-active': selectedAreaCodes.includes(item.value) }"
-						@click="toggleArea(item.value)"
-					>
-						<text class="subject-option-text">{{ item.text }}</text>
+					<view class="subject-grid">
+						<view
+							v-for="item in districtOptions"
+							:key="item.value"
+							class="subject-option"
+							:class="{ 'subject-option-active': selectedAreaCodes.includes(item.value) }"
+							@click="toggleArea(item.value)"
+						>
+							<text class="subject-option-text">{{ item.text }}</text>
+						</view>
 					</view>
-				</view>
-				<view class="popup-confirm-btn" @click="$refs.areaPopup.close()">
-					<text class="popup-confirm-text">确定（已选 {{ selectedAreaCodes.length }} 项）</text>
+					<view class="popup-confirm-btn" @click="closeAreaPopup">
+						<text class="popup-confirm-text">确定（已选 {{ selectedAreaCodes.length }} 项）</text>
+					</view>
 				</view>
 			</view>
-		</uni-popup>
+		</view>
 
-		<!-- 科目选择弹窗 -->
-		<uni-popup ref="subjectPopup" type="bottom">
-			<view class="subject-popup">
-				<view class="popup-header">
-					<text class="popup-title">选择可教科目</text>
-					<view class="popup-close" @click="$refs.subjectPopup.close()">
-						<uni-icons type="closeempty" size="20" color="#666"></uni-icons>
+		<!-- 科目选择弹窗 —— 自定义 overlay，不依赖 uni-popup -->
+		<view v-if="subjectPopupVisible" class="picker-overlay" @touchmove.stop.prevent>
+			<view class="picker-mask" :class="{ 'picker-mask--active': subjectPopupShown }" @click="closeSubjectPopup"></view>
+			<view class="picker-sheet" :class="{ 'picker-sheet--active': subjectPopupShown }">
+				<view class="subject-popup">
+					<view class="popup-header">
+						<text class="popup-title">选择可教科目</text>
+						<view class="popup-close" @click="closeSubjectPopup">
+							<uni-icons type="closeempty" size="20" color="#666"></uni-icons>
+						</view>
 					</view>
-				</view>
-				<view class="subject-grid">
-					<view
-						v-for="item in dict.type.sys_subject"
-						:key="item.value"
-						class="subject-option"
-						:class="{ 'subject-option-active': form.subjects.includes(item.value) }"
-						@click="toggleSubject(item.value)"
-					>
-						<text class="subject-option-text">{{ item.label }}</text>
+					<view class="subject-grid">
+						<view
+							v-for="item in dict.type.sys_subject"
+							:key="item.value"
+							class="subject-option"
+							:class="{ 'subject-option-active': form.subjects.includes(item.value) }"
+							@click="toggleSubject(item.value)"
+						>
+							<text class="subject-option-text">{{ item.label }}</text>
+						</view>
 					</view>
-				</view>
-				<view class="popup-confirm-btn" @click="$refs.subjectPopup.close()">
-					<text class="popup-confirm-text">确定（已选 {{ form.subjects.length }} 项）</text>
+					<view class="popup-confirm-btn" @click="closeSubjectPopup">
+						<text class="popup-confirm-text">确定（已选 {{ form.subjects.length }} 项）</text>
+					</view>
 				</view>
 			</view>
-		</uni-popup>
+		</view>
 	</view>
 </template>
 
@@ -385,7 +391,12 @@ export default {
 			methodsIndex: -1,
 			liveIndex: -1,
 			workIndex: -1,
-			selectedAreaCodes: []
+			selectedAreaCodes: [],
+			// 自定义弹窗状态
+			areaPopupVisible: false,
+			areaPopupShown: false,
+			subjectPopupVisible: false,
+			subjectPopupShown: false
 		}
 	},
 	computed: {
@@ -394,6 +405,26 @@ export default {
 		}
 	},
 	methods: {
+		openAreaPopup() {
+			this.areaPopupVisible = true
+			this.$nextTick(() => {
+				setTimeout(() => { this.areaPopupShown = true }, 30)
+			})
+		},
+		closeAreaPopup() {
+			this.areaPopupShown = false
+			setTimeout(() => { this.areaPopupVisible = false }, 300)
+		},
+		openSubjectPopup() {
+			this.subjectPopupVisible = true
+			this.$nextTick(() => {
+				setTimeout(() => { this.subjectPopupShown = true }, 30)
+			})
+		},
+		closeSubjectPopup() {
+			this.subjectPopupShown = false
+			setTimeout(() => { this.subjectPopupVisible = false }, 300)
+		},
 		getSubjectLabel(val) {
 			const item = (this.dict.type.sys_subject || []).find(o => o.value === val)
 			return item ? item.label : val
@@ -1014,6 +1045,46 @@ page {
 	color: #fff;
 	font-size: 15px;
 	font-weight: 600;
+}
+
+/* ===== 自定义底部弹出 overlay ===== */
+.picker-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 9000;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+
+.picker-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0);
+	transition: background 0.3s ease;
+}
+
+.picker-mask--active {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.picker-sheet {
+	position: relative;
+	z-index: 1;
+	max-height: 80vh;
+	overflow-y: auto;
+	transform: translateY(100%);
+	transition: transform 0.3s ease;
+}
+
+.picker-sheet--active {
+	transform: translateY(0);
 }
 
 </style>

@@ -104,6 +104,12 @@
       }
     },
     {
+      "path": "pages/tutoring/tutor/index",
+      "style": {
+        "navigationBarTitleText": "我的教员主页"
+      }
+    },
+    {
       "path": "pages/mine/avatar/index",
       "style": {
         "navigationBarTitleText": "修改头像"

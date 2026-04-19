@@ -33,37 +33,49 @@
 			<uni-icons v-if="!verified" type="right" size="14" color="#3B82F6"></uni-icons>
 		</view>
 
-		<!-- 实人认证弹窗 -->
-		<uni-popup ref="verifyPopup" type="center" :is-mask-click="false">
-			<view class="verify-popup">
-				<view class="popup-header">
-					<text class="popup-title">实人认证</text>
-					<uni-icons type="closeempty" size="20" color="#666" @click="closePopup"></uni-icons>
-				</view>
+		<!-- 实人认证弹窗 —— 自定义 overlay，不依赖 uni-popup -->
+		<view v-if="popupVisible" class="rv-overlay" @touchmove.stop.prevent>
+			<view
+				class="rv-mask"
+				:class="{ 'rv-mask--active': popupShown }"
+				@click="closePopup"
+			></view>
+			<view
+				class="rv-sheet"
+				:class="{ 'rv-sheet--active': popupShown }"
+			>
+				<view class="verify-popup">
+					<view class="popup-header">
+						<text class="popup-title">实人认证</text>
+						<uni-icons type="closeempty" size="20" color="#666" @click="closePopup"></uni-icons>
+					</view>
 
-				<text class="popup-subtitle">请填写真实信息，仅用于平台身份核验，信息严格保密。</text>
-				<view class="popup-form-item">
-					<text class="popup-label">真实姓名</text>
-					<input class="popup-input" :value="realName" @input="$emit('update:realName', $event.detail.value)" placeholder="请输入真实姓名" />
-				</view>
-				<view class="popup-form-item">
-					<text class="popup-label">身份证号</text>
-					<input class="popup-input" :value="idCard" @input="$emit('update:idCard', $event.detail.value)" placeholder="请输入18位身份证号" maxlength="18" />
-				</view>
+					<text class="popup-subtitle">请填写真实信息，仅用于平台身份核验，信息严格保密。</text>
+					<view class="popup-form-item">
+						<text class="popup-label">真实姓名</text>
+						<input class="popup-input" :value="realName" @input="$emit('update:realName', $event.detail.value)" placeholder="请输入真实姓名" />
+					</view>
+					<view class="popup-form-item">
+						<text class="popup-label">身份证号</text>
+						<input class="popup-input" :value="idCard" @input="$emit('update:idCard', $event.detail.value)" placeholder="请输入18位身份证号" maxlength="18" />
+					</view>
 
-				<view
-					class="popup-btn"
-					:class="{ 'popup-btn-disabled': verifying }"
-					@click="submitVerify"
-				>
-					<text class="popup-btn-text">{{ verifying ? '认证中...' : '立即认证' }}</text>
+					<view
+						class="popup-btn"
+						:class="{ 'popup-btn-disabled': verifying }"
+						@click="submitVerify"
+					>
+						<text class="popup-btn-text">{{ verifying ? '认证中...' : '立即认证' }}</text>
+					</view>
 				</view>
 			</view>
-		</uni-popup>
+		</view>
 	</view>
 </template>
 
 <script>
+import { nextTick } from 'vue'
+
 export default {
 	name: 'RealVerify',
 	props: {
@@ -91,20 +103,32 @@ export default {
 	emits: ['update:verified', 'update:realName', 'update:idCard'],
 	data() {
 		return {
-			verifying: false
+			verifying: false,
+			popupVisible: false,
+			popupShown: false
 		}
 	},
-	computed: {},
 	methods: {
 		handleClick() {
 			if (this.verified) {
 				uni.showToast({ title: '您已完成实人认证', icon: 'success' })
 				return
 			}
-			this.$refs.verifyPopup.open()
+			this.openPopup()
+		},
+		openPopup() {
+			this.popupVisible = true
+			nextTick(() => {
+				setTimeout(() => {
+					this.popupShown = true
+				}, 30)
+			})
 		},
 		closePopup() {
-			this.$refs.verifyPopup.close()
+			this.popupShown = false
+			setTimeout(() => {
+				this.popupVisible = false
+			}, 300)
 		},
 		async submitVerify() {
 			if (this.verifying) return
@@ -120,7 +144,7 @@ export default {
 			try {
 				await verifyRealName({ realName: this.realName, idCard: this.idCard })
 				this.$emit('update:verified', true)
-				this.$refs.verifyPopup.close()
+				this.closePopup()
 				uni.showToast({ title: '实人认证成功', icon: 'success' })
 			} catch (e) {
 				uni.showToast({ title: '认证失败，请检查信息后重试', icon: 'none' })
@@ -215,12 +239,53 @@ export default {
 	color: #10B981;
 }
 
-/* 弹窗 */
+/* ===== 自定义 overlay 弹窗 ===== */
+.rv-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 9000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rv-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0);
+	transition: background 0.3s ease;
+}
+
+.rv-mask--active {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.rv-sheet {
+	position: relative;
+	z-index: 1;
+	width: 680rpx;
+	border-radius: 20px;
+	opacity: 0;
+	transform: scale(0.92);
+	transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.rv-sheet--active {
+	opacity: 1;
+	transform: scale(1);
+}
+
+/* 弹窗内容 */
 .verify-popup {
 	background: #fff;
 	border-radius: 20px;
 	padding: 24px 20px;
-	width: 600rpx;
 }
 
 .popup-header {
@@ -243,24 +308,6 @@ export default {
 	display: block;
 	margin-bottom: 20px;
 	line-height: 1.6;
-}
-
-.verify-status-tip {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	background: #FFFBEB;
-	border-radius: 8px;
-	padding: 10px 12px;
-	margin-bottom: 20px;
-}
-
-.verify-status-text {
-	font-size: 12px;
-	color: #92400E;
-	margin-left: 6px;
-	flex: 1;
-	line-height: 1.5;
 }
 
 .popup-form-item {
@@ -304,18 +351,5 @@ export default {
 	color: #fff;
 	font-size: 15px;
 	font-weight: 600;
-}
-
-.popup-cancel {
-	margin-top: 12px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 8px 0;
-}
-
-.popup-cancel-text {
-	font-size: 13px;
-	color: #94a3b8;
 }
 </style>

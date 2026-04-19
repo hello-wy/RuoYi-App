@@ -1,129 +1,141 @@
 <template>
-  <uni-popup ref="popupRef" type="bottom" :is-mask-click="true" :mask-background-color="'rgba(0, 0, 0, 0.6)'" :safe-area="false" background-color="transparent">
-    <view class="login-popup">
-      <view class="popup-handle"></view>
-      <view class="popup-header">
-        <view>
-          <text class="popup-title">登录后继续使用完整服务</text>
-          <text class="popup-subtitle"></text>
-        </view>
-        <uni-icons type="closeempty" size="20" color="#64748b" @click="close"></uni-icons>
-      </view>
-
-      <view class="mode-switch">
-        <view
-          v-for="item in modeOptions"
-          :key="item.value"
-          class="mode-item"
-          :class="{ active: activeMode === item.value }"
-          @click="setMode(item.value)"
-        >
-          <uni-icons :type="item.icon" size="16" :color="activeMode === item.value ? '#0f766e' : '#64748b'"></uni-icons>
-          <text class="mode-text">{{ item.label }}</text>
-        </view>
-      </view>
-
-      <view v-if="activeMode === 'realtimePhone'" class="panel panel-primary">
-        <text class="panel-tag">推荐</text>
-        <text class="panel-title">手机号快捷登录</text>
-        <!-- #ifdef MP-WEIXIN -->
-        <button
-          v-if="realtimePhoneSupported"
-          class="primary-btn realtime-btn"
-          open-type="getRealtimePhoneNumber"
-          @getrealtimephonenumber="handleRealtimePhoneLogin"
-        >
-          手机号快捷登录
-        </button>
-        <button
-          v-else
-          class="primary-btn realtime-btn"
-          @click="handleRealtimePhoneUnsupported"
-        >
-          手机号快捷登录
-        </button>
-        <!-- #endif -->
-        <!-- #ifndef MP-WEIXIN -->
-        <button
-          class="primary-btn realtime-btn"
-          @click="handleRealtimePhoneUnsupported"
-        >
-          手机号快捷登录
-        </button>
-        <!-- #endif -->
-      </view>
-
-      <view v-else-if="activeMode === 'wechat'" class="panel">
-        <text class="panel-title">微信授权登录</text>
-        <button class="primary-btn wechat-btn" @click="handleWechatLogin">
-          微信授权登录
-        </button>
-      </view>
-
-      <view v-else class="panel">
-        <text class="panel-title">账号密码登录</text>
-        <view class="input-item">
-          <input
-            class="input"
-            :value="loginForm.username"
-            maxlength="30"
-            placeholder="请输入账号"
-            @input="updateLoginField('username', $event.detail.value)"
-          />
-        </view>
-        <view class="input-item">
-          <input
-            class="input"
-            :value="loginForm.password"
-            maxlength="20"
-            password
-            placeholder="请输入密码"
-            @input="updateLoginField('password', $event.detail.value)"
-          />
-        </view>
-        <view v-if="captchaEnabled" class="input-item captcha-row">
-          <input
-            class="input"
-            :value="loginForm.code"
-            maxlength="4"
-            placeholder="请输入验证码"
-            type="number"
-            @input="updateLoginField('code', $event.detail.value)"
-          />
-          <image class="captcha-img" :src="codeUrl" @click="getCode"></image>
-        </view>
-        <button class="primary-btn account-btn" @click="handleAccountLogin">
-          账号登录
-        </button>
-        <view v-if="register" class="register-row">
-          <text class="muted-text">没有账号？</text>
-          <text class="link-text" @click="handleUserRegister">立即注册</text>
-        </view>
-      </view>
-
-      <view class="agreement">
-        <view class="agreement-checkbox" @click="toggleAgreement" :class="{ shake: isShaking }">
-          <view class="checkbox-wrapper">
-            <view v-if="agreedToTerms" class="checkbox-checked">
-              <uni-icons type="checkmarkempty" size="14" color="#fff"></uni-icons>
-            </view>
-            <view v-else class="checkbox-unchecked"></view>
+  <view v-if="isVisible" class="login-overlay" @touchmove.stop.prevent>
+    <!-- 遮罩层 -->
+    <view
+      class="login-overlay__mask"
+      :class="{ 'login-overlay__mask--active': showContent }"
+      @click="handleMaskClick"
+    ></view>
+    <!-- 弹出内容 -->
+    <view
+      class="login-overlay__content"
+      :class="{ 'login-overlay__content--active': showContent }"
+    >
+      <view class="login-popup">
+        <view class="popup-handle"></view>
+        <view class="popup-header">
+          <view>
+            <text class="popup-title">登录后继续使用完整服务</text>
+            <text class="popup-subtitle"></text>
           </view>
-          <view class="agreement-text">
-            <text class="muted-text">我已阅读并同意</text>
-            <template v-for="(agreement, index) in agreements" :key="agreement.title || index">
-              <text v-if="index > 0" class="muted-text">和</text>
-              <text class="link-text" @click.stop="openAgreement(index)">《{{ agreement.title }}》</text>
-            </template>
+          <uni-icons type="closeempty" size="20" color="#64748b" @click="close"></uni-icons>
+        </view>
+
+        <view class="mode-switch">
+          <view
+            v-for="item in modeOptions"
+            :key="item.value"
+            class="mode-item"
+            :class="{ active: activeMode === item.value }"
+            @click="setMode(item.value)"
+          >
+            <uni-icons :type="item.icon" size="16" :color="activeMode === item.value ? '#0f766e' : '#64748b'"></uni-icons>
+            <text class="mode-text">{{ item.label }}</text>
+          </view>
+        </view>
+
+        <view v-if="activeMode === 'realtimePhone'" class="panel panel-primary">
+          <text class="panel-tag">推荐</text>
+          <text class="panel-title">手机号快捷登录</text>
+          <!-- #ifdef MP-WEIXIN -->
+          <button
+            v-if="realtimePhoneSupported"
+            class="primary-btn realtime-btn"
+            open-type="getRealtimePhoneNumber"
+            @getrealtimephonenumber="handleRealtimePhoneLogin"
+          >
+            手机号快捷登录
+          </button>
+          <button
+            v-else
+            class="primary-btn realtime-btn"
+            @click="handleRealtimePhoneUnsupported"
+          >
+            手机号快捷登录
+          </button>
+          <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
+          <button
+            class="primary-btn realtime-btn"
+            @click="handleRealtimePhoneUnsupported"
+          >
+            手机号快捷登录
+          </button>
+          <!-- #endif -->
+        </view>
+
+        <view v-else-if="activeMode === 'wechat'" class="panel">
+          <text class="panel-title">微信授权登录</text>
+          <button class="primary-btn wechat-btn" @click="handleWechatLogin">
+            微信授权登录
+          </button>
+        </view>
+
+        <view v-else class="panel">
+          <text class="panel-title">账号密码登录</text>
+          <view class="input-item">
+            <input
+              class="input"
+              :value="loginForm.username"
+              maxlength="30"
+              placeholder="请输入账号"
+              @input="updateLoginField('username', $event.detail.value)"
+            />
+          </view>
+          <view class="input-item">
+            <input
+              class="input"
+              :value="loginForm.password"
+              maxlength="20"
+              password
+              placeholder="请输入密码"
+              @input="updateLoginField('password', $event.detail.value)"
+            />
+          </view>
+          <view v-if="captchaEnabled" class="input-item captcha-row">
+            <input
+              class="input"
+              :value="loginForm.code"
+              maxlength="4"
+              placeholder="请输入验证码"
+              type="number"
+              @input="updateLoginField('code', $event.detail.value)"
+            />
+            <image class="captcha-img" :src="codeUrl" @click="getCode"></image>
+          </view>
+          <button class="primary-btn account-btn" @click="handleAccountLogin">
+            账号登录
+          </button>
+          <view v-if="register" class="register-row">
+            <text class="muted-text">没有账号？</text>
+            <text class="link-text" @click="handleUserRegister">立即注册</text>
+          </view>
+        </view>
+
+        <view class="agreement">
+          <view class="agreement-checkbox" @click="toggleAgreement" :class="{ shake: isShaking }">
+            <view class="checkbox-wrapper">
+              <view v-if="agreedToTerms" class="checkbox-checked">
+                <uni-icons type="checkmarkempty" size="14" color="#fff"></uni-icons>
+              </view>
+              <view v-else class="checkbox-unchecked"></view>
+            </view>
+            <view class="agreement-text">
+              <text class="muted-text">我已阅读并同意</text>
+              <template v-for="(agreement, index) in agreements" :key="agreement.title || index">
+                <text v-if="index > 0" class="muted-text">和</text>
+                <text class="link-text" @click.stop="openAgreement(index)">《{{ agreement.title }}》</text>
+              </template>
+            </view>
           </view>
         </view>
       </view>
     </view>
-  </uni-popup>
+  </view>
 </template>
 
 <script setup>
-import { getCurrentInstance, onMounted, ref, watch } from 'vue'
+import { getCurrentInstance, nextTick, onMounted, ref, watch } from 'vue'
 import { getCodeImg } from '@/api/login'
 import { useConfigStore, useUserStore } from '@/store'
 
@@ -181,7 +193,8 @@ const userStore = useUserStore()
 const configStore = useConfigStore()
 const globalConfig = configStore.config || {}
 const agreements = (globalConfig && globalConfig.appInfo && globalConfig.appInfo.agreements) || []
-const popupRef = ref(null)
+const isVisible = ref(false)
+const showContent = ref(false)
 const activeMode = ref(props.defaultMode)
 const codeUrl = ref('')
 const captchaEnabled = ref(true)
@@ -202,6 +215,8 @@ watch(() => props.defaultMode, (value) => {
 watch(() => props.autoOpen, (value) => {
   if (value) {
     open(props.defaultMode)
+  } else {
+    close()
   }
 })
 
@@ -225,16 +240,26 @@ function setMode(mode) {
 
 function open(mode = activeMode.value) {
   setMode(mode)
-  if (popupRef.value) {
-    popupRef.value.open()
-  }
+  isVisible.value = true
+  // 等 DOM 渲染完成后再触发动画，否则 transition 不生效
+  nextTick(() => {
+    setTimeout(() => {
+      showContent.value = true
+    }, 30)
+  })
 }
 
 function close() {
-  if (popupRef.value) {
-    popupRef.value.close()
-  }
+  showContent.value = false
+  // 等关闭动画结束后再移除 DOM
+  setTimeout(() => {
+    isVisible.value = false
+  }, 300)
   emit('close')
+}
+
+function handleMaskClick() {
+  close()
 }
 
 function toggleAgreement() {
@@ -444,14 +469,17 @@ function detectRealtimePhoneSupport() {
 onMounted(() => {
   realtimePhoneSupported.value = detectRealtimePhoneSupport()
   if (props.autoOpen) {
-    open(props.defaultMode)
+    nextTick(() => {
+      open(props.defaultMode)
+    })
   }
 })
 
 defineExpose({
   close,
   open,
-  setMode
+  setMode,
+  isVisible
 })
 </script>
 

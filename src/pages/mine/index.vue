@@ -124,7 +124,11 @@ const userIdentityLabel = computed(() => {
 })
 
 const showPrimaryCard = computed(() => hasLogin.value && !isAdmin.value)
-const primaryActionPath = computed(() => profileDetail.value?.primaryAction || '/pages/guide/index')
+const primaryActionPath = computed(() => {
+  if (normalizedUserType.value === USER_TYPES.STUDENT) return '/pages/tutoring/tutor/index'
+  if (normalizedUserType.value === USER_TYPES.PARENT) return '/pages/tutoring/parent/apply'
+  return profileDetail.value?.primaryAction || '/pages/guide/index'
+})
 const primaryActionTitle = computed(() => {
   if (normalizedUserType.value === USER_TYPES.PARENT) return '发布需求'
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '做家教'

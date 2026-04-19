@@ -1,35 +1,58 @@
+/* ============================
+   自定义弹出层容器（替代 uni-popup）
+   ============================ */
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+}
+
+/* 遮罩层 */
+.login-overlay__mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0);
+  transition: background-color 0.3s ease;
+}
+
+.login-overlay__mask--active {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* 弹出内容区域 */
+.login-overlay__content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-overlay__content--active {
+  transform: translateY(0);
+}
+
+/* ============================
+   弹窗主体
+   ============================ */
 .login-popup {
   background: #ffffff;
   border-radius: 36rpx 36rpx 0 0;
   padding: 24rpx 28rpx 44rpx;
   padding-bottom: calc(44rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -16rpx 60rpx rgba(15, 23, 42, 0.14);
-  height: 70vh;
+  max-height: 80vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
   box-sizing: border-box;
-}
-
-/* 修复uni-popup底部间隙问题 */
-:deep(.uni-popup) {
-  position: fixed !important;
-}
-
-:deep(.uni-popup__wrapper) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup.type-bottom) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup__wrapper-box) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup__wrapper-box-bottom) {
-  background-color: transparent !important;
 }
 
 .login-popup::-webkit-scrollbar {
@@ -43,23 +66,6 @@
 
 .login-popup::-webkit-scrollbar-track {
   background: transparent;
-}
-
-/* 确保弹窗完全贴底部，没有灰色间隙 */
-:deep(.uni-popup__wrapper) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup.type-bottom) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup__wrapper-box) {
-  background-color: transparent !important;
-}
-
-:deep(.uni-popup__wrapper-box-bottom) {
-  background-color: transparent !important;
 }
 
 .popup-handle {

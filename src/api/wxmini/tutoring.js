@@ -24,6 +24,14 @@ export function addTutors(data) {
     })
 }
 
+// 获取当前登录教员自己的信息
+export function getMyTutor() {
+    return request({
+        url: '/wxmini/tutoring/my',
+        method: 'get'
+    })
+}
+
 // 家教单
 export function listParents(query) {
     return request({
