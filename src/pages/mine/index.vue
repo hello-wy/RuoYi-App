@@ -149,6 +149,7 @@ const studyItems = [
 ]
 
 const baseMenuItems = [
+  { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
   { key: 'service', label: '客服电话', icon: 'headphones', iconColor: '#059669', iconClass: 'menu-icon-light', description: '周一至周日 09:00-24:00', onClick: handleBuilding },
@@ -230,6 +231,12 @@ function handleSwitchIdentity() {
 function handleToOrderCenter() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/order-center/index')
+  })
+}
+
+function handleToBaby() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/baby/index')
   })
 }
 

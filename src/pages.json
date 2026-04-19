@@ -86,6 +86,18 @@
       }
     },
     {
+      "path": "pages/mine/baby/index",
+      "style": {
+        "navigationBarTitleText": "萌娃管理"
+      }
+    },
+    {
+      "path": "pages/mine/baby/edit",
+      "style": {
+        "navigationBarTitleText": "编辑萌娃"
+      }
+    },
+    {
       "path": "pages/mine/course/list",
       "style": {
         "navigationBarTitleText": "已报课程"
