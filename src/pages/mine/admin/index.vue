@@ -12,6 +12,9 @@
         class="admin-action"
         @click="item.onClick"
       >
+        <text v-if="item.key === 'tutor-review' && pendingTutorReviewCount > 0" class="action-badge">
+          {{ pendingTutorReviewCountText }}
+        </text>
         <view class="action-icon">
           <uni-icons :type="item.icon" size="30" :color="item.iconColor" />
         </view>
@@ -22,11 +25,20 @@
 </template>
 
 <script setup>
-import { getCurrentInstance } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { computed, getCurrentInstance, ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { getPendingTutorReviewCount } from '@/api/system/tutors'
 import { requireAdminAccess } from './access'
 
 const { proxy } = getCurrentInstance()
+const pendingTutorReviewCount = ref(0)
+
+const pendingTutorReviewCountText = computed(() => {
+  if (pendingTutorReviewCount.value > 99) {
+    return '99+'
+  }
+  return String(pendingTutorReviewCount.value)
+})
 
 const actionItems = [
   {
@@ -85,8 +97,23 @@ function validateAccess() {
   return requireAdminAccess(proxy)
 }
 
+async function loadPendingTutorReviewCount() {
+  try {
+    pendingTutorReviewCount.value = await getPendingTutorReviewCount()
+  } catch (error) {
+    console.error('加载教员审核待办数量失败', error)
+  }
+}
+
 onLoad(() => {
   validateAccess()
+})
+
+onShow(() => {
+  if (!validateAccess()) {
+    return
+  }
+  loadPendingTutorReviewCount()
 })
 </script>
 

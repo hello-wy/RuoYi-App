@@ -1,5 +1,25 @@
 import request from '@/utils/request'
 
+const DEFAULT_PENDING_TUTOR_REVIEW_QUERY = {
+  isCertified: 0,
+  pageNum: 1,
+  pageSize: 10,
+  orderByColumn: 'createDate',
+  isAsc: 'desc'
+}
+
+export function buildPendingTutorReviewQuery(query = {}) {
+  return {
+    ...DEFAULT_PENDING_TUTOR_REVIEW_QUERY,
+    ...query
+  }
+}
+
+export async function getPendingTutorReviewCount() {
+  const res = await listTutors(buildPendingTutorReviewQuery({ pageSize: 1 }))
+  return Number(res.total || 0)
+}
+
 // 查询大学生/教员列表
 export function listTutors(query) {
   return request({

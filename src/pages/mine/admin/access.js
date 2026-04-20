@@ -1,13 +1,13 @@
 import { useUserStore } from '@/store'
 import { getToken } from '@/utils/auth'
+import { isAdminUser as checkIsAdminUser } from '@/utils/admin'
 
-const ADMIN_ROLE = 'admin'
 const MINE_PAGE = '/pages/mine/index'
 const REDIRECT_DELAY_MS = 800
 
 export function isAdminUser() {
   const roles = useUserStore().roles
-  return Boolean(getToken()) && Array.isArray(roles) && roles.includes(ADMIN_ROLE)
+  return checkIsAdminUser(getToken(), roles)
 }
 
 export function requireAdminAccess(proxy) {

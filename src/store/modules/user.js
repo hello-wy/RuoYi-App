@@ -9,6 +9,7 @@ import { bindWxminiPhone, getInfo, login, logout, wxminiLogin } from '@/api/logi
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
+import { shouldEnableRegularMineFeatures } from '@/utils/admin'
 import defAva from '@/static/images/profile.jpg'
 
 const baseUrl = config.baseUrl
@@ -74,6 +75,9 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const syncEnrollment = () => {
+    if (!shouldEnableRegularMineFeatures(token.value, roles.value)) {
+      return
+    }
     getTotalEnrollments().then(res => {
       SET_ENROLLMENT(res.data)
     })

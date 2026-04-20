@@ -76,7 +76,7 @@
 
 <script>
 import config from '@/config'
-import { listTutors, reviewTutors } from '@/api/system/tutors'
+import { buildPendingTutorReviewQuery, listTutors, reviewTutors } from '@/api/system/tutors'
 import { isHttp } from '@/utils/validate'
 import { requireAdminAccess } from './access'
 
@@ -144,13 +144,10 @@ export default {
       this.loadError = false
     },
     buildQueryParams() {
-      return {
-        isCertified: 0,
+      return buildPendingTutorReviewQuery({
         pageNum: this.pageNum,
-        pageSize: PAGE_SIZE,
-        orderByColumn: 'createDate',
-        isAsc: 'desc'
-      }
+        pageSize: PAGE_SIZE
+      })
     },
     loadMore() {
       if (this.loading || this.tutorList.length >= this.total) {

@@ -7,14 +7,14 @@
             <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
             <view v-else class="user-name-row">
               <text class="user-name">{{ name }}</text>
-              <view class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
+              <view v-if="shouldEnableRegularContent" class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
                 <text class="tag-text">{{ userIdentityLabel }}</text>
                 <uni-icons type="redo" size="12" color="#ffffff" />
               </view>
             </view>
           </view>
         </view>
-        <view class="header-right" @click="handleToProfile">
+        <view v-if="shouldEnableRegularContent" class="header-right" @click="handleToProfile">
           <text class="homepage-text">个人主页</text>
           <uni-icons type="right" size="14" color="#ECFEF6" />
         </view>
@@ -28,7 +28,7 @@
         <view class="primary-cta-btn">立即前往</view>
       </view>
 
-      <view v-if="!isAdmin" class="stats-row">
+      <view v-if="shouldEnableRegularContent" class="stats-row">
         <view class="stat-item" @click="handleToEnrollment">
           <text class="stat-num">{{ enrollmentList }}</text>
           <view class="stat-btn">我的学籍</view>
@@ -42,7 +42,7 @@
     </view>
 
     <view class="content-section">
-      <view class="card">
+      <view v-if="shouldEnableRegularContent" class="card">
         <view class="card-title">学习中心</view>
         <view class="study-grid">
           <view
@@ -100,6 +100,7 @@ import { useUserStore } from '@/store'
 import { hasUserType, normalizeUserType, USER_TYPES } from '@/utils/userType'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
+import { isAdminUser, shouldEnableRegularMineFeatures } from '@/utils/admin'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
@@ -113,17 +114,25 @@ const hasLogin = computed(() => Boolean(token.value))
 const normalizedUserType = computed(() => normalizeUserType(userType.value))
 const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value))
 
-const isAdmin = computed(() => {
-  const currentRoles = Array.isArray(roles.value) ? roles.value : []
-  return hasLogin.value && currentRoles.includes('admin')
-})
+const isAdmin = computed(() => isAdminUser(token.value, roles.value))
+const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
 
 const userIdentityLabel = computed(() => {
   const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家' }
   return labels[normalizedUserType.value] || '未设置'
 })
 
-const showPrimaryCard = computed(() => hasLogin.value && !isAdmin.value)
+const showPrimaryCard = computed(() => hasLogin.value && shouldEnableRegularContent.value)
+const studyItems = computed(() => {
+  if (!shouldEnableRegularContent.value) {
+    return []
+  }
+  return [
+    { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
+    { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleToOrderCenter },
+    { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleBuilding }
+  ]
+})
 const primaryActionPath = computed(() => {
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '/pages/tutoring/tutor/index'
   if (normalizedUserType.value === USER_TYPES.PARENT) return '/pages/tutoring/parent/apply'
@@ -142,13 +151,8 @@ const primaryActionDesc = computed(() => {
   return '先选择身份，为您推荐更适合的内容和服务'
 })
 
-const studyItems = [
-  { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
-  { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleToOrderCenter },
-  { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleBuilding }
-]
-
 const baseMenuItems = [
+
   { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
@@ -157,13 +161,16 @@ const baseMenuItems = [
 ]
 
 const menuItems = computed(() => {
-  const visibleBaseMenuItems = baseMenuItems.filter(item => {
+  if (isAdmin.value) {
+    return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin },
+        { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
+    ]
+  }
+
+  return baseMenuItems.filter(item => {
     if (item.key !== 'baby') return true
     return normalizedUserType.value === USER_TYPES.PARENT
   })
-
-  if (!isAdmin.value) return visibleBaseMenuItems
-  return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin }, ...visibleBaseMenuItems]
 })
 
 function withLogin(action) {
@@ -189,30 +196,40 @@ function handleToCourse() {
 }
 
 function loadEnrollment() {
+  if (!shouldEnableRegularContent.value) {
+    return
+  }
   getTotalEnrollments().then(res => {
     enrollmentList.value = res.data
   })
 }
 
 async function loadProfileDetail() {
-  if (!hasLogin.value) return
+  if (!hasLogin.value || !shouldEnableRegularContent.value) return
   const res = await getWxUserProfileDetail()
   profileDetail.value = res.data
   userStore.updateWxProfileState(res.data)
 }
 
 async function ensureUserTypeReady() {
-  if (!hasLogin.value || isAdmin.value) return
+  if (!hasLogin.value || !shouldEnableRegularContent.value) return
   await loadProfileDetail()
   if (!hasSelectedUserType.value) {
     proxy.$tab.navigateTo('/pages/guide/index')
   }
 }
 
-function handleLoginSuccess() {
-  shouldAutoOpenLogin.value = false
+function initRegularMineData() {
+  if (!hasLogin.value || !shouldEnableRegularContent.value) {
+    return
+  }
   loadEnrollment()
   ensureUserTypeReady()
+}
+
+function handleLoginSuccess() {
+  shouldAutoOpenLogin.value = false
+  initRegularMineData()
 }
 
 function handleToEnrollment() {
@@ -274,14 +291,12 @@ onLoad(() => {
   if (!hasLogin.value) {
     return
   }
-  loadEnrollment()
-  ensureUserTypeReady()
+  initRegularMineData()
 })
 
 onShow(() => {
   if (hasLogin.value) {
-    loadEnrollment()
-    ensureUserTypeReady()
+    initRegularMineData()
   }
 })
 </script>

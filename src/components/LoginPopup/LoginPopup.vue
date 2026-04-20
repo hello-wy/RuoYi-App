@@ -142,15 +142,15 @@ import { useConfigStore, useUserStore } from '@/store'
 const isProd = import.meta.env.PROD
 
 const modeOptions = [
-  { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },
-  ...(!isProd ? [{ label: '微信登录', value: 'wechat', icon: 'weixin' },{ label: '账号登录', value: 'account', icon: 'person' }] : []),
+  { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },{ label: '账号登录', value: 'account', icon: 'person' },
+  ...(!isProd ? [{ label: '微信登录', value: 'wechat', icon: 'weixin' }] : []),
 ]
 
 const DEFAULT_MODE = 'realtimePhone'
 const ACCOUNT_MODE = 'account'
 const DEFAULT_LOGIN_FORM = Object.freeze({
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
   code: '',
   uuid: ''
 })
