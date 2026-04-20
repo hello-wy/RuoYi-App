@@ -1,7 +1,8 @@
 export const USER_TYPES = Object.freeze({
   PARENT: 0,
   STUDENT: 1,
-  MERCHANT: 2
+  MERCHANT: 2,
+  AUNT: 3
 })
 
 export const EMPTY_USER_TYPE = ''

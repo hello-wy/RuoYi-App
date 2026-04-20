@@ -118,7 +118,7 @@ const isAdmin = computed(() => isAdminUser(token.value, roles.value))
 const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
 
 const userIdentityLabel = computed(() => {
-  const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家' }
+  const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家', [USER_TYPES.AUNT]: '阿姨' }
   return labels[normalizedUserType.value] || '未设置'
 })
 
@@ -136,18 +136,21 @@ const studyItems = computed(() => {
 const primaryActionPath = computed(() => {
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '/pages/tutoring/tutor/index'
   if (normalizedUserType.value === USER_TYPES.PARENT) return '/pages/tutoring/parent/apply'
+  if (normalizedUserType.value === USER_TYPES.AUNT) return '/pages/mine/info/index'
   return profileDetail.value?.primaryAction || '/pages/guide/index'
 })
 const primaryActionTitle = computed(() => {
   if (normalizedUserType.value === USER_TYPES.PARENT) return '发布需求'
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '做家教'
   if (normalizedUserType.value === USER_TYPES.MERCHANT) return '发布招聘'
+  if (normalizedUserType.value === USER_TYPES.AUNT) return '完善资料'
   return '选择身份'
 })
 const primaryActionDesc = computed(() => {
   if (normalizedUserType.value === USER_TYPES.PARENT) return '快速发布请家教需求，匹配优质教员'
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '完善资料并申请做家教'
   if (normalizedUserType.value === USER_TYPES.MERCHANT) return '发布招聘信息，快速招募人才'
+  if (normalizedUserType.value === USER_TYPES.AUNT) return '完善基础信息，方便后续展示与使用平台服务'
   return '先选择身份，为您推荐更适合的内容和服务'
 })
 

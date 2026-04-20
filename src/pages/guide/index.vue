@@ -62,7 +62,10 @@
         v-for="role in roles"
         :key="role.value"
         class="role-btn"
-        :class="[{ active: selectedRole === role.value }, role.theme]"
+        :class="[
+          { active: selectedRole === role.value, 'role-btn-last': role.value === 3 },
+          role.theme
+        ]"
         :disabled="submitting"
         @click="selectRole(role.value)"
       >
@@ -121,6 +124,17 @@ const roles = [
     leftText: '发布岗位',
     rightIcon: 'paperplane',
     rightText: '链接人才'
+  },
+  {
+    value: 3,
+    name: '阿姨',
+    theme: 'aunt-theme',
+    icon: 'person',
+    color: '#a855f7',
+    leftIcon: 'person',
+    leftText: '完善资料',
+    rightIcon: 'heart',
+    rightText: '提供服务'
   }
 ]
 
@@ -129,7 +143,8 @@ const currentRole = computed(() => roles.find(item => item.value === selectedRol
 function resolveTarget(userType) {
   if (userType === 0) return '/pages/tutoring/parent/apply'
   if (userType === 1) return '/pages/tutoring/tutor/apply'
-  return '/pages/jobs/apply'
+  if (userType === 2) return '/pages/jobs/apply'
+  return '/pages/mine/index'
 }
 
 function selectRole(role) {
@@ -242,6 +257,12 @@ page {
   --theme-main: #19a974;
   --theme-soft: rgba(25, 169, 116, 0.2);
   --theme-warm: #ffc36b;
+}
+
+.aunt-theme {
+  --theme-main: #a855f7;
+  --theme-soft: rgba(168, 85, 247, 0.18);
+  --theme-warm: #f9a8d4;
 }
 
 .badge-row {
@@ -571,7 +592,7 @@ page {
   z-index: 2;
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 16rpx;
   margin-top: 22rpx;
   margin-bottom: 24rpx;
@@ -583,6 +604,7 @@ page {
 }
 
 .role-btn {
+  grid-column: span 2;
   height: 92rpx;
   padding: 0;
   margin: 0;
@@ -603,9 +625,13 @@ page {
   border: none;
 }
 
+.role-btn-last {
+  grid-column: 3 / span 2;
+}
+
 .role-btn.active {
   color: #ffffff;
-  background: linear-gradient(145deg, var(--theme-main), #24324a);
+  background: var(--theme-main);
   box-shadow: 0 18rpx 34rpx var(--theme-soft);
 }
 
@@ -629,7 +655,7 @@ page {
   font-size: 32rpx;
   font-weight: 900;
   color: #ffffff;
-  background: linear-gradient(145deg, var(--theme-main), #24324a);
+  background: var(--theme-main);
   box-shadow: 0 22rpx 46rpx var(--theme-soft);
 }
 

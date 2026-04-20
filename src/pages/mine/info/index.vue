@@ -41,6 +41,13 @@ const fieldList = computed(() => {
     { key: 'userType', label: '用户类型', value: userTypeText(profile.value.userType) }
   ]
 
+  if (profile.value.userType === 3) {
+    return [
+      ...baseFields,
+      { key: 'age', label: '年龄', value: profile.value.age }
+    ]
+  }
+
   if (profile.value.userType !== 2) {
     return baseFields
   }
@@ -85,6 +92,7 @@ function userTypeText(value) {
   if (value === 0) return '家长'
   if (value === 1) return '学生'
   if (value === 2) return '商家'
+  if (value === 3) return '阿姨'
   return '家长 / 学生'
 }
 

@@ -12,6 +12,9 @@
         <uni-forms-item label="性别" name="gender">
           <uni-data-checkbox v-model="form.gender" :localdata="genderOptions" />
         </uni-forms-item>
+        <uni-forms-item v-if="isAunt" label="年龄" name="age">
+          <uni-easyinput v-model="form.age" placeholder="请输入年龄" type="number" />
+        </uni-forms-item>
         <uni-forms-item label="手机号码" name="phone">
           <uni-easyinput v-model="form.phone" placeholder="请输入手机号码" disabled/>
         </uni-forms-item>
@@ -63,6 +66,7 @@ const form = ref({
   realName: '',
   nickName: '',
   gender: '',
+  age: '',
   companyName: '',
   companyAddress: '',
   companyPosition: '',
@@ -72,10 +76,12 @@ const form = ref({
 })
 
 const isMerchant = computed(() => form.value.userType === 2)
+const isAunt = computed(() => form.value.userType === 3)
 const userTypeText = computed(() => {
   if (form.value.userType === 0) return '家长'
   if (form.value.userType === 1) return '学生'
   if (form.value.userType === 2) return '商家'
+  if (form.value.userType === 3) return '阿姨'
   return '家长 / 学生'
 })
 
@@ -109,6 +115,14 @@ const rules = {
         errorMessage: '昵称长度不能超过64个字符'
       }
     ]
+  },
+  age: {
+    rules: [
+      {
+        pattern: /^$|^(?:[1-9]\d?|1[01]\d|120)$/,
+        errorMessage: '请输入正确年龄'
+      }
+    ]
   }
 }
 
@@ -122,6 +136,7 @@ function loadProfile() {
       realName: data.realName || '',
       nickName: data.nickName || '',
       gender: data.gender !== null && data.gender !== undefined ? data.gender : '',
+      age: data.age !== null && data.age !== undefined ? String(data.age) : '',
       companyName: data.companyName || '',
       companyAddress: data.companyAddress || '',
       companyPosition: data.companyPosition || '',
@@ -142,7 +157,8 @@ function buildSubmitPayload() {
     phone: form.value.phone,
     realName: form.value.realName,
     nickName: form.value.nickName,
-    gender: form.value.gender
+    gender: form.value.gender,
+    age: isAunt.value && form.value.age !== '' ? Number(form.value.age) : null
   }
 
   if (isMerchant.value) {

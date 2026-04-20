@@ -165,6 +165,19 @@
       }
     },
     {
+      "path": "pages/mine/admin/student/index",
+      "style": {
+        "navigationBarTitleText": "学员管理",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/mine/admin/student/detail",
+      "style": {
+        "navigationBarTitleText": "学员详情"
+      }
+    },
+    {
       "path": "pages/mine/help/index",
       "style": {
         "navigationBarTitleText": "常见问题"

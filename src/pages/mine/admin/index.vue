@@ -53,7 +53,7 @@ const actionItems = [
     label: '学员管理',
     icon: 'person-filled',
     iconColor: '#0ea5a4',
-    onClick: handleUnreadyFeature
+    onClick: handleStudentManagement
   },
   {
     key: 'follow-up',
@@ -87,6 +87,10 @@ const actionItems = [
 
 function handleTutorReview() {
   proxy.$tab.navigateTo('/pages/mine/admin/tutor-review')
+}
+
+function handleStudentManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/student/index')
 }
 
 function handleUnreadyFeature() {
