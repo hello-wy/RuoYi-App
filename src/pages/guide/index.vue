@@ -127,7 +127,7 @@ const roles = [
   },
   {
     value: 3,
-    name: '阿姨',
+    name: '兼职',
     theme: 'aunt-theme',
     icon: 'person',
     color: '#a855f7',
@@ -143,7 +143,7 @@ const currentRole = computed(() => roles.find(item => item.value === selectedRol
 function resolveTarget(userType) {
   if (userType === 0) return '/pages/tutoring/parent/apply'
   if (userType === 1) return '/pages/tutoring/tutor/apply'
-  if (userType === 2) return '/pages/jobs/apply'
+  if (userType === 2) return '/pages/jobs/list'
   return '/pages/mine/index'
 }
 

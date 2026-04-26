@@ -11,7 +11,7 @@ export function listTutors(query) {
 
 export function getTutors(id) {
     return request({
-        url: '/system/tutors/' + id,
+        url: '/wxmini/tutoring/tutors/' + id,
         method: 'get'
     })
 }
@@ -27,7 +27,7 @@ export function addTutors(data) {
 // 获取当前登录教员自己的信息
 export function getMyTutor() {
     return request({
-        url: '/wxmini/tutoring/my',
+        url: '/wxmini/tutoring/mine',
         method: 'get'
     })
 }

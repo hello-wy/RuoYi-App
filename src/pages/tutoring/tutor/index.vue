@@ -1,11 +1,9 @@
 <template>
 	<view class="page">
-		<!-- 加载中 -->
 		<view v-if="loading" class="loading-wrap">
 			<uni-load-more status="loading"></uni-load-more>
 		</view>
 
-		<!-- 未登录提示 -->
 		<view v-else-if="!isLoggedIn" class="empty-wrap">
 			<uni-icons type="person" size="64" color="#CBD5E1"></uni-icons>
 			<text class="empty-title">请先登录</text>
@@ -15,7 +13,6 @@
 			</view>
 		</view>
 
-		<!-- 无教员档案 -->
 		<view v-else-if="!profile" class="empty-wrap">
 			<uni-icons type="compose" size="64" color="#CBD5E1"></uni-icons>
 			<text class="empty-title">您还没有教员档案</text>
@@ -25,28 +22,21 @@
 			</view>
 		</view>
 
-		<!-- 教员主页内容 -->
 		<scroll-view v-else scroll-y class="content-scroll">
-			<!-- ===== 顶部 Profile ===== -->
 			<view class="profile-header">
 				<view class="profile-bg"></view>
 				<view class="profile-body">
 					<view class="avatar-wrap">
-						<image
-							class="avatar"
-							:src="profile.avatar || '/static/images/profile.jpg'"
-							mode="aspectFill"
-						></image>
-						<view v-if="profile.isCertified === '已通过'" class="cert-dot">
+						<image class="avatar" :src="profile.avatar || '/static/images/profile.jpg'" mode="aspectFill"></image>
+						<view v-if="profile.status === '1' || profile.status === 1" class="cert-dot">
 							<uni-icons type="checkmarkempty" size="12" color="#fff"></uni-icons>
 						</view>
 					</view>
 					<text class="profile-name">{{ getName(profile) }}</text>
 					<text class="profile-sub">{{ profile.school || '--' }} · {{ profile.major || '--' }}</text>
 
-					<!-- 状态徽章 -->
 					<view class="badge-row">
-						<view v-if="profile.isCertified === '已通过'" class="badge badge-green">
+						<view v-if="profile.status === '1' || profile.status === 1" class="badge badge-green">
 							<uni-icons type="checkmarkempty" size="12" color="#10B981"></uni-icons>
 							<text class="badge-text">实名认证</text>
 						</view>
@@ -55,7 +45,6 @@
 						</view>
 					</view>
 
-					<!-- 快捷操作 -->
 					<view class="quick-actions">
 						<view class="quick-btn" @click="goEdit">
 							<uni-icons type="compose" size="16" color="#3B82F6"></uni-icons>
@@ -69,7 +58,6 @@
 				</view>
 			</view>
 
-			<!-- ===== 审核状态 ===== -->
 			<view class="status-card" :class="statusCardClass">
 				<view class="status-icon-wrap" :class="statusIconClass">
 					<uni-icons :type="statusIcon" size="22" :color="statusIconColor"></uni-icons>
@@ -80,7 +68,6 @@
 				</view>
 			</view>
 
-			<!-- ===== 基本信息 ===== -->
 			<view class="section-card">
 				<view class="section-header">
 					<view class="section-icon-wrap blue">
@@ -94,8 +81,16 @@
 						<text class="info-val">{{ profile.realName || '--' }}</text>
 					</view>
 					<view class="info-cell">
+						<text class="info-key">身份</text>
+						<text class="info-val">{{ getIdentityLabel(profile.identity) }}</text>
+					</view>
+					<view class="info-cell">
 						<text class="info-key">学历</text>
 						<text class="info-val">{{ getDegreeLabel(profile.degree) }}</text>
+					</view>
+					<view class="info-cell">
+						<text class="info-key">城市</text>
+						<text class="info-val">{{ profile.city || '--' }}</text>
 					</view>
 					<view class="info-cell">
 						<text class="info-key">院校</text>
@@ -105,18 +100,9 @@
 						<text class="info-key">专业</text>
 						<text class="info-val">{{ profile.major || '--' }}</text>
 					</view>
-					<view class="info-cell">
-						<text class="info-key">生活地点</text>
-						<text class="info-val">{{ getLiveLabel(profile.live) }}</text>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">工作地点</text>
-						<text class="info-val">{{ getWorkLabel(profile.work) }}</text>
-					</view>
 				</view>
 			</view>
 
-			<!-- ===== 教学概况 ===== -->
 			<view class="section-card">
 				<view class="section-header">
 					<view class="section-icon-wrap orange">
@@ -125,50 +111,37 @@
 					<text class="section-title">教学概况</text>
 				</view>
 
-				<!-- 可教科目 -->
 				<view class="info-block">
 					<text class="info-block-label">可教科目</text>
 					<view class="tag-row">
-						<view
-							v-for="(sub, index) in subjectList"
-							:key="index"
-							class="info-tag"
-						>
+						<view v-for="(sub, index) in subjectList" :key="index" class="info-tag">
 							<text class="info-tag-text">{{ sub }}</text>
 						</view>
 						<text v-if="subjectList.length === 0" class="info-empty">暂未设置</text>
 					</view>
 				</view>
 
-				<!-- 可授课区域 -->
 				<view class="info-block">
 					<text class="info-block-label">可授课区域</text>
 					<view class="tag-row">
-						<view
-							v-for="(area, index) in areaList"
-							:key="index"
-							class="info-tag info-tag-area"
-						>
+						<view v-for="(area, index) in areaList" :key="index" class="info-tag info-tag-area">
 							<text class="info-tag-text-area">{{ area }}</text>
 						</view>
 						<text v-if="areaList.length === 0" class="info-empty">暂未设置</text>
 					</view>
 				</view>
 
-				<!-- 授课方式 -->
 				<view class="info-block">
 					<text class="info-block-label">授课方式</text>
 					<dict-tag :options="dict.type.sys_methods" :value="profile.methods" />
 				</view>
 
-				<!-- 教学经历 -->
 				<view v-if="profile.experience" class="info-block">
 					<text class="info-block-label">教学经历</text>
 					<text class="info-text">{{ profile.experience }}</text>
 				</view>
 			</view>
 
-			<!-- ===== 资质认证 ===== -->
 			<view class="section-card">
 				<view class="section-header">
 					<view class="section-icon-wrap purple">
@@ -184,9 +157,13 @@
 				<view v-else class="cert-empty">
 					<text class="cert-empty-text">未上传证书，请编辑资料补充</text>
 				</view>
+				<view class="tag-row" style="margin-top: 16rpx;">
+					<view v-for="(item, index) in certificateItems" :key="index" class="info-tag">
+						<text class="info-tag-text">{{ item }}</text>
+					</view>
+				</view>
 			</view>
 
-			<!-- ===== 薪资参考 ===== -->
 			<view class="section-card salary-nav" @click="goSalary">
 				<view class="section-header">
 					<view class="section-icon-wrap green">
@@ -200,11 +177,9 @@
 				</view>
 			</view>
 
-			<!-- 底部占位 -->
 			<view class="bottom-placeholder"></view>
 		</scroll-view>
 
-		<!-- 登录弹窗 -->
 		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="shouldAutoOpenLogin = false" />
 	</view>
 </template>
@@ -277,7 +252,7 @@ export default {
 		statusDesc() {
 			const s = this.profile?.status
 			if (s === '1' || s === 1) return '家长可以查看并联系您，祝您接单顺利！'
-			if (s === '2' || s === 2) return '可点击"编辑资料"查看拒绝原因并补充完善。'
+			if (s === '2' || s === 2) return '可点击“编辑资料”补充完善后重新提交。'
 			return '审核通过后将通知您，请保持关注。'
 		},
 		subjectList() {
@@ -297,6 +272,11 @@ export default {
 				const found = this.districtOptions.find(d => String(d.value) === String(v))
 				return found ? found.text : v
 			}).filter(Boolean)
+		},
+		certificateItems() {
+			const source = this.profile?.certificateList || ''
+			if (!source) return []
+			return source.split(/[，,、\n]/).map(item => item.trim()).filter(Boolean)
 		}
 	},
 	onLoad() {
@@ -315,7 +295,6 @@ export default {
 				const res = await getMyTutor()
 				this.profile = res.data || null
 			} catch (e) {
-				// 未找到教员档案时 profile 为 null，显示引导卡片
 				this.profile = null
 			} finally {
 				this.loading = false
@@ -323,20 +302,15 @@ export default {
 		},
 		getName(item) {
 			if (!item) return ''
-			const nickname = item.nickname || ''
-			return (nickname ? nickname.slice(0, 1) : '') + (item.title || item.realName || '')
+			return item.realName || '教员'
+		},
+		getIdentityLabel(identity) {
+			const mapping = { 0: '大学生教员', 1: '在职教师', 2: '其他' }
+			return mapping[Number(identity)] || '未知'
 		},
 		getDegreeLabel(val) {
 			const item = (this.dict.type.sys_degree || []).find(o => o.value === val)
 			return item ? item.label : (val || '--')
-		},
-		getLiveLabel(val) {
-			const item = this.districtOptions.find(o => String(o.value) === String(val))
-			return item ? item.text : (val || '--')
-		},
-		getWorkLabel(val) {
-			const item = this.districtOptions.find(o => String(o.value) === String(val))
-			return item ? item.text : (val || '--')
 		},
 		goLogin() {
 			this.shouldAutoOpenLogin = true
@@ -373,7 +347,6 @@ page {
 	height: 100vh;
 }
 
-/* ===== 空状态 ===== */
 .loading-wrap,
 .empty-wrap {
 	display: flex;
@@ -412,7 +385,6 @@ page {
 	font-weight: 700;
 }
 
-/* ===== Profile Header ===== */
 .profile-header {
 	position: relative;
 	margin-bottom: 14rpx;
@@ -496,17 +468,9 @@ page {
 	background: #F1F5F9;
 }
 
-.badge-green {
-	background: #ECFDF5;
-}
-
-.badge-yellow {
-	background: #FFFBEB;
-}
-
-.badge-red {
-	background: #FEF2F2;
-}
+.badge-green { background: #ECFDF5; }
+.badge-yellow { background: #FFFBEB; }
+.badge-red { background: #FEF2F2; }
 
 .badge-text {
 	font-size: 22rpx;
@@ -514,103 +478,89 @@ page {
 	font-weight: 600;
 }
 
-.badge-green .badge-text {
-	color: #10B981;
-}
-
-.badge-yellow .badge-text {
-	color: #D97706;
-}
-
-.badge-red .badge-text {
-	color: #EF4444;
-}
+.badge-green .badge-text { color: #10B981; }
+.badge-yellow .badge-text { color: #D97706; }
+.badge-red .badge-text { color: #EF4444; }
 
 .quick-actions {
 	display: flex;
-	flex-direction: row;
+	width: 100%;
 	gap: 20rpx;
 }
 
 .quick-btn {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 8rpx;
+	flex: 1;
 	background: #F8FAFC;
-	border: 1.5rpx solid #E2E8F0;
-	border-radius: 999rpx;
-	padding: 14rpx 32rpx;
+	border-radius: 18rpx;
+	padding: 22rpx 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10rpx;
 }
 
 .quick-btn-text {
 	font-size: 26rpx;
-	color: #475569;
 	font-weight: 600;
+	color: #334155;
 }
 
-/* ===== 状态卡片 ===== */
+.status-card,
+.section-card {
+	margin: 0 24rpx 20rpx;
+	background: #fff;
+	border-radius: 24rpx;
+	padding: 28rpx 24rpx;
+	box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
 .status-card {
-	margin: 0 24rpx 14rpx;
-	border-radius: 20rpx;
-	padding: 24rpx;
 	display: flex;
-	flex-direction: row;
 	align-items: center;
 	gap: 20rpx;
-	background: #FFFBEB;
 }
 
+.status-card-yellow { background: #FFFBEA; }
 .status-card-green { background: #ECFDF5; }
-.status-card-yellow { background: #FFFBEB; }
 .status-card-red { background: #FEF2F2; }
 
 .status-icon-wrap {
 	width: 72rpx;
 	height: 72rpx;
-	border-radius: 999rpx;
+	border-radius: 20rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-shrink: 0;
 }
 
-.icon-green { background: #D1FAE5; }
 .icon-yellow { background: #FEF3C7; }
+.icon-green { background: #D1FAE5; }
 .icon-red { background: #FEE2E2; }
 
 .status-info {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
 }
 
 .status-title {
-	font-size: 28rpx;
+	font-size: 30rpx;
 	font-weight: 700;
-	color: #1e293b;
-	display: block;
-	margin-bottom: 6rpx;
+	color: #1E293B;
 }
 
 .status-desc {
 	font-size: 24rpx;
-	color: #64748b;
-	line-height: 1.5;
-}
-
-/* ===== Section 卡片 ===== */
-.section-card {
-	background: #fff;
-	border-radius: 20rpx;
-	padding: 32rpx 28rpx;
-	margin: 0 24rpx 14rpx;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+	color: #64748B;
+	line-height: 1.6;
 }
 
 .section-header {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	margin-bottom: 24rpx;
+	margin-bottom: 18rpx;
 }
 
 .section-icon-wrap {
@@ -620,51 +570,51 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-right: 16rpx;
-	flex-shrink: 0;
+	margin-right: 12rpx;
 }
 
 .section-icon-wrap.blue { background: #EFF6FF; }
-.section-icon-wrap.green { background: #ECFDF5; }
 .section-icon-wrap.orange { background: #FFFBEB; }
 .section-icon-wrap.purple { background: #F5F3FF; }
+.section-icon-wrap.green { background: #ECFDF5; }
 
 .section-title {
 	font-size: 30rpx;
 	font-weight: 700;
-	color: #1e293b;
-	flex: 1;
+	color: #1E293B;
 }
 
-/* ===== 信息网格 ===== */
 .info-grid {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	row-gap: 20rpx;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20rpx;
 }
 
 .info-cell {
-	width: 50%;
+	background: #F8FAFC;
+	border-radius: 16rpx;
+	padding: 20rpx;
 	display: flex;
 	flex-direction: column;
+	gap: 8rpx;
 }
 
 .info-key {
-	font-size: 22rpx;
-	color: #94a3b8;
-	margin-bottom: 4rpx;
+	font-size: 24rpx;
+	color: #94A3B8;
 }
 
-.info-val {
-	font-size: 28rpx;
-	color: #1e293b;
-	font-weight: 600;
+.info-val,
+.info-text,
+.salary-link-text,
+.cert-empty-text {
+	font-size: 26rpx;
+	color: #334155;
+	line-height: 1.6;
 }
 
-/* ===== 信息块 ===== */
 .info-block {
-	margin-bottom: 24rpx;
+	margin-bottom: 20rpx;
 }
 
 .info-block:last-child {
@@ -672,103 +622,73 @@ page {
 }
 
 .info-block-label {
-	font-size: 24rpx;
-	color: #94a3b8;
 	display: block;
+	font-size: 24rpx;
+	color: #64748B;
 	margin-bottom: 12rpx;
-}
-
-.info-text {
-	font-size: 26rpx;
-	color: #475569;
-	line-height: 1.7;
-}
-
-.info-empty {
-	font-size: 26rpx;
-	color: #CBD5E1;
 }
 
 .tag-row {
 	display: flex;
-	flex-direction: row;
 	flex-wrap: wrap;
-	gap: 10rpx;
+	gap: 12rpx;
 }
 
 .info-tag {
-	background: #EFF6FF;
+	padding: 10rpx 20rpx;
 	border-radius: 999rpx;
-	padding: 8rpx 24rpx;
-}
-
-.info-tag-text {
-	font-size: 24rpx;
-	color: #3B82F6;
-	font-weight: 600;
+	background: #EFF6FF;
 }
 
 .info-tag-area {
 	background: #ECFDF5;
 }
 
-.info-tag-text-area {
-	font-size: 24rpx;
-	color: #10B981;
-	font-weight: 600;
+.info-tag-text {
+	font-size: 22rpx;
+	color: #2563EB;
 }
 
-/* ===== 证书 ===== */
+.info-tag-text-area {
+	font-size: 22rpx;
+	color: #10B981;
+}
+
+.info-empty {
+	font-size: 24rpx;
+	color: #94A3B8;
+}
+
 .cert-preview {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 12rpx;
 }
 
 .cert-img {
-	width: 100%;
-	height: 360rpx;
-	border-radius: 12rpx;
-	background: #f8fafc;
+	width: 220rpx;
+	height: 220rpx;
+	border-radius: 18rpx;
+	background: #F8FAFC;
 }
 
 .cert-hint {
-	font-size: 24rpx;
-	color: #10B981;
+	font-size: 22rpx;
+	color: #8B5CF6;
+	margin-top: 12rpx;
 }
 
-.cert-empty {
-	padding: 20rpx 0;
-}
-
-.cert-empty-text {
-	font-size: 26rpx;
-	color: #94a3b8;
-}
-
-/* ===== 薪资跳转 ===== */
 .salary-nav {
-	cursor: pointer;
+	padding-bottom: 24rpx;
 }
 
 .salary-link-row {
 	display: flex;
-	flex-direction: row;
-	align-items: center;
 	justify-content: space-between;
-	background: #EFF6FF;
-	border-radius: 12rpx;
-	padding: 20rpx 24rpx;
-}
-
-.salary-link-text {
-	font-size: 28rpx;
-	color: #3B82F6;
-	font-weight: 500;
+	align-items: center;
 }
 
 .bottom-placeholder {
-	height: 80rpx;
+	height: 60rpx;
 }
 </style>

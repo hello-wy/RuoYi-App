@@ -1,176 +1,151 @@
 <template>
 	<view class="page">
-		<!-- 加载中 -->
 		<view v-if="loading" class="loading-wrap">
 			<uni-load-more status="loading"></uni-load-more>
 		</view>
 
-		<!-- 加载失败 -->
 		<view v-else-if="error" class="error-wrap">
-			<text>加载失败，请重试</text>
+			<text class="error-text">加载失败，请重试</text>
 		</view>
 
-		<!-- 内容 -->
-		<view v-else-if="detail" class="content">
+		<scroll-view v-else-if="detail" scroll-y class="scroll-body">
+			<view class="hero-section">
+				<view class="hero-bg circle-one"></view>
+				<view class="hero-bg circle-two"></view>
 
-			<!-- 顶部 Profile -->
-			<view class="profile-header">
 				<view class="avatar-wrap">
-					<image
-						class="avatar"
-						:src="detail.avatar || '/static/images/profile.jpg'"
-						mode="aspectFill"
-					></image>
-					<view v-if="detail.isCertified === '已通过'" class="cert-dot">
-						<uni-icons type="checkmarkempty" size="12" color="#fff"></uni-icons>
+					<image class="avatar" :src="avatarSrc" mode="aspectFill"></image>
+					<view v-if="isCertified" class="avatar-badge">
+						<uni-icons type="checkmarkempty" size="14" color="#FFFFFF"></uni-icons>
 					</view>
 				</view>
-				<text class="profile-name">{{ getName(detail) }}</text>
-				<text class="profile-sub">{{ detail.school || '--' }} · {{ detail.major || '--' }}</text>
-				<view v-if="detail.isCertified === '已通过'" class="cert-badge">
-					<uni-icons type="checkmarkempty" size="14" color="#10B981"></uni-icons>
-					<text class="cert-text">实名认证已通过</text>
-				</view>
-			</view>
 
-			<!-- 基本信息 -->
-			<view class="section">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">基本信息</text>
-				</view>
-				<view class="info-grid">
-					<view class="info-cell">
-						<text class="info-key">姓名：</text>
-						<text class="info-val">{{ getName(detail) }}</text>
+				<text class="hero-name">{{ displayName }}</text>
+				<text class="hero-subtitle">{{ subtitleText }}</text>
+
+				<view class="status-row">
+					<view v-if="isCertified" class="status-chip">
+						<uni-icons type="auth-filled" size="14" color="#16A34A"></uni-icons>
+						<text class="status-chip-text">身份已认证</text>
 					</view>
-					<view class="info-cell">
-						<text class="info-key">城市：</text>
-						<text class="info-val">{{ getFirstArea(detail) }}</text>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">学历：</text>
-						<dict-tag :options="dict.type.sys_degree" :value="detail.degree"/>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">院校：</text>
-						<text class="info-val">{{ detail.school || '--' }}</text>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">专业：</text>
-						<text class="info-val">{{ detail.major || '--' }}</text>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">生活：</text>
-						<text class="info-val">{{ detail.live || '--' }}</text>
-					</view>
-					<view class="info-cell">
-						<text class="info-key">工作：</text>
-						<text class="info-val">{{ detail.work || '--' }}</text>
+					<view class="status-chip">
+						<uni-icons type="staff-filled" size="14" color="#16A34A"></uni-icons>
+						<text class="status-chip-text">{{ identityText }}</text>
 					</view>
 				</view>
 			</view>
 
-			<!-- 擅长科目 -->
-			<view class="section">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">擅长科目</text>
-				</view>
-				<view class="area-text">
-					{{ getSubjectLabel(detail.subjects).join(',') || '暂未设置' }}
-				</view>
-			</view>
-
-			<!-- 可授课区域 -->
-			<view class="section">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">可授课区域</text>
-				</view>
-				<view class="area-row">
-					<uni-icons type="location" size="16" color="#666"></uni-icons>
-
-					<text class="area-text">
-						{{ getDistrictLabel(detail.areas).join(',') }}。
-					</text>
-					<text class="area-text" v-if="detail.methods !== 0">支持线上授课。</text>
-				</view>
-			</view>
-
-			<!-- 教学经历 -->
-			<view class="section" v-if="detail.experience">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">教学经历</text>
-				</view>
-				<view class="exp-card">
-					<view class="exp-dot-wrap">
-						<view class="exp-dot"><uni-icons type="checkmarkempty" size="10" color="#fff"></uni-icons></view>
-						<view class="exp-line"></view>
+			<view class="card-section">
+				<view class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="calendar-filled" size="20" color="#2563EB"></uni-icons>
+						<text class="card-title">概览</text>
 					</view>
-					<view class="exp-body">
-						<text class="exp-desc">{{ detail.experience }}</text>
+					<view class="overview-grid">
+						<view class="overview-item">
+							<view class="overview-icon blue">
+								<uni-icons type="location-filled" size="20" color="#2563EB"></uni-icons>
+							</view>
+							<view class="overview-content">
+								<text class="overview-label">城市</text>
+								<text class="overview-value">{{ cityText }}</text>
+							</view>
+						</view>
+						<view class="overview-item">
+							<view class="overview-icon blue">
+								<uni-icons type="person-filled" size="20" color="#2563EB"></uni-icons>
+							</view>
+							<view class="overview-content">
+								<text class="overview-label">身份</text>
+								<text class="overview-value">{{ identityText }}</text>
+							</view>
+						</view>
+						<view class="overview-item">
+							<view class="overview-icon blue">
+								<uni-icons type="medal-filled" size="20" color="#2563EB"></uni-icons>
+							</view>
+							<view class="overview-content">
+								<text class="overview-label">学历</text>
+								<text class="overview-value">{{ degreeText }}</text>
+							</view>
+						</view>
+						<view class="overview-item">
+							<view class="overview-icon blue">
+								<uni-icons type="paperplane-filled" size="20" color="#2563EB"></uni-icons>
+							</view>
+							<view class="overview-content">
+								<text class="overview-label">授课方式</text>
+								<text class="overview-value">{{ methodText }}</text>
+							</view>
+						</view>
+					</view>
+				</view>
+
+				<view class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="star-filled" size="20" color="#2563EB"></uni-icons>
+						<text class="card-title">擅长与授课区域</text>
+					</view>
+					<view class="plain-info-list">
+						<view class="plain-info-row">
+							<text class="plain-info-label">擅长</text>
+							<text class="plain-info-value">{{ subjectText }}</text>
+						</view>
+						<view class="plain-info-row">
+							<text class="plain-info-label">授课区域</text>
+							<text class="plain-info-value">{{ areaText }}</text>
+						</view>
+					</view>
+				</view>
+
+				<view class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="star-filled" size="20" color="#16A34A"></uni-icons>
+						<text class="card-title">教学亮点</text>
+					</view>
+					<view v-if="experienceList.length" class="bullet-list">
+						<view v-for="(item, index) in experienceList" :key="index" class="bullet-item">
+							<view class="bullet-dot">
+								<uni-icons type="checkmarkempty" size="10" color="#FFFFFF"></uni-icons>
+							</view>
+							<text class="bullet-text">{{ item }}</text>
+						</view>
+					</view>
+					<text v-else class="empty-text">暂未填写教学亮点</text>
+				</view>
+
+				<view class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="person-filled" size="20" color="#F59E0B"></uni-icons>
+						<text class="card-title">自我介绍</text>
+					</view>
+					<text class="description-text">{{ selfJudgeText }}</text>
+				</view>
+
+				<view class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="medal-filled" size="20" color="#2563EB"></uni-icons>
+						<text class="card-title">证书</text>
+					</view>
+					<view class="certificate-row">
+						<view v-for="(item, index) in certificateItems" :key="index" class="certificate-chip">
+							<text class="certificate-chip-text">{{ item }}</text>
+						</view>
+						<view v-if="certificateItems.length === 0" class="certificate-chip">
+							<text class="certificate-chip-text">暂未填写</text>
+						</view>
 					</view>
 				</view>
 			</view>
 
-			<!-- 辅导方式 -->
-			<view class="section">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">辅导方式</text>
-				</view>
-				<dict-tag :options="dict.type.sys_methods" :value="detail.methods"/>
-			</view>
+			<view class="bottom-placeholder"></view>
+		</scroll-view>
 
-			<!-- 薪资要求 -->
-			<view class="section">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">薪资要求</text>
-				</view>
-				<navigator url="/pages/price/list" class="salary-link">
-					<uni-icons type="list" size="16" color="#3B82F6"></uni-icons>
-					<text class="salary-link-text">查看薪资详情</text>
-					<uni-icons type="right" size="14" color="#3B82F6"></uni-icons>
-				</navigator>
-			</view>
-
-			<!-- 经历 -->
-			<view class="section" v-if="detail.experience">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">经历</text>
-				</view>
-				<text class="rich-text">{{ detail.experience }}</text>
-			</view>
-
-			<!-- 证书 -->
-			<view class="section" v-if="detail.certificate">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">证书</text>
-				</view>
-				<text class="rich-text">{{ detail.certificate }}</text>
-			</view>
-
-			<!-- 自我评价 -->
-			<view class="section" v-if="detail.selfJudge">
-				<view class="section-header">
-					<view class="section-bar"></view>
-					<text class="section-title">自我评价</text>
-				</view>
-				<text class="rich-text">{{ detail.selfJudge }}</text>
-			</view>
-
-			<!-- 底部占位 -->
-			<view style="height: 240rpx;"></view>
-		</view>
-
-		<!-- 底部栏 -->
-		<view class="bottom-bar">
-			<button class="btn-apply btn-apply-text" type="primary" size="small" open-type="contact">立即申请</button>
+		<view v-if="detail" class="bottom-bar">
+			<button class="contact-btn" open-type="contact">
+				<uni-icons type="chatboxes-filled" size="18" color="#FFFFFF"></uni-icons>
+				<text class="contact-btn-text">立即联系</text>
+			</button>
 		</view>
 	</view>
 </template>
@@ -180,7 +155,7 @@ import { getTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 
 export default {
-	dicts: ['sys_degree','sys_subject','sys_methods'],
+	dicts: ['sys_degree', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
 			tutorId: '',
@@ -194,6 +169,21 @@ export default {
 		this.loadDetail()
 	},
 	computed: {
+		avatarSrc() {
+			return '/static/images/profile.jpg'
+		},
+		isCertified() {
+			return String(this.detail?.status) === '1'
+		},
+		displayName() {
+			return this.detail?.realName || '教员'
+		},
+		subtitleText() {
+			const school = this.detail?.school || ''
+			const major = this.detail?.major || ''
+			if (school && major) return `${school}  ${major}`
+			return school || major || '暂未完善院校与专业信息'
+		},
 		districtDictOptions() {
 			return (useLocationStore().districts || []).map(d => ({
 				value: d.value,
@@ -202,6 +192,52 @@ export default {
 				elTagClass: ''
 			}))
 		},
+		subjectLabels() {
+			return this.mapLabels(this.detail?.subjects, this.dict.type.sys_subject)
+		},
+		areaLabels() {
+			return this.mapLabels(this.detail?.areas, this.districtDictOptions)
+		},
+		methodLabels() {
+			return this.mapLabels(this.detail?.methods, this.dict.type.sys_methods, false)
+		},
+		degreeText() {
+			const found = (this.dict.type.sys_degree || []).find(item => String(item.value) === String(this.detail?.degree))
+			return found ? found.label : '暂未填写'
+		},
+		cityText() {
+			return this.detail?.city || '暂未填写'
+		},
+		identityText() {
+			const mapping = {
+				0: '大学生教员',
+				1: '在职教师',
+				2: '其他'
+			}
+			return mapping[Number(this.detail?.identity)] || '大学生教员'
+		},
+		subjectText() {
+			return this.subjectLabels.join(' / ') || '暂未填写'
+		},
+		methodText() {
+			return this.methodLabels.join(' / ') || '暂未填写'
+		},
+		areaText() {
+			return this.areaLabels.join(' / ') || '暂未填写'
+		},
+		selfJudgeText() {
+			return this.detail?.selfJudge || '暂未填写自我介绍'
+		},
+		certificateItems() {
+			const source = this.detail?.certificateList || ''
+			if (!source) return []
+			return source.split(/[，,、\n]/).map(item => item.trim()).filter(Boolean)
+		},
+		experienceList() {
+			const source = this.detail?.experience || ''
+			if (!source) return []
+			return source.split(/[\n；;。]/).map(item => item.trim()).filter(Boolean).slice(0, 5)
+		}
 	},
 	methods: {
 		async loadDetail() {
@@ -218,38 +254,13 @@ export default {
 				this.loading = false
 			}
 		},
-		getDistrictLabel(val) {
-			const arr=[]
-			val.split(',').map(v => {
-				v=v.trim()
-				const found = (this.districtDictOptions || []).find(d => String(d.value) === String(v))
-				arr.push(found ? found.label : v)
-			})	
-			return arr
-		},
-		getSubjectLabel(val) {
-			const arr=[]
-			val.split(',').map(v => {
-				v=v.trim()
-				const found = (this.dict.type.sys_subject || []).find(d => String(d.value) === String(v))
-				arr.push(found ? found.label : v)
-			})	
-			return arr
-		},
-		getName(item) {
-			if (!item) return ''
-			const nickname = item.nickname || ''
-			return (nickname ? nickname.slice(0, 1) : '') + (item.title || '')
-		},
-		getFirstArea(item) {			
-			return useLocationStore().city.name
-		},
-		formatAreas(areas) {
-			if (!areas || !areas.length) return '暂未设置'
-			return areas.replace(/,/g, '、')
-		},
-		book() {
-			uni.showToast({ title: '预约功能开发中', icon: 'none' })
+		mapLabels(val, options, split = true) {
+			if (val === null || val === undefined || val === '') return []
+			const values = split ? String(val).split(',') : [String(val)]
+			return values.map(v => String(v).trim()).filter(Boolean).map(v => {
+				const found = (options || []).find(item => String(item.value) === v)
+				return found ? found.label : v
+			})
 		}
 	}
 }
@@ -258,365 +269,288 @@ export default {
 <style scoped>
 .page {
 	min-height: 100vh;
-	background: #fff;
+	background: #f3f7ff;
 }
 
-/* Profile 顶部 */
-.profile-header {
+.scroll-body {
+	height: 100vh;
+}
+
+.hero-section {
+	position: relative;
+	overflow: hidden;
+	padding: 40rpx 32rpx 28rpx;
+	background: linear-gradient(180deg, #ffffff 0%, #edf4ff 100%);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 40rpx 32rpx 28rpx;
-	background: #fff;
 }
+
+.hero-bg {
+	position: absolute;
+	border-radius: 50%;
+	background: rgba(59, 130, 246, 0.08);
+}
+
+.circle-one {
+	width: 260rpx;
+	height: 260rpx;
+	right: 60rpx;
+	top: 20rpx;
+}
+
+.circle-two {
+	width: 180rpx;
+	height: 180rpx;
+	right: -20rpx;
+	top: 80rpx;
+}
+
 .avatar-wrap {
 	position: relative;
-	width: 150rpx;
-	height: 150rpx;
-	margin-bottom: 16rpx;
+	width: 132rpx;
+	height: 132rpx;
+	margin-bottom: 20rpx;
+	z-index: 2;
 }
+
 .avatar {
-	width: 150rpx;
-	height: 150rpx;
-	border-radius: 8rpx;
-	background: #EEE;
+	width: 132rpx;
+	height: 132rpx;
+	border-radius: 50%;
+	background: #e5e7eb;
+	border: 6rpx solid #ffffff;
 }
-.cert-dot {
+
+.avatar-badge {
 	position: absolute;
-	right: 0;
-	bottom: 0;
+	right: 2rpx;
+	bottom: 4rpx;
 	width: 36rpx;
 	height: 36rpx;
-	background: #1A1A1A;
 	border-radius: 50%;
-	border: 2rpx solid #fff;
+	background: #3b82f6;
+	border: 4rpx solid #ffffff;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
-.profile-name {
-	font-size: 40rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-	margin-bottom: 8rpx;
+
+.hero-name {
+	font-size: 44rpx;
+	font-weight: 700;
+	color: #111827;
+	line-height: 1.2;
+	z-index: 2;
 }
-.profile-sub {
-	font-size: 26rpx;
-	color: #888;
-	margin-bottom: 16rpx;
-}
-.cert-badge {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	background: #F0FDF4;
-	border: 1rpx solid #BBF7D0;
-	border-radius: 20rpx;
-	padding: 6rpx 20rpx;
-	gap: 6rpx;
-}
-.cert-text {
+
+.hero-subtitle {
+	margin-top: 12rpx;
 	font-size: 24rpx;
-	color: #10B981;
+	color: #6b7280;
+	line-height: 1.5;
+	z-index: 2;
 }
 
-/* 统计栏 */
-.stats-bar {
+.status-row {
+	margin-top: 20rpx;
 	display: flex;
-	flex-direction: row;
-	align-items: center;
+	gap: 16rpx;
+	flex-wrap: wrap;
 	justify-content: center;
-	padding: 28rpx 32rpx;
-	border-top: 1rpx solid #F0F0F0;
-	border-bottom: 1rpx solid #F0F0F0;
-	margin-bottom: 10rpx;
+	z-index: 2;
 }
-.stat-item {
-	flex: 1;
+
+.status-chip {
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-}
-.stat-num {
-	font-size: 36rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-}
-.stat-label {
-	font-size: 22rpx;
-	color: #999;
-	margin-top: 4rpx;
-}
-.stat-divider {
-	width: 1rpx;
-	height: 48rpx;
-	background: #DDD;
-}
-
-/* 章节 */
-.section {
-	padding: 28rpx 32rpx;
-	border-bottom: 1rpx solid #F5F5F5;
-}
-.section-header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	margin-bottom: 20rpx;
-}
-.section-bar {
-	width: 6rpx;
-	height: 32rpx;
-	background: #1A1A1A;
-	border-radius: 4rpx;
-	margin-right: 12rpx;
-}
-.section-title {
-	font-size: 30rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-}
-
-/* 基本信息网格 */
-.info-grid {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	row-gap: 16rpx;
-}
-.info-cell {
-	display: flex;
-	flex-direction: row;
-	width: 50%;
-	align-items: flex-start;
-}
-.info-key {
-	font-size: 26rpx;
-	color: #888;
-	width: 100rpx;
-	flex-shrink: 0;
-}
-.info-val {
-	font-size: 26rpx;
-	color: #333;
-	flex: 1;
-	word-break: break-all;
-}
-
-/* 富文本段落 */
-.rich-text {
-	font-size: 26rpx;
-	color: #555;
-	line-height: 1.8;
-	word-break: break-all;
-}
-
-/* 科目标签 */
-.subject-tags {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 12rpx;
-}
-.subject-tag {
-	background: #F3F4F6;
-	color: #444;
-	font-size: 26rpx;
-	padding: 8rpx 22rpx;
-	border-radius: 8rpx;
-}
-
-/* 区域 */
-.area-row {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
 	gap: 8rpx;
 }
-.area-text {
-	font-size: 26rpx;
-	color: #555;
-	line-height: 1.6;
-	flex: 1;
+
+.status-chip-text {
+	font-size: 24rpx;
+	color: #16a34a;
 }
 
-/* 经历 */
-.exp-card {
-	display: flex;
-	flex-direction: row;
+.card-section {
+	padding: 24rpx;
 }
-.exp-dot-wrap {
+
+.info-card {
+	background: #fff;
+	border-radius: 28rpx;
+	padding: 28rpx 24rpx;
+	margin-bottom: 24rpx;
+	box-shadow: 0 10rpx 24rpx rgba(37, 99, 235, 0.06);
+}
+
+.card-title-row {
 	display: flex;
-	flex-direction: column;
 	align-items: center;
-	margin-right: 16rpx;
+	gap: 12rpx;
+	margin-bottom: 24rpx;
 }
-.exp-dot {
-	width: 28rpx;
-	height: 28rpx;
-	background: #10B981;
-	border-radius: 50%;
+
+.card-title {
+	font-size: 34rpx;
+	font-weight: 700;
+	color: #111827;
+}
+
+.overview-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 24rpx;
+}
+
+.overview-item {
+	display: flex;
+	gap: 16rpx;
+	padding: 20rpx;
+	border: 2rpx solid #eef2ff;
+	border-radius: 20rpx;
+}
+
+.overview-icon {
+	width: 56rpx;
+	height: 56rpx;
+	border-radius: 16rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	background: #eff6ff;
 	flex-shrink: 0;
 }
-.exp-line {
-	width: 2rpx;
-	flex: 1;
-	background: #E5E7EB;
-	margin-top: 4rpx;
+
+.overview-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
 }
-.exp-body {
-	flex: 1;
-	padding-bottom: 16rpx;
+
+.overview-label {
+	font-size: 24rpx;
+	color: #94a3b8;
 }
-.exp-desc {
-	font-size: 26rpx;
-	color: #555;
+
+.overview-value {
+	font-size: 28rpx;
+	font-weight: 600;
+	color: #1e293b;
+	line-height: 1.5;
+}
+
+.plain-info-list {
+	display: flex;
+	flex-direction: column;
+	gap: 20rpx;
+}
+
+.plain-info-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8rpx;
+}
+
+.plain-info-label {
+	font-size: 24rpx;
+	color: #94a3b8;
+}
+
+.plain-info-value,
+.description-text,
+.bullet-text,
+.empty-text {
+	font-size: 28rpx;
+	color: #334155;
 	line-height: 1.7;
 }
 
-/* 辅导方式 */
-.method-tags {
+.bullet-list {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
+	gap: 20rpx;
+}
+
+.bullet-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 16rpx;
+}
+
+.bullet-dot {
+	width: 32rpx;
+	height: 32rpx;
+	border-radius: 50%;
+	background: #16a34a;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-top: 6rpx;
+	flex-shrink: 0;
+}
+
+.certificate-row {
+	display: flex;
 	flex-wrap: wrap;
 	gap: 16rpx;
 }
-.method-tag {
-	border: 1rpx solid #E5E7EB;
-	border-radius: 8rpx;
-	padding: 10rpx 28rpx;
-}
-.method-text {
-	font-size: 26rpx;
-	color: #333;
+
+.certificate-chip {
+	padding: 14rpx 24rpx;
+	border-radius: 999rpx;
+	background: #eff6ff;
 }
 
-/* 薪资链接 */
-.salary-link {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 10rpx;
-	background: #EFF6FF;
-	border: 1rpx solid #BFDBFE;
-	border-radius: 12rpx;
-	padding: 20rpx 24rpx;
-}
-.salary-link-text {
-	flex: 1;
-	font-size: 28rpx;
-	color: #3B82F6;
-	font-weight: 500;
-}
-
-/* 薪资表格 */
-.salary-table {
-	background: #F9FAFB;
-	border-radius: 12rpx;
-	padding: 20rpx 24rpx;
-}
-.salary-row-header {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	margin-bottom: 12rpx;
-}
-.salary-th {
+.certificate-chip-text {
 	font-size: 24rpx;
-	color: #999;
-	font-weight: 500;
-}
-.salary-tr {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	padding: 12rpx 0;
-	border-top: 1rpx solid #EBEBEB;
-}
-.salary-td-label {
-	font-size: 26rpx;
-	color: #555;
-}
-.salary-td-val {
-	font-size: 26rpx;
-	color: #1A1A1A;
-	font-weight: 500;
-}
-.salary-note {
-	font-size: 22rpx;
-	color: #999;
-	display: block;
-	margin-top: 12rpx;
+	color: #2563eb;
 }
 
-/* 底部栏 */
+.bottom-placeholder {
+	height: 160rpx;
+}
+
 .bottom-bar {
 	position: fixed;
-	bottom: 0;
 	left: 0;
 	right: 0;
-	background: #fff;
-	border-top: 1rpx solid #ECECEC;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: 20rpx 32rpx;
-	padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-	gap: 24rpx;
-}
-.bottom-price {
-	display: flex;
-	flex-direction: row;
-	align-items: baseline;
-}
-.bottom-price-num {
-	font-size: 40rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-}
-.bottom-price-unit {
-	font-size: 24rpx;
-	color: #888;
-	margin-left: 4rpx;
+	bottom: 0;
+	padding: 20rpx 24rpx 28rpx;
+	background: linear-gradient(180deg, rgba(243,247,255,0) 0%, #f3f7ff 24%, #f3f7ff 100%);
 }
 
-/* 加载/错误 */
-.loading-wrap, .error-wrap {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding: 100rpx 0;
-}
-.bottom-bar {
-	position: sticky;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background: #fff;
-	border-top: 1rpx solid #ECECEC;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: 20rpx 32rpx;
-	padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-	gap: 24rpx;
-}
-.btn-apply {
-	flex: 1;
-	background: #1A1A1A;
-	border-radius: 80rpx;
+.contact-btn {
+	height: 92rpx;
+	border: none;
+	border-radius: 999rpx;
+	background: linear-gradient(135deg, #2563eb, #3b82f6);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 9rpx 0;
+	gap: 12rpx;
 }
-.btn-apply-text {
+
+.contact-btn::after {
+	border: none;
+}
+
+.contact-btn-text {
 	font-size: 30rpx;
+	font-weight: 700;
 	color: #fff;
-	font-weight: bold;
 }
 
+.loading-wrap,
+.error-wrap {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+}
+
+.error-text {
+	font-size: 28rpx;
+	color: #64748b;
+}
 </style>

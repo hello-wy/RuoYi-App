@@ -24,47 +24,27 @@
           <view class="card-main">
             <view class="card-info">
               <text class="tutor-name">{{ formatTutorName(item) }}</text>
+              <text class="info-line">身份：{{ getIdentityLabel(item.identity) }}</text>
+              <text class="info-line">城市：{{ item.city || '未填写' }}</text>
               <text class="info-line">学校：{{ item.school || '未填写' }}</text>
               <text class="info-line">专业：{{ item.major || '未填写' }}</text>
               <view class="method-row">
                 <text class="info-label">授课方式：</text>
-                <dict-tag
-                  v-if="hasTeachingMethod(item)"
-                  :options="dict.type.sys_methods"
-                  :value="item.methods"
-                />
+                <dict-tag v-if="hasTeachingMethod(item)" :options="dict.type.sys_methods" :value="item.methods" />
                 <text v-else class="method-empty">未填写</text>
               </view>
-              <text class="certificate-text">证书说明：{{ item.certificate || '未填写' }}</text>
+              <text class="certificate-text">证书说明：{{ item.certificateList || '未填写' }}</text>
             </view>
 
             <view class="cert-box">
-              <image
-                v-if="getCertificateImages(item).length > 0"
-                class="cert-thumb"
-                :src="getCertificateImages(item)[0]"
-                mode="aspectFill"
-                @click="previewCertificate(item)"
-              />
+              <image v-if="getCertificateImages(item).length > 0" class="cert-thumb" :src="getCertificateImages(item)[0]" mode="aspectFill" @click="previewCertificate(item)" />
               <view v-else class="cert-empty">暂无图片</view>
             </view>
           </view>
 
           <view class="card-actions">
-            <button
-              class="review-btn reject-btn"
-              :disabled="reviewingId === item.id"
-              @click="submitReview(item.id, 2)"
-            >
-              拒绝
-            </button>
-            <button
-              class="review-btn pass-btn"
-              :disabled="reviewingId === item.id"
-              @click="submitReview(item.id, 1)"
-            >
-              通过
-            </button>
+            <button class="review-btn reject-btn" :disabled="reviewingId === item.id" @click="submitReview(item.id, 2)">拒绝</button>
+            <button class="review-btn pass-btn" :disabled="reviewingId === item.id" @click="submitReview(item.id, 1)">通过</button>
           </view>
         </view>
 
@@ -82,7 +62,6 @@ import { requireAdminAccess } from './access'
 
 const PAGE_SIZE = 10
 const REVIEW_STATUS_PASS = 1
-const REVIEW_STATUS_REJECT = 2
 
 export default {
   dicts: ['sys_methods'],
@@ -114,13 +93,17 @@ export default {
     this.loadTutorList(true)
   },
   methods: {
+    getIdentityLabel(identity) {
+      const mapping = {
+        0: '大学生教员',
+        1: '在职教师',
+        2: '其他'
+      }
+      return mapping[Number(identity)] || '未知'
+    },
     async loadTutorList(reset = false) {
-      if (this.loading) {
-        return
-      }
-      if (reset) {
-        this.resetListState()
-      }
+      if (this.loading) return
+      if (reset) this.resetListState()
       this.loading = true
       try {
         const res = await listTutors(this.buildQueryParams())
@@ -144,49 +127,34 @@ export default {
       this.loadError = false
     },
     buildQueryParams() {
-      return buildPendingTutorReviewQuery({
-        pageNum: this.pageNum,
-        pageSize: PAGE_SIZE
-      })
+      return buildPendingTutorReviewQuery({ pageNum: this.pageNum, pageSize: PAGE_SIZE })
     },
     loadMore() {
-      if (this.loading || this.tutorList.length >= this.total) {
-        return
-      }
+      if (this.loading || this.tutorList.length >= this.total) return
       this.loadTutorList(false)
     },
     getCertificateImages(item) {
-      return String((item && item.certificates) || '')
-        .split(',')
-        .map(url => this.resolveImageUrl(url.trim()))
-        .filter(Boolean)
+      return String((item && item.certificates) || '').split(',').map(url => this.resolveImageUrl(url.trim())).filter(Boolean)
     },
     resolveImageUrl(url) {
-      if (!url) {
-        return ''
-      }
+      if (!url) return ''
       return isHttp(url) ? url : config.baseUrl + url
     },
     formatTutorName(item) {
-      return (item && item.realName) || (item && item.nickname) || '未填写姓名'
+      return (item && item.realName) || '未填写姓名'
     },
     hasTeachingMethod(item) {
       return item && item.methods !== null && item.methods !== undefined && item.methods !== ''
     },
     previewCertificate(item) {
       const urls = this.getCertificateImages(item)
-      if (urls.length === 0) {
-        return
-      }
-      uni.previewImage({
-        urls,
-        current: urls[0]
-      })
+      if (urls.length === 0) return
+      uni.previewImage({ urls, current: urls[0] })
     },
     async submitReview(id, status) {
       this.reviewingId = id
       try {
-        await reviewTutors({ id, isCertified: status })
+        await reviewTutors({ id, status })
         this.tutorList = this.tutorList.filter(item => item.id !== id)
         this.total = Math.max(this.total - 1, 0)
         this.$modal.showToast(status === REVIEW_STATUS_PASS ? '已通过' : '已拒绝')

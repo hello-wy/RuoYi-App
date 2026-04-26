@@ -55,7 +55,16 @@
         },
         "usingComponents" : true,
         "permission" : {},
-        "__usePrivacyCheck__" : true
+        "__usePrivacyCheck__" : true,
+        "__wxPrivacyConfig" : {
+            "enable" : true,
+            "policies" : [
+                {
+                    "text" : "相册（读取你选择的照片用于上传资质图片）",
+                    "scope" : "userAlbum"
+                }
+            ]
+        }
     },
     "vueVersion" : "3",
     "h5" : {

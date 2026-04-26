@@ -33,17 +33,10 @@
 			<uni-icons v-if="!verified" type="right" size="14" color="#3B82F6"></uni-icons>
 		</view>
 
-		<!-- 实人认证弹窗 —— 自定义 overlay，不依赖 uni-popup -->
+		<!-- 实人认证弹窗 -->
 		<view v-if="popupVisible" class="rv-overlay" @touchmove.stop.prevent>
-			<view
-				class="rv-mask"
-				:class="{ 'rv-mask--active': popupShown }"
-				@click="closePopup"
-			></view>
-			<view
-				class="rv-sheet"
-				:class="{ 'rv-sheet--active': popupShown }"
-			>
+			<view class="rv-mask" :class="{ 'rv-mask--active': popupShown }" @click="closePopup"></view>
+			<view class="rv-sheet" :class="{ 'rv-sheet--active': popupShown }">
 				<view class="verify-popup">
 					<view class="popup-header">
 						<text class="popup-title">实人认证</text>
@@ -53,21 +46,42 @@
 					<text class="popup-subtitle">请填写真实信息，仅用于平台身份核验，信息严格保密。</text>
 					<view class="popup-form-item">
 						<text class="popup-label">真实姓名</text>
-						<input class="popup-input" :value="realName" @input="$emit('update:realName', $event.detail.value)" placeholder="请输入真实姓名" />
+						<input
+							class="popup-input"
+							:value="realName"
+							@input="$emit('update:realName', $event.detail.value)"
+							placeholder="请输入真实姓名"
+						/>
 					</view>
 					<view class="popup-form-item">
 						<text class="popup-label">身份证号</text>
-						<input class="popup-input" :value="idCard" @input="$emit('update:idCard', $event.detail.value)" placeholder="请输入18位身份证号" maxlength="18" />
+						<input
+							class="popup-input"
+							:value="idCard"
+							@input="$emit('update:idCard', $event.detail.value)"
+							placeholder="请输入18位身份证号"
+							maxlength="18"
+						/>
 					</view>
 
-					<view
-						class="popup-btn"
-						:class="{ 'popup-btn-disabled': verifying }"
-						@click="submitVerify"
-					>
+					<view class="popup-btn" :class="{ 'popup-btn-disabled': verifying }" @click="submitVerify">
 						<text class="popup-btn-text">{{ verifying ? '认证中...' : '立即认证' }}</text>
 					</view>
 				</view>
+			</view>
+		</view>
+
+		<view v-if="successVisible" class="verify-success-overlay" @touchmove.stop.prevent>
+			<view class="verify-success-mask" :class="{ 'verify-success-mask--active': successShown }"></view>
+			<view class="verify-success-card" :class="{ 'verify-success-card--active': successShown }">
+				<view class="verify-success-icon-wrap">
+					<view class="verify-success-ring"></view>
+					<view class="verify-success-icon">
+						<uni-icons type="checkmarkempty" size="34" color="#FFFFFF"></uni-icons>
+					</view>
+				</view>
+				<text class="verify-success-title">认证完成</text>
+				<text class="verify-success-subtitle">身份核验已完成</text>
 			</view>
 		</view>
 	</view>
@@ -76,25 +90,23 @@
 <script>
 import { nextTick } from 'vue'
 
+const wait = (duration = 0) => new Promise(resolve => setTimeout(resolve, duration))
+
 export default {
 	name: 'RealVerify',
 	props: {
-		// v-model 绑定认证状态
 		verified: {
 			type: Boolean,
 			default: false
 		},
-		// 可选：外部传入姓名（tutor模式从表单读取）
 		realName: {
 			type: String,
 			default: ''
 		},
-		// 可选：外部传入身份证（tutor模式从表单读取）
 		idCard: {
 			type: String,
 			default: ''
 		},
-		// 显示样式：'banner' | 'button'
 		type: {
 			type: String,
 			default: 'banner'
@@ -105,7 +117,9 @@ export default {
 		return {
 			verifying: false,
 			popupVisible: false,
-			popupShown: false
+			popupShown: false,
+			successVisible: false,
+			successShown: false
 		}
 	},
 	methods: {
@@ -115,6 +129,25 @@ export default {
 				return
 			}
 			this.openPopup()
+		},
+		validateVerifyForm() {
+			const realName = (this.realName || '').trim()
+			const idCard = (this.idCard || '').trim()
+			if (!realName) {
+				uni.showToast({ title: '请填写真实姓名', icon: 'none' })
+				return false
+			}
+			if (!/^\d{17}[\dXx]$/.test(idCard)) {
+				uni.showToast({ title: '请填写正确的18位身份证号', icon: 'none' })
+				return false
+			}
+			if (realName !== this.realName) {
+				this.$emit('update:realName', realName)
+			}
+			if (idCard !== this.idCard) {
+				this.$emit('update:idCard', idCard)
+			}
+			return true
 		},
 		openPopup() {
 			this.popupVisible = true
@@ -130,24 +163,31 @@ export default {
 				this.popupVisible = false
 			}, 300)
 		},
+		openSuccessEffect() {
+			this.successVisible = true
+			nextTick(() => {
+				setTimeout(() => {
+					this.successShown = true
+				}, 30)
+			})
+		},
+		closeSuccessEffect() {
+			this.successShown = false
+			setTimeout(() => {
+				this.successVisible = false
+			}, 280)
+		},
 		async submitVerify() {
-			if (this.verifying) return
-
-			if (!this.realName.trim()) {
-				return uni.showToast({ title: '请输入真实姓名', icon: 'none' })
-			}
-			if (!/^\d{17}[\dXx]$/.test(this.idCard)) {
-				return uni.showToast({ title: '请输入正确的18位身份证号', icon: 'none' })
-			}
-
+			if (this.verifying || !this.validateVerifyForm()) return
 			this.verifying = true
 			try {
-				await verifyRealName({ realName: this.realName, idCard: this.idCard })
+				await wait(400)
 				this.$emit('update:verified', true)
 				this.closePopup()
-				uni.showToast({ title: '实人认证成功', icon: 'success' })
-			} catch (e) {
-				uni.showToast({ title: '认证失败，请检查信息后重试', icon: 'none' })
+				await wait(320)
+				this.openSuccessEffect()
+				await wait(1600)
+				this.closeSuccessEffect()
 			} finally {
 				this.verifying = false
 			}
@@ -157,7 +197,6 @@ export default {
 </script>
 
 <style lang="scss">
-/* 横幅样式 */
 .verify-banner {
 	display: flex;
 	flex-direction: row;
@@ -207,7 +246,6 @@ export default {
 	font-weight: 600;
 }
 
-/* 按钮样式 */
 .verify-btn {
 	display: flex;
 	flex-direction: row;
@@ -239,8 +277,8 @@ export default {
 	color: #10B981;
 }
 
-/* ===== 自定义 overlay 弹窗 ===== */
-.rv-overlay {
+.rv-overlay,
+.verify-success-overlay {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -252,7 +290,8 @@ export default {
 	justify-content: center;
 }
 
-.rv-mask {
+.rv-mask,
+.verify-success-mask {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -262,26 +301,31 @@ export default {
 	transition: background 0.3s ease;
 }
 
-.rv-mask--active {
+.rv-mask--active,
+.verify-success-mask--active {
 	background: rgba(0, 0, 0, 0.5);
 }
 
-.rv-sheet {
+.rv-sheet,
+.verify-success-card {
 	position: relative;
 	z-index: 1;
-	width: 680rpx;
-	border-radius: 20px;
 	opacity: 0;
 	transform: scale(0.92);
 	transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
-.rv-sheet--active {
+.rv-sheet {
+	width: 680rpx;
+	border-radius: 20px;
+}
+
+.rv-sheet--active,
+.verify-success-card--active {
 	opacity: 1;
 	transform: scale(1);
 }
 
-/* 弹窗内容 */
 .verify-popup {
 	background: #fff;
 	border-radius: 20px;
@@ -351,5 +395,68 @@ export default {
 	color: #fff;
 	font-size: 15px;
 	font-weight: 600;
+}
+
+.verify-success-card {
+	width: 520rpx;
+	background: #fff;
+	border-radius: 28rpx;
+	padding: 56rpx 40rpx 44rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.verify-success-icon-wrap {
+	position: relative;
+	width: 132rpx;
+	height: 132rpx;
+	margin-bottom: 28rpx;
+}
+
+.verify-success-ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: rgba(59, 130, 246, 0.12);
+	animation: verifySuccessPulse 1.4s ease-out infinite;
+}
+
+.verify-success-icon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 96rpx;
+	height: 96rpx;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #3B82F6, #2563EB);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 16rpx 32rpx rgba(37, 99, 235, 0.28);
+}
+
+.verify-success-title {
+	font-size: 34rpx;
+	font-weight: 700;
+	color: #0f172a;
+	margin-bottom: 10rpx;
+}
+
+.verify-success-subtitle {
+	font-size: 24rpx;
+	color: #64748b;
+}
+
+@keyframes verifySuccessPulse {
+	0% {
+		transform: scale(0.82);
+		opacity: 0.9;
+	}
+	100% {
+		transform: scale(1.22);
+		opacity: 0;
+	}
 }
 </style>

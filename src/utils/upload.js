@@ -7,13 +7,26 @@ import { toast, showConfirm, tansParams } from '@/utils/common'
 let timeout = 10000
 const baseUrl = config.baseUrl
 
+function joinRequestUrl(base = '', path = '') {
+  const normalizedBase = String(base || '').replace(/\/+$/, '')
+  const normalizedPath = String(path || '').replace(/^\/+/, '')
+  return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase
+}
+
 export default function upload(config) {
-  // 是否需要设置 token
-  const isToken = (config.headers || {}).isToken === false
-  config.header = config.header || {}
-  if (getToken() && !isToken) {
-    config.header['Authorization'] = 'Bearer ' + getToken()
+  const header = {
+    ...(config.headers || {}),
+    ...(config.header || {})
   }
+  const isToken = header.isToken === false
+  if (getToken() && !isToken) {
+    const requestUrl = config.url || ''
+    const authHeader = requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization'
+    if (!header[authHeader]) {
+      header[authHeader] = 'Bearer ' + getToken()
+    }
+  }
+  config.header = header
   // get请求映射params参数
   if (config.params) {
     let url = config.url + '?' + tansParams(config.params)
@@ -23,7 +36,7 @@ export default function upload(config) {
   return new Promise((resolve, reject) => {
     uni.uploadFile({
       timeout: config.timeout || timeout,
-      url: baseUrl + config.url,
+      url: joinRequestUrl(baseUrl, config.url),
       filePath: config.filePath,
       name: config.name || 'file',
       header: config.header,

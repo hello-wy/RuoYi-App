@@ -209,33 +209,39 @@ export default {
 			this.queryParams = newParams
 			this.loadData(true)
 		},
-		formatName(item) {
-			// 姓（第一个字）+ title，如 李老师
-			const nickname = item.nickname || ''
-			const lastName = nickname ? nickname.slice(0, 1) : ''
-			const title = item.title || ''
-			return lastName + title
-		},
-		/** 根据区域 value 查找 text */
-		getDistrictLabel(val) {
-			const arr=[]
-			val.split(',').map(v => {
-				v=v.trim()
-				const found = (this.districtDictOptions || []).find(d => String(d.value) === String(v))
-				arr.push(found ? found.label : v)
-			})
-			return arr
-		},
-		/** 根据科目 value 查找 label */
-		getSubjectLabel(val) {
-			const arr=[]
-			val.split(',').map(v => {
-				v=v.trim()
-				const found = (this.dict.type.sys_subject || []).find(d => String(d.value) === String(v))
-				arr.push(found ? found.label : v)
-			})
-			return arr
-		},
+			formatName(item) {
+				const sourceName = item.realName || item.nickname || ''
+				const lastName = sourceName ? sourceName.slice(0, 1) : ''
+				const suffixMap = {
+					0: '同学',
+					1: '老师',
+					2: '教员'
+				}
+				const suffix = suffixMap[Number(item.identity)] || '教员'
+				return lastName ? lastName + suffix : suffix
+			},
+			/** 根据区域 value 查找 text */
+			getDistrictLabel(val) {
+				if (!val) return []
+				const arr = []
+				val.split(',').map(v => {
+					v = v.trim()
+					const found = (this.districtDictOptions || []).find(d => String(d.value) === String(v))
+					arr.push(found ? found.label : v)
+				})
+				return arr
+			},
+			/** 根据科目 value 查找 label */
+			getSubjectLabel(val) {
+				if (!val) return []
+				const arr = []
+				val.split(',').map(v => {
+					v = v.trim()
+					const found = (this.dict.type.sys_subject || []).find(d => String(d.value) === String(v))
+					arr.push(found ? found.label : v)
+				})
+				return arr
+			},
 		goDetail(id) {
 			uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + id })
 		}

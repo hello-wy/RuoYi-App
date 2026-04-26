@@ -116,6 +116,12 @@
       }
     },
     {
+      "path": "pages/tutoring/tutor/agreement",
+      "style": {
+        "navigationBarTitleText": "家教入驻服务协议"
+      }
+    },
+    {
       "path": "pages/tutoring/tutor/index",
       "style": {
         "navigationBarTitleText": "我的教员主页"

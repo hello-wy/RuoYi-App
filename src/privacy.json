@@ -1,0 +1,9 @@
+{
+    "enable": true,
+    "policies": [
+        {
+            "text": "相册（读取你选择的照片用于上传资质图片）",
+            "scope": "userAlbum"
+        }
+    ]
+}

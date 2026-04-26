@@ -6,6 +6,12 @@ import { toast, showConfirm, tansParams } from '@/utils/common'
 let timeout = 10000
 const baseUrl = config.baseUrl
 
+function joinRequestUrl(base = '', path = '') {
+  const normalizedBase = String(base || '').replace(/\/+$/, '')
+  const normalizedPath = String(path || '').replace(/^\/+/, '')
+  return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase
+}
+
 const request = config => {
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
@@ -30,7 +36,7 @@ const request = config => {
     uni.request({
       method: config.method || 'get',
       timeout: config.timeout || timeout,
-      url: config.baseUrl || baseUrl + config.url,
+      url: config.baseUrl || joinRequestUrl(baseUrl, config.url),
       data: config.data,
       header: config.header,
       dataType: 'json'

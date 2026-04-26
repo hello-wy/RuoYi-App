@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 const DEFAULT_PENDING_TUTOR_REVIEW_QUERY = {
-  isCertified: 0,
+  status: 0,
   pageNum: 1,
   pageSize: 10,
   orderByColumn: 'createDate',
@@ -20,7 +20,6 @@ export async function getPendingTutorReviewCount() {
   return Number(res.total || 0)
 }
 
-// 查询大学生/教员列表
 export function listTutors(query) {
   return request({
     url: '/system/tutors/list',
@@ -29,7 +28,6 @@ export function listTutors(query) {
   })
 }
 
-// 查询大学生/教员详细
 export function getTutors(id) {
   return request({
     url: '/system/tutors/' + id,
@@ -37,7 +35,6 @@ export function getTutors(id) {
   })
 }
 
-// 新增大学生/教员
 export function addTutors(data) {
   return request({
     url: '/system/tutors',
@@ -46,7 +43,6 @@ export function addTutors(data) {
   })
 }
 
-// 修改大学生/教员
 export function updateTutors(data) {
   return request({
     url: '/system/tutors',
@@ -55,7 +51,6 @@ export function updateTutors(data) {
   })
 }
 
-// 审核大学生/教员认证状态
 export function reviewTutors(data) {
   return request({
     url: '/system/tutors/review',
@@ -64,7 +59,6 @@ export function reviewTutors(data) {
   })
 }
 
-// 删除大学生/教员
 export function delTutors(id) {
   return request({
     url: '/system/tutors/' + id,
