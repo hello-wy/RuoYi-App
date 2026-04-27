@@ -1,6 +1,5 @@
 <template>
 	<view class="page">
-		<!-- 筛选栏 -->
 		<tutoring-filter-bar
 			:value="queryParams"
 			:district-options="districtOptions"
@@ -12,12 +11,10 @@
 			@reset="loadData(true)"
 		></tutoring-filter-bar>
 
-		<!-- 加载中 -->
 		<view v-if="loading && list.length === 0" class="loading-wrap">
 			<uni-load-more status="loading"></uni-load-more>
 		</view>
 
-		<!-- 加载失败 -->
 		<view v-else-if="error && list.length === 0" class="error-wrap">
 			<text>加载失败，请重试</text>
 			<view class="retry-btn" @click="loadData(true)">
@@ -25,7 +22,6 @@
 			</view>
 		</view>
 
-		<!-- 列表 -->
 		<scroll-view
 			v-else
 			scroll-y
@@ -38,49 +34,66 @@
 				class="card"
 				@click="goDetail(item.id)"
 			>
-				<!-- 左：头像区（头像 + 认证角标） -->
-				<view class="avatar-wrap">
-					<image
-						class="avatar"
-						:src="item.avatar || '/static/images/profile.jpg'"
-						mode="aspectFill"
-					></image>
-				</view>
+				<view class="card-main">
+					<view class="avatar-wrap">
+						<image
+							class="avatar"
+							:src="getAvatarSrc(item)"
+							mode="aspectFill"
+						></image>
+						<text v-if="item.distance" class="distance-badge">{{ item.distance }}</text>
+					</view>
 
-				<!-- 右：信息区 -->
-				<view class="info-wrap">
-					<!-- 第一行：姓名 + 认证文字 + 箭头 -->
-					<view class="info-row-top">
-						<view class="name-cert">
-							<text class="tutor-name">
-								{{ formatName(item) }}
+					<view class="info-wrap">
+						<view class="name-row">
+							<text class="tutor-name">{{ formatName(item) }}</text>
+						</view>
+
+						<view class="school-row">
+							<text class="school-text">
+								{{ item.school || '--' }}{{ item.major ? ' · ' + item.major : '' }}
 							</text>
 						</view>
-						<uni-icons type="right" size="16" color="#CCC"></uni-icons>
-					</view>
 
-					<!-- 第二行：学校 · 专业 -->
-					<view class="school-row">
-						<uni-icons type="school" size="14" color="#999"></uni-icons>
-						<text class="school-text">
-							{{ item.school || '--' }}{{ item.major ? ' · ' + item.major : '' }}
-						</text>
+						<view class="card-tags">
+							<dict-tag
+								v-for="(value, tagIndex) in getDistrictLabel(item.areas)"
+								:key="'d' + tagIndex"
+								:options="districtDictOptions"
+								:value="value"
+							/>
+							<dict-tag
+								v-for="(value, tagIndex) in getSubjectLabel(item.subjects)"
+								:key="'s' + tagIndex"
+								:options="dict.type.sys_subject"
+								:value="value"
+							/>
+						</view>
 					</view>
+				</view>
 
-					<!-- 区域 + 科目标签 -->
-					<view class="card-tags">
-						<dict-tag v-for="(value, index) in getDistrictLabel(item.areas)" :key="'d'+index" :options="districtDictOptions" :value="value"/>
-						<dict-tag v-for="(value, index) in getSubjectLabel(item.subjects)" :key="'s'+index" :options="dict.type.sys_subject" :value="value"/>
+				<view class="card-footer">
+					<view class="footer-left">
+						<view class="footer-item">
+							<uni-icons type="auth-filled" size="16" color="#2196F3"></uni-icons>
+							<text class="footer-item-text">{{ String(item.status) === '1' ? '实名认证' : '资料待认证' }}</text>
+						</view>
+						<view class="footer-item">
+							<uni-icons type="staff-filled" size="16" color="#22C55E"></uni-icons>
+							<text class="footer-item-text">{{ item.school ? '学籍核验' : '院校待完善' }}</text>
+						</view>
+						<view class="footer-item">
+							<uni-icons type="star-filled" size="16" color="#F59E0B"></uni-icons>
+							<text class="footer-item-text">{{ getDegreeText(item.degree) }}</text>
+						</view>
 					</view>
-
-					<!-- 学历（独立一行，右对齐） -->
-					<view class="degree-row">
-						<dict-tag :options="dict.type.sys_degree" :value="item.degree"/>
+					<view class="footer-right">
+						<text class="detail-text">查看详情</text>
+						<uni-icons type="right" size="16" color="#22C55E"></uni-icons>
 					</view>
 				</view>
 			</view>
 
-			<!-- 加载更多 -->
 			<uni-load-more
 				:status="loadMoreStatus"
 				@clickLoadMore="loadMore"
@@ -90,13 +103,14 @@
 </template>
 
 <script>
+import config from '@/config'
 import { listTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
 
 export default {
 	components: { TutoringFilterBar },
-	dicts: ['sys_subject', 'sys_class', 'sys_methods','sys_degree'],
+	dicts: ['sys_subject', 'sys_class', 'sys_methods', 'sys_degree'],
 	data() {
 		return {
 			list: [],
@@ -120,11 +134,9 @@ export default {
 			if (!this.hasMore) return 'noMore'
 			return 'more'
 		},
-		// 区域选项：从 store 读取当前城市的区县列表
 		districtOptions() {
 			return useLocationStore().districts
 		},
-		// dict-tag 期望 { label, value } 格式，districts 是 { text, value }，需转换
 		districtDictOptions() {
 			return (useLocationStore().districts || []).map(d => ({
 				value: d.value,
@@ -133,14 +145,12 @@ export default {
 				elTagClass: ''
 			}))
 		},
-		// 科目选项：从字典转换为 picker 格式
 		subjectOptions() {
 			return (this.dict.type.sys_subject || []).map(item => ({
 				value: item.value,
 				text: item.label
 			}))
 		},
-		// 年级选项：从 sys_class 字典转换为 picker 格式
 		gradeOptions() {
 			return (this.dict.type.sys_class || []).map(item => ({
 				value: item.value,
@@ -204,44 +214,49 @@ export default {
 			if (!this.hasMore || this.loading) return
 			this.loadData(false)
 		},
-		/** 筛选栏变化回调 */
 		onFilterChange(newParams) {
 			this.queryParams = newParams
 			this.loadData(true)
 		},
-			formatName(item) {
-				const sourceName = item.realName || item.nickname || ''
-				const lastName = sourceName ? sourceName.slice(0, 1) : ''
-				const suffixMap = {
-					0: '同学',
-					1: '老师',
-					2: '教员'
-				}
-				const suffix = suffixMap[Number(item.identity)] || '教员'
-				return lastName ? lastName + suffix : suffix
-			},
-			/** 根据区域 value 查找 text */
-			getDistrictLabel(val) {
-				if (!val) return []
-				const arr = []
-				val.split(',').map(v => {
-					v = v.trim()
-					const found = (this.districtDictOptions || []).find(d => String(d.value) === String(v))
-					arr.push(found ? found.label : v)
-				})
-				return arr
-			},
-			/** 根据科目 value 查找 label */
-			getSubjectLabel(val) {
-				if (!val) return []
-				const arr = []
-				val.split(',').map(v => {
-					v = v.trim()
-					const found = (this.dict.type.sys_subject || []).find(d => String(d.value) === String(v))
-					arr.push(found ? found.label : v)
-				})
-				return arr
-			},
+		getAvatarSrc(item) {
+			const userId = item?.userId || item?.user_id || ''
+			return userId ? `${config.baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.jpg'
+		},
+		getDegreeText(value) {
+			const found = (this.dict.type.sys_degree || []).find(item => String(item.value) === String(value))
+			return found ? found.label : '学历待完善'
+		},
+		formatName(item) {
+			const sourceName = item.realName || item.nickname || ''
+			const lastName = sourceName ? sourceName.slice(0, 1) : ''
+			const suffixMap = {
+				0: '同学',
+				1: '老师',
+				2: '教员'
+			}
+			const suffix = suffixMap[Number(item.identity)] || '教员'
+			return lastName ? lastName + suffix : suffix
+		},
+		getDistrictLabel(val) {
+			if (!val) return []
+			const arr = []
+			val.split(',').map(v => {
+				v = v.trim()
+				const found = (this.districtDictOptions || []).find(d => String(d.value) === String(v))
+				arr.push(found ? found.label : v)
+			})
+			return arr
+		},
+		getSubjectLabel(val) {
+			if (!val) return []
+			const arr = []
+			val.split(',').map(v => {
+				v = v.trim()
+				const found = (this.dict.type.sys_subject || []).find(d => String(d.value) === String(v))
+				arr.push(found ? found.label : v)
+			})
+			return arr
+		},
 		goDetail(id) {
 			uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + id })
 		}
@@ -252,181 +267,139 @@ export default {
 <style scoped>
 .page {
 	min-height: 100vh;
-	background-color: #F5F5F5;
+	background-color: #f6f7ee;
 }
 
-/* 列表滚动区 */
 .list-scroll {
 	flex: 1;
 }
 
-/* 卡片 */
 .card {
-	background: #fff;
-	border-radius: 16rpx;
-	margin: 20rpx 24rpx;
-	padding: 24rpx;
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
-	position: relative;
+	margin: 24rpx;
+	background: linear-gradient(180deg, #ffffff 0%, #fdfdf7 100%);
+	border-radius: 24rpx;
+	overflow: hidden;
+	box-shadow: 0 12rpx 32rpx rgba(15, 23, 42, 0.06);
 }
 
-/* 头像 */
+.card-main {
+	display: flex;
+	gap: 24rpx;
+	padding: 28rpx;
+}
+
 .avatar-wrap {
 	position: relative;
-	width: 96rpx;
-	height: 96rpx;
-	margin-right: 24rpx;
+	width: 136rpx;
+	height: 168rpx;
 	flex-shrink: 0;
-}
-.avatar {
-	width: 96rpx;
-	height: 96rpx;
-	border-radius: 8rpx;
-	background-color: #EEE;
-}
-.cert-badge {
-	position: absolute;
-	bottom: 0;
-	right: 0;
-	width: 30rpx;
-	height: 30rpx;
-	border-radius: 50%;
-	background-color: #1A1A1A;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	margin-right: 0;
 }
 
-/* 信息区 */
+.avatar {
+	width: 136rpx;
+	height: 168rpx;
+	border-radius: 16rpx;
+	background-color: #eee;
+}
+
+.distance-badge {
+	position: absolute;
+	left: 12rpx;
+	bottom: 12rpx;
+	padding: 8rpx 16rpx;
+	border-radius: 999rpx;
+	background: rgba(17, 24, 39, 0.72);
+	font-size: 24rpx;
+	line-height: 1;
+	color: #fff;
+}
+
 .info-wrap {
 	flex: 1;
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	position: relative;
+	justify-content: flex-start;
 }
 
-.info-row-top {
+.name-row {
 	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 8rpx;
-}
-.name-cert {
-	display: flex;
-	flex-direction: row;
 	align-items: center;
 	gap: 12rpx;
 }
+
 .tutor-name {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-}
-.cert-label {
-	background-color: #F0F0F0;
-	border-radius: 8rpx;
-	padding: 2rpx 10rpx;
-}
-.cert-text {
-	font-size: 22rpx;
-	color: #666;
+	font-size: 40rpx;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #1f2937;
 }
 
-/* 学校行 */
 .school-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	margin-bottom: 16rpx;
-}
-.school-text {
-	font-size: 24rpx;
-	color: #888;
-	margin-left: 6rpx;
+	margin-top: 18rpx;
+	margin-bottom: 0;
 }
 
-/* 区域 + 科目标签行 */
+.school-text {
+	font-size: 28rpx;
+	line-height: 1.5;
+	color: #6b7280;
+	margin-left: 0;
+}
+
 .card-tags {
 	display: flex;
-	flex-direction: row;
 	flex-wrap: wrap;
-	gap: 8rpx;
-	margin-top: 8rpx;
+	gap: 12rpx;
+	margin-top: 20rpx;
 }
 
-/* 旧 subject-tags 保留兼容 */
-.subject-tags {
+.card-footer {
 	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 10rpx;
-}
-.bottom-bar {
-	position: sticky;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	background: #fff;
-	border-top: 1rpx solid #ECECEC;
-	display: flex;
-	flex-direction: row;
 	align-items: center;
-	padding: 20rpx 32rpx;
-	padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-	gap: 24rpx;
+	justify-content: space-between;
+	gap: 20rpx;
+	padding: 22rpx 28rpx;
+	border-top: 1rpx solid #edf0f2;
 }
-.btn-apply {
+
+.footer-left {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 18rpx;
 	flex: 1;
-	background: #1A1A1A;
-	border-radius: 80rpx;
+}
+
+.footer-item {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	padding: 9rpx 0;
-}
-.btn-apply-text {
-	font-size: 30rpx;
-	color: #fff;
-	font-weight: bold;
-}
-.subject-tag {
-	background-color: #F3F4F6;
-	color: #444;
+	gap: 6rpx;
 	font-size: 24rpx;
-	padding: 6rpx 18rpx;
-	border-radius: 8rpx;
+	line-height: 1.5;
+	color: #4b5563;
 }
 
-/* 学历行（独立行，右对齐） */
-.degree-row {
+.footer-item-text {
+	font-size: 24rpx;
+	line-height: 1.5;
+	color: #4b5563;
+}
+
+.footer-right {
 	display: flex;
-	flex-direction: row;
-	justify-content: flex-end;
-	margin-top: 10rpx;
+	align-items: center;
+	gap: 8rpx;
+	flex-shrink: 0;
 }
 
-/* 学历角标（兼容旧样式，保留但不再使用绝对定位） */
-.degree-badge-wrap {
-	display: flex;
-	flex-direction: row;
-	justify-content: flex-end;
-	margin-top: 10rpx;
-}
-.degree-badge {
-	font-size: 22rpx;
-	color: #6B7280;
-	background-color: #F3F4F6;
-	padding: 4rpx 12rpx;
-	border-radius: 8rpx;
-	font-weight: 500;
+.detail-text {
+	font-size: 30rpx;
+	color: #4b5563;
 }
 
-/* 加载/错误 */
-.loading-wrap, .error-wrap {
+.loading-wrap,
+.error-wrap {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -434,11 +407,13 @@ export default {
 	padding: 60rpx 0;
 	gap: 16rpx;
 }
+
 .retry-btn {
 	padding: 12rpx 40rpx;
 	background-color: #f0f0f0;
 	border-radius: 40rpx;
 }
+
 .retry-text {
 	font-size: 28rpx;
 	color: #555;
