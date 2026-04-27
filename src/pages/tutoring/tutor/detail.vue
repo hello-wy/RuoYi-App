@@ -163,6 +163,7 @@
 </template>
 
 <script>
+import config from '@/config'
 import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { reviewTutors } from '@/api/system/tutors'
 import { useLocationStore } from '@/store'
@@ -191,7 +192,8 @@ export default {
 	},
 	computed: {
 		avatarSrc() {
-			return '/static/images/profile.jpg'
+			const userId = this.detail?.userId || this.detail?.user_id || ''
+			return userId ? `${config.baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.jpg'
 		},
 		isCertified() {
 			return String(this.detail?.status) === '1'
@@ -350,15 +352,15 @@ export default {
 
 .avatar-wrap {
 	position: relative;
-	width: 132rpx;
-	height: 132rpx;
-	margin-bottom: 20rpx;
+	width: 176rpx;
+	height: 176rpx;
+	margin-bottom: 24rpx;
 	z-index: 2;
 }
 
 .avatar {
-	width: 132rpx;
-	height: 132rpx;
+	width: 176rpx;
+	height: 176rpx;
 	border-radius: 50%;
 	background: #e5e7eb;
 	border: 6rpx solid #ffffff;
@@ -366,8 +368,8 @@ export default {
 
 .avatar-badge {
 	position: absolute;
-	right: 2rpx;
-	bottom: 4rpx;
+	right: 6rpx;
+	bottom: 8rpx;
 	width: 36rpx;
 	height: 36rpx;
 	border-radius: 50%;
@@ -569,43 +571,35 @@ export default {
 	border: none;
 	border-radius: 999rpx;
 	font-size: 30rpx;
-	font-weight: 700;
-	line-height: 92rpx;
-}
-
-.audit-btn::after {
-	border: none;
+	font-weight: 600;
 }
 
 .reject-btn {
-	color: #b91c1c;
-	background: #fff1f2;
+	background: #fee2e2;
+	color: #dc2626;
 }
 
 .pass-btn {
+	background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
 	color: #ffffff;
-	background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
 .contact-btn {
-	height: 92rpx;
+	height: 96rpx;
 	border: none;
 	border-radius: 999rpx;
-	background: linear-gradient(135deg, #2563eb, #3b82f6);
+	background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 12rpx;
-}
-
-.contact-btn::after {
-	border: none;
+	box-shadow: 0 14rpx 32rpx rgba(37, 99, 235, 0.24);
 }
 
 .contact-btn-text {
 	font-size: 30rpx;
-	font-weight: 700;
-	color: #fff;
+	font-weight: 600;
+	color: #ffffff;
 }
 
 .loading-wrap,
@@ -613,7 +607,7 @@ export default {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	height: 100vh;
+	padding-top: 240rpx;
 }
 
 .error-text {
