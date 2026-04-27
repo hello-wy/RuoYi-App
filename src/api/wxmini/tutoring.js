@@ -64,3 +64,11 @@ export function uploadTutorCertification(filePath) {
         name: 'file'
     })
 }
+
+export function uploadTutorAvatar(filePath) {
+    return upload({
+        url: '/wxmini/common/uploadAvatar',
+        filePath,
+        name: 'file'
+    })
+}

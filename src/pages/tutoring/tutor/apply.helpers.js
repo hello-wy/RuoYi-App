@@ -83,8 +83,10 @@ export function requestWechatImagePrivacyAuthorization(wxApi = globalThis.wx) {
 }
 
 export function chooseWechatAlbumImage(uniApi = globalThis.uni) {
-  const chooser = uniApi?.chooseMedia || uniApi?.chooseImage
-  if (!chooser) {
+  const hasChooseMedia = typeof uniApi?.chooseMedia === 'function'
+  const hasChooseImage = typeof uniApi?.chooseImage === 'function'
+
+  if (!hasChooseMedia && !hasChooseImage) {
     return Promise.reject(new Error('choose image api unavailable'))
   }
 
@@ -94,12 +96,14 @@ export function chooseWechatAlbumImage(uniApi = globalThis.uni) {
     sourceType: ['album']
   }
 
-  if (uniApi?.chooseMedia) {
+  if (hasChooseMedia) {
     options.mediaType = ['image']
   }
 
   return new Promise((resolve, reject) => {
-    chooser({
+    const invoke = hasChooseMedia ? uniApi.chooseMedia : uniApi.chooseImage
+
+    invoke({
       ...options,
       success: (res) => {
         const file = normalizeSelectedImage(res.tempFiles?.[0] || {

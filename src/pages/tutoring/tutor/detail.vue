@@ -164,7 +164,8 @@
 
 <script>
 import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
-import { reviewTutors } from '@/api/system/tutors'
+import { getTutorById, reviewTutors } from '@/api/system/tutors'
+import request from '@/utils/request'
 import { useLocationStore } from '@/store'
 import {
 	buildTutorDetailBottomActions,
@@ -272,8 +273,20 @@ export default {
 			this.loading = true
 			this.error = false
 			try {
-				const res = await getTutorDetail(this.tutorId)
-				this.detail = res.data || res
+				let res
+				if (this.auditMode) {
+					const loadAuditTutorDetail = typeof getTutorById === 'function'
+						? getTutorById
+						: id => request({
+							url: '/system/tutors/' + id,
+							method: 'get'
+						})
+					res = await loadAuditTutorDetail(this.tutorId)
+					this.detail = res?.data || (Array.isArray(res?.rows) ? res.rows[0] : res)
+				}else{
+					res = await getTutorDetail(this.tutorId)
+					this.detail = res.data || res
+				}
 			} catch (e) {
 				this.error = true
 				console.error('加载教员详情失败', e)

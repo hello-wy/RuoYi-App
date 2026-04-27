@@ -28,7 +28,7 @@ export function listTutors(query) {
   })
 }
 
-export function getTutors(id) {
+export function getTutorById(id) {
   return request({
     url: '/system/tutors/' + id,
     method: 'get'

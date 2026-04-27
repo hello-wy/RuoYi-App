@@ -36,6 +36,23 @@
 						<input class="field-input" v-model="form.city" placeholder="例：江宁区" maxlength="15" />
 					</view>
 				</view>
+
+				<view class="form-item">
+					<text class="form-label">头像</text>
+					<view v-if="avatarPreviewUrl" class="cert-upload-preview" @click="previewAvatarImage">
+						<image :src="avatarPreviewUrl" class="cert-upload-image" mode="aspectFill"></image>
+						<view class="cert-upload-actions">
+							<view class="cert-upload-action" @click.stop="chooseAvatarImage">
+								<text class="cert-upload-action-text">重新上传</text>
+							</view>
+						</view>
+					</view>
+					<view v-else class="cert-upload-trigger" @click="chooseAvatarImage">
+						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
+						<text class="cert-upload-trigger-text">{{ avatarUploading ? '上传中...' : '上传头像' }}</text>
+						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 5MB</text>
+					</view>
+				</view>
 			</view>
 
 			<view class="section-card">
@@ -73,7 +90,6 @@
 						</picker>
 					</view>
 				</view>
-
 			</view>
 
 			<view class="section-card">
@@ -158,7 +174,7 @@
 					<text class="word-count">{{ (form.certificateList || '').length }}/300</text>
 				</view>
 
-				<!-- <view class="form-item">
+				<view class="form-item">
 					<text class="form-label">证书图片</text>
 					<view v-if="certificatePreviewUrl" class="cert-upload-preview" @click="previewCertificateImage">
 						<image :src="certificatePreviewUrl" class="cert-upload-image" mode="aspectFill"></image>
@@ -176,7 +192,7 @@
 						<text class="cert-upload-trigger-text">{{ certificateUploading ? '上传中...' : '上传证书图片' }}</text>
 						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 5MB</text>
 					</view>
-				</view> -->
+				</view>
 
 				<view class="form-item">
 					<text class="form-label">自我评价</text>
@@ -251,7 +267,7 @@
 
 <script>
 import config from '@/config'
-import { addTutors, uploadTutorCertification } from '@/api/wxmini/tutoring'
+import { addTutors, uploadTutorAvatar, uploadTutorCertification } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import {
@@ -274,6 +290,7 @@ export default {
 			verified: false,
 			submitting: false,
 			certificateUploading: false,
+			avatarUploading: false,
 			agreed: false,
 			identityOptions: [
 				{ label: '大学生教员', value: 0 },
@@ -302,7 +319,8 @@ export default {
 			areaPopupShown: false,
 			subjectPopupVisible: false,
 			subjectPopupShown: false,
-			certificatePreviewUrl: ''
+			certificatePreviewUrl: '',
+			avatarPreviewUrl: ''
 		}
 	},
 	computed: {
@@ -313,19 +331,27 @@ export default {
 	methods: {
 		openAreaPopup() {
 			this.areaPopupVisible = true
-			this.$nextTick(() => setTimeout(() => { this.areaPopupShown = true }, 30))
+			this.$nextTick(() => setTimeout(() => {
+				this.areaPopupShown = true
+			}, 30))
 		},
 		closeAreaPopup() {
 			this.areaPopupShown = false
-			setTimeout(() => { this.areaPopupVisible = false }, 300)
+			setTimeout(() => {
+				this.areaPopupVisible = false
+			}, 300)
 		},
 		openSubjectPopup() {
 			this.subjectPopupVisible = true
-			this.$nextTick(() => setTimeout(() => { this.subjectPopupShown = true }, 30))
+			this.$nextTick(() => setTimeout(() => {
+				this.subjectPopupShown = true
+			}, 30))
 		},
 		closeSubjectPopup() {
 			this.subjectPopupShown = false
-			setTimeout(() => { this.subjectPopupVisible = false }, 300)
+			setTimeout(() => {
+				this.subjectPopupVisible = false
+			}, 300)
 		},
 		selectIdentity(value) {
 			this.form.identity = value
@@ -335,7 +361,7 @@ export default {
 			return item ? item.label : val
 		},
 		getDegreeLabel(val) {
-			const item = (this.dict.type.sys_degree || []).find(o => o.value === val)
+			const item = (this.dict.type.sys_degree || []).find(o => String(o.value) === String(val))
 			return item ? item.label : val
 		},
 		onDegreeChange(e) {
@@ -377,57 +403,102 @@ export default {
 		openAgreement() {
 			uni.navigateTo({ url: tutorAgreementRoute })
 		},
-		// async chooseCertificateImage() {
-		// 	if (this.certificateUploading) return
-		// 	try {
-		// 		await requestWechatImagePrivacyAuthorization()
-		// 		const file = await chooseWechatAlbumImage()
-		// 		const error = getImageValidationError(file)
-		// 		if (error) {
-		// 			uni.showToast({ title: error, icon: 'none' })
-		// 			return
-		// 		}
-		// 		await this.uploadCertificateImage(file)
-		// 	} catch (error) {
-		// 		if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
-		// 			return
-		// 		}
-		// 		if (isChooseImagePermissionDenied(error)) {
-		// 			uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
-		// 			return
-		// 		}
-		// 		uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
-		// 	}
-		// },
-		// async uploadCertificateImage(file) {
-		// 	this.certificateUploading = true
-		// 	try {
-		// 		const result = await uploadTutorCertification(file.tempFilePath || file.path)
-		// 		const certificateUrl = buildUploadedCertificateUrl(config.baseUrl, result)
-		// 		if (!certificateUrl) {
-		// 			throw new Error('empty upload result')
-		// 		}
-		// 		this.form.certificates = certificateUrl
-		// 		this.certificatePreviewUrl = certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl
-		// 		uni.showToast({ title: '上传成功', icon: 'success' })
-		// 	} catch (error) {
-		// 		uni.showToast({ title: '上传失败，请重试', icon: 'none' })
-		// 	} finally {
-		// 		this.certificateUploading = false
-		// 	}
-		// },
-		// previewCertificateImage() {
-		// 	if (!this.certificatePreviewUrl) return
-		// 	uni.previewImage({
-		// 		urls: [this.certificatePreviewUrl],
-		// 		current: this.certificatePreviewUrl
-		// 	})
-		// },
-		// removeCertificateImage() {
-		// 	const state = buildRemovedCertificateState()
-		// 	this.form.certificates = state.certificates
-		// 	this.certificatePreviewUrl = state.certificatePreviewUrl
-		// },
+		async chooseAvatarImage() {
+			if (this.avatarUploading) return
+			try {
+				await requestWechatImagePrivacyAuthorization(typeof wx !== 'undefined' ? wx : undefined)
+				const file = await chooseWechatAlbumImage(typeof uni !== 'undefined' ? uni : undefined)
+				const error = getImageValidationError(file)
+				if (error) {
+					uni.showToast({ title: error, icon: 'none' })
+					return
+				}
+				await this.uploadAvatarImage(file)
+			} catch (error) {
+				if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
+					return
+				}
+				if (isChooseImagePermissionDenied(error)) {
+					uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
+					return
+				}
+				uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
+			}
+		},
+		async uploadAvatarImage(file) {
+			this.avatarUploading = true
+			try {
+				const result = await uploadTutorAvatar(file.tempFilePath || file.path)
+				const avatarUrl = buildUploadedCertificateUrl(config.baseUrl, result)
+				if (!avatarUrl) {
+					throw new Error('empty upload result')
+				}
+				this.avatarPreviewUrl = avatarUrl.startsWith('http') ? avatarUrl : config.baseUrl + avatarUrl
+				uni.showToast({ title: '上传成功', icon: 'success' })
+			} catch (error) {
+				uni.showToast({ title: '上传失败，请重试', icon: 'none' })
+			} finally {
+				this.avatarUploading = false
+			}
+		},
+		previewAvatarImage() {
+			if (!this.avatarPreviewUrl) return
+			uni.previewImage({
+				urls: [this.avatarPreviewUrl],
+				current: this.avatarPreviewUrl
+			})
+		},
+		async chooseCertificateImage() {
+			if (this.certificateUploading) return
+			try {
+				await requestWechatImagePrivacyAuthorization(typeof wx !== 'undefined' ? wx : undefined)
+				const file = await chooseWechatAlbumImage(typeof uni !== 'undefined' ? uni : undefined)
+				const error = getImageValidationError(file)
+				if (error) {
+					uni.showToast({ title: error, icon: 'none' })
+					return
+				}
+				await this.uploadCertificateImage(file)
+			} catch (error) {
+				if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
+					return
+				}
+				if (isChooseImagePermissionDenied(error)) {
+					uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
+					return
+				}
+				uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
+			}
+		},
+		async uploadCertificateImage(file) {
+			this.certificateUploading = true
+			try {
+				const result = await uploadTutorCertification(file.tempFilePath || file.path)
+				const certificateUrl = buildUploadedCertificateUrl(config.baseUrl, result)
+				if (!certificateUrl) {
+					throw new Error('empty upload result')
+				}
+				this.form.certificates = certificateUrl
+				this.certificatePreviewUrl = certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl
+				uni.showToast({ title: '上传成功', icon: 'success' })
+			} catch (error) {
+				uni.showToast({ title: '上传失败，请重试', icon: 'none' })
+			} finally {
+				this.certificateUploading = false
+			}
+		},
+		previewCertificateImage() {
+			if (!this.certificatePreviewUrl) return
+			uni.previewImage({
+				urls: [this.certificatePreviewUrl],
+				current: this.certificatePreviewUrl
+			})
+		},
+		removeCertificateImage() {
+			const state = buildRemovedCertificateState()
+			this.form.certificates = state.certificates
+			this.certificatePreviewUrl = state.certificatePreviewUrl
+		},
 		validate() {
 			if (!this.form.realName.trim()) {
 				uni.showToast({ title: '请填写真实姓名', icon: 'none' })
@@ -447,6 +518,10 @@ export default {
 			}
 			if (this.form.city.trim().length > 15) {
 				uni.showToast({ title: '城市不能超过15个字', icon: 'none' })
+				return false
+			}
+			if (!this.avatarPreviewUrl) {
+				uni.showToast({ title: '请上传头像', icon: 'none' })
 				return false
 			}
 			if (!this.form.school.trim()) {
@@ -487,7 +562,7 @@ export default {
 			if (!this.validate() || this.submitting) return
 			this.submitting = true
 			try {
-				const res = await addTutors({
+				await addTutors({
 					realName: this.form.realName,
 					idCard: this.form.idCard,
 					identity: this.form.identity,
@@ -505,7 +580,6 @@ export default {
 				})
 				uni.showToast({ title: '申请已提交，等待审核', icon: 'success' })
 				setTimeout(() => {
-					// uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + res.data })
 					uni.navigateTo({ url: '/pages/index' })
 				}, 1000)
 			} catch (e) {
