@@ -17,7 +17,6 @@
 				</view>
 			</view>
 
-			<!-- 分割线 OR -->
 			<view class="divider-or">
 				<view class="divider-line"></view>
 				<text class="divider-or-text">或</text>
@@ -33,7 +32,6 @@
 					<text class="method-title">在线填写需求表单</text>
 				</view>
 
-				<!-- 联系人姓名 -->
 				<view class="form-item">
 					<text class="form-label">简单描述你的需求（这个将作为标题）</text>
 					<input
@@ -44,7 +42,6 @@
 					/>
 				</view>
 
-				<!-- 手机号码 -->
 				<view class="form-item">
 					<text class="form-label">手机号码</text>
 					<view class="form-input-row">
@@ -58,11 +55,46 @@
 					</view>
 				</view>
 
-				<!-- 年级科目 -->
+				<view class="form-item">
+					<text class="form-label">服务萌娃 <text class="form-label-required">*</text></text>
+					<view class="baby-picker">
+						<view class="picker-full-box baby-picker-trigger" @click="handleBabyPickerToggle">
+							<view class="baby-picker-value">
+								<text class="picker-text" :class="{ placeholder: !form.babyName }">
+									{{ form.babyName || '点击选择萌娃' }}
+								</text>
+								<text v-if="form.babyMeta" class="baby-picker-meta">{{ form.babyMeta }}</text>
+							</view>
+							<uni-icons :type="babyPickerVisible ? 'top' : 'bottom'" size="12" color="#aaa"></uni-icons>
+						</view>
+						<view v-if="babyPickerVisible" class="baby-picker-panel">
+							<view v-if="babyLoading" class="baby-picker-state">萌娃列表加载中...</view>
+							<template v-else-if="showBabyEmptyState">
+								<view class="baby-picker-state">暂无萌娃，请先前往萌娃管理添加</view>
+								<view class="baby-picker-action" @click="handleToBabyManager">去添加萌娃</view>
+							</template>
+							<view v-else class="baby-option-list">
+								<view
+									v-for="item in babyList"
+									:key="item.id"
+									class="baby-option"
+									:class="{ active: String(form.babyId) === String(item.id) }"
+									@click="selectBaby(item)"
+								>
+									<view class="baby-option-main">
+										<text class="baby-option-name">{{ item.displayName }}</text>
+										<text v-if="item.meta" class="baby-option-meta">{{ item.meta }}</text>
+									</view>
+									<uni-icons v-if="String(form.babyId) === String(item.id)" type="checkmarkempty" size="18" color="#3B82F6"></uni-icons>
+								</view>
+							</view>
+						</view>
+					</view>
+				</view>
+
 				<view class="form-item">
 					<text class="form-label">年级科目</text>
 					<view class="picker-row">
-						<!-- 年级 -->
 						<picker
 							mode="selector"
 							:range="gradeOptions"
@@ -77,7 +109,6 @@
 								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
 							</view>
 						</picker>
-						<!-- 科目 -->
 						<picker
 							mode="selector"
 							:range="subjectOptions"
@@ -95,10 +126,8 @@
 					</view>
 				</view>
 
-				<!-- 授课地址：省市区 -->
 				<area-picker v-model="form.region" @change="onRegionChange"></area-picker>
 
-				<!-- 授课地址：详细地址 -->
 				<address-search
 					v-model="form.detail"
 					v-model:location="form.location"
@@ -107,7 +136,6 @@
 					:city="form.region.city"
 				></address-search>
 
-				<!-- 每周频次 -->
 				<view class="form-item">
 					<text class="form-label">每周频次</text>
 					<view class="week-tags">
@@ -123,11 +151,9 @@
 					</view>
 				</view>
 
-				<!-- 上课时间 -->
 				<view class="form-item">
 					<text class="form-label">上课时间</text>
 					<view class="time-row">
-						<!-- 开始时间 -->
 						<picker
 							mode="multiSelector"
 							:range="timeRange"
@@ -143,7 +169,6 @@
 							</view>
 						</picker>
 						<text class="time-separator">至</text>
-						<!-- 结束时间 -->
 						<picker
 							mode="multiSelector"
 							:range="timeRange"
@@ -161,7 +186,6 @@
 					</view>
 				</view>
 
-				<!-- 授课方式 -->
 				<view class="form-item">
 					<text class="form-label">授课方式</text>
 					<view class="method-tags">
@@ -177,7 +201,6 @@
 					</view>
 				</view>
 
-				<!-- 学生情况描述 -->
 				<view class="form-item">
 					<text class="form-label">学生情况描述</text>
 					<textarea
@@ -190,7 +213,6 @@
 					<text class="word-count">{{ (form.description || '').length }}/300</text>
 				</view>
 
-				<!-- 教员要求 -->
 				<view class="form-item">
 					<text class="form-label">教员要求</text>
 					<textarea
@@ -203,33 +225,32 @@
 					<text class="word-count">{{ (form.requirements || '').length }}/300</text>
 				</view>
 
-				<!-- 提示 -->
 				<view class="tips-row">
 					<uni-icons type="info-filled" size="14" color="#999"></uni-icons>
 					<text class="tips-text">发布需求后，平台会通过审核。审核通过后需教师通过教务院申请。</text>
 				</view>
 			</view>
 
-			<!-- 提交按钮 -->
 			<view class="submit-wrap">
 				<view class="submit-btn" :class="{ disabled: submitting }" @click="handleSubmit">
 					<text class="submit-text">{{ submitting ? '提交中...' : '立即发布' }}</text>
 				</view>
 			</view>
-
 		</view>
 
-		<!-- 登录弹窗 -->
 		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
 	</view>
 </template>
 
 <script>
 import { addParents } from '@/api/wxmini/tutoring'
+import { listBaby } from '@/api/wxmini/baby'
 import { useUserStore } from '@/store'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import { canUseBabyPicker, normalizeBabyList, shouldShowBabyEmptyState } from './apply.helpers'
+
 export default {
 	components: { AreaPicker, AddressSearch, LoginPopup },
 	dicts: ['sys_class', 'sys_subject', 'sys_methods'],
@@ -237,7 +258,9 @@ export default {
 		return {
 			submitting: false,
 			shouldAutoOpenLogin: false,
-			userPhone: '',
+			babyLoading: false,
+			babyPickerVisible: false,
+			babyList: [],
 			weekDays: [
 				{ label: '周一', value: '1' },
 				{ label: '周二', value: '2' },
@@ -247,30 +270,32 @@ export default {
 				{ label: '周六', value: '6' },
 				{ label: '周日', value: '7' }
 			],
-			// timeRange[0] = hours 0~23, timeRange[1] = minutes ['00','30']
 			timeRange: [
 				Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + '时'),
 				['00分', '30分']
 			],
-			startTimeIndex: [8, 0],  // 默认 08:00
-			endTimeIndex: [10, 0],   // 默认 10:00
+			startTimeIndex: [8, 0],
+			endTimeIndex: [10, 0],
 			form: {
 				name: '',
 				phone: '',
+				babyId: '',
+				babyName: '',
+				babyMeta: '',
 				grade: '',
 				subject: '',
 				region: { province: '', city: '', district: '', code: '' },
-				detail: '',      // 输入的地点名称
-				location: '',    // 腾讯地图返回的完整地址
-				geo: '',         // 经纬度字符串 "lng,lat"
-				region_district: '', // 腾讯地图返回的区县名
-				dayOfWeek: '',   // 逗号分隔，如 "1,2,3"
-				startTime: '',   // 如 "08:00"
-				endTime: '',     // 如 "10:00"
+				detail: '',
+				location: '',
+				geo: '',
+				region_district: '',
+				dayOfWeek: '',
+				startTime: '',
+				endTime: '',
 				methods: '',
 				description: '',
 				requirements: ''
-			},
+			}
 		}
 	},
 	computed: {
@@ -286,17 +311,21 @@ export default {
 		subjectIndex() {
 			return this.subjectOptions.findIndex(o => o.value === this.form.subject)
 		},
-		userPhone() {
-			return useUserStore().phone
+		userType() {
+			return useUserStore().userType
 		},
+		showBabyEmptyState() {
+			return shouldShowBabyEmptyState(this.babyPickerVisible, this.babyList)
+		}
 	},
 	onLoad() {
 		this.form.phone = useUserStore().phone
+		this.loadBabyList()
+	},
+	onShow() {
+		this.loadBabyList()
 	},
 	methods: {
-		goBack() {
-			uni.navigateBack()
-		},
 		callService() {
 			uni.makePhoneCall({ phoneNumber: '17327736231' })
 		},
@@ -313,13 +342,12 @@ export default {
 		toggleMethod(value) {
 			this.form.methods = this.form.methods === value ? '' : value
 		},
-		// 星期多选
 		isDaySelected(val) {
 			if (!this.form.dayOfWeek) return false
 			return this.form.dayOfWeek.split(',').includes(val)
 		},
 		toggleDay(val) {
-			let days = this.form.dayOfWeek ? this.form.dayOfWeek.split(',') : []
+			const days = this.form.dayOfWeek ? this.form.dayOfWeek.split(',') : []
 			const idx = days.indexOf(val)
 			if (idx >= 0) {
 				days.splice(idx, 1)
@@ -329,7 +357,6 @@ export default {
 			}
 			this.form.dayOfWeek = days.join(',')
 		},
-		// 时间选择器工具
 		indexToTime(hIdx, mIdx) {
 			const h = String(hIdx).padStart(2, '0')
 			const m = mIdx === 0 ? '00' : '30'
@@ -341,10 +368,8 @@ export default {
 			this.form.startTime = this.indexToTime(hIdx, mIdx)
 		},
 		onStartColumnChange(e) {
-			const col = e.detail.column
-			const val = e.detail.value
 			const cur = [...this.startTimeIndex]
-			cur[col] = val
+			cur[e.detail.column] = e.detail.value
 			this.startTimeIndex = cur
 		},
 		onEndTimeChange(e) {
@@ -353,14 +378,62 @@ export default {
 			this.form.endTime = this.indexToTime(hIdx, mIdx)
 		},
 		onEndColumnChange(e) {
-			const col = e.detail.column
-			const val = e.detail.value
 			const cur = [...this.endTimeIndex]
-			cur[col] = val
+			cur[e.detail.column] = e.detail.value
 			this.endTimeIndex = cur
 		},
 		onRegionChange(val) {
 			this.form.region = val
+		},
+		async loadBabyList() {
+			if (!canUseBabyPicker(this.userType)) {
+				this.babyList = []
+				this.babyPickerVisible = false
+				this.form.babyId = ''
+				this.form.babyName = ''
+				this.form.babyMeta = ''
+				return
+			}
+			this.babyLoading = true
+			try {
+				const res = await listBaby()
+				const babyList = normalizeBabyList(res?.data)
+				this.babyList = babyList
+				if (!this.form.babyId) return
+				const selected = babyList.find(item => String(item.id) === String(this.form.babyId))
+				if (selected) {
+					this.form.babyName = selected.displayName
+					this.form.babyMeta = selected.meta || ''
+				} else {
+					this.form.babyId = ''
+					this.form.babyName = ''
+					this.form.babyMeta = ''
+				}
+			} catch (e) {
+				this.babyList = []
+			} finally {
+				this.babyLoading = false
+			}
+		},
+		handleBabyPickerToggle() {
+			if (!canUseBabyPicker(this.userType)) {
+				uni.showToast({ title: '请先切换为家长身份', icon: 'none' })
+				return
+			}
+			this.babyPickerVisible = !this.babyPickerVisible
+			if (this.babyPickerVisible && !this.babyList.length && !this.babyLoading) {
+				this.loadBabyList()
+			}
+		},
+		selectBaby(item) {
+			this.form.babyId = item.id
+			this.form.babyName = item.displayName
+			this.form.babyMeta = item.meta || ''
+			this.babyPickerVisible = false
+		},
+		handleToBabyManager() {
+			this.babyPickerVisible = false
+			uni.navigateTo({ url: '/pages/mine/baby/index' })
 		},
 		validate() {
 			if (!this.form.name.trim()) {
@@ -369,6 +442,14 @@ export default {
 			}
 			if (!/^1[3-9]\d{9}$/.test(this.form.phone)) {
 				uni.showToast({ title: '请填写正确的手机号', icon: 'none' })
+				return false
+			}
+			if (!canUseBabyPicker(this.userType)) {
+				uni.showToast({ title: '请先切换为家长身份', icon: 'none' })
+				return false
+			}
+			if (!this.form.babyId) {
+				uni.showToast({ title: '请选择服务萌娃', icon: 'none' })
 				return false
 			}
 			if (!this.form.grade) {
@@ -418,13 +499,13 @@ export default {
 				this.shouldAutoOpenLogin = true
 				return
 			}
-			if (!this.validate()) return
-			if (this.submitting) return
+			if (!this.validate() || this.submitting) return
 			this.submitting = true
 			try {
 				const res = await addParents({
 					name: this.form.name,
 					phone: this.form.phone,
+					babyId: this.form.babyId,
 					grade: this.form.grade,
 					subject: this.form.subject,
 					location: this.form.location,
@@ -440,13 +521,10 @@ export default {
 				})
 				uni.showToast({ title: '发布成功，等待审核', icon: 'success' })
 				setTimeout(() => {
-					uni.navigateTo({
-						url: '/pages/tutoring/parent/detail?id=' + res.data
-					})
+					uni.navigateTo({ url: '/pages/tutoring/parent/detail?id=' + res.data })
 				}, 1000)
 			} catch (e) {
 				uni.showToast({ title: '发布失败，请重试', icon: 'none' })
-				this.submitting = false
 			} finally {
 				this.submitting = false
 			}
@@ -471,7 +549,6 @@ page {
 	padding: 16px;
 }
 
-/* 卡片 */
 .method-card {
 	background: #fff;
 	border-radius: 16px;
@@ -539,7 +616,6 @@ page {
 	margin-left: 8px;
 }
 
-/* OR 分割 */
 .divider-or {
 	display: flex;
 	flex-direction: row;
@@ -559,7 +635,6 @@ page {
 	margin: 0 12px;
 }
 
-/* 表单 */
 .form-item {
 	margin-bottom: 16px;
 }
@@ -569,6 +644,10 @@ page {
 	font-size: 13px;
 	color: #64748b;
 	margin-bottom: 6px;
+}
+
+.form-label-required {
+	color: #ef4444;
 }
 
 .form-input {
@@ -589,24 +668,6 @@ page {
 	align-items: center;
 }
 
-.flex-1 {
-	flex: 1;
-}
-
-.use-phone-btn {
-	margin-left: 8px;
-	background: #EFF6FF;
-	border-radius: 8px;
-	padding: 8px 10px;
-}
-
-.use-phone-text {
-	font-size: 12px;
-	color: #3B82F6;
-	white-space: nowrap;
-}
-
-/* picker */
 .picker-row {
 	display: flex;
 	flex-direction: row;
@@ -649,11 +710,90 @@ page {
 	color: #a0aec0;
 }
 
-.location-icon {
-	margin-left: 8px;
+.baby-picker {
+	position: relative;
 }
 
-/* 星期多选 */
+.baby-picker-trigger {
+	cursor: pointer;
+}
+
+.baby-picker-value {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.baby-picker-meta {
+	margin-top: 2px;
+	font-size: 12px;
+	color: #94a3b8;
+}
+
+.baby-picker-panel {
+	margin-top: 8px;
+	background: #fff;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.baby-picker-state {
+	padding: 16px;
+	font-size: 13px;
+	color: #94a3b8;
+	text-align: center;
+}
+
+.baby-picker-action {
+	margin: 0 16px 16px;
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	border-radius: 10px;
+	background: #EFF6FF;
+	color: #3B82F6;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.baby-option-list {
+	padding: 8px;
+}
+
+.baby-option {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px;
+	border-radius: 10px;
+}
+
+.baby-option.active {
+	background: #EFF6FF;
+}
+
+.baby-option-main {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.baby-option-name {
+	font-size: 14px;
+	color: #1e293b;
+}
+
+.baby-option-meta {
+	margin-top: 4px;
+	font-size: 12px;
+	color: #94a3b8;
+}
+
 .week-tags {
 	display: flex;
 	flex-direction: row;
@@ -683,7 +823,6 @@ page {
 	font-weight: 600;
 }
 
-/* 时间选择行 */
 .time-row {
 	display: flex;
 	flex-direction: row;
@@ -702,7 +841,6 @@ page {
 	flex-shrink: 0;
 }
 
-/* 授课方式多选标签 */
 .method-tags {
 	display: flex;
 	flex-direction: row;
@@ -732,7 +870,6 @@ page {
 	font-weight: 600;
 }
 
-/* 文本域 */
 .form-textarea {
 	width: 100%;
 	min-height: 100px;
@@ -754,7 +891,6 @@ page {
 	margin-top: 4px;
 }
 
-/* 提示 */
 .tips-row {
 	display: flex;
 	flex-direction: row;
@@ -772,7 +908,6 @@ page {
 	flex: 1;
 }
 
-/* 提交 */
 .submit-wrap {
 	margin-top: 8px;
 	margin-bottom: 40px;
@@ -796,5 +931,4 @@ page {
 	font-size: 16px;
 	font-weight: 600;
 }
-
 </style>

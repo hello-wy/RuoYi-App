@@ -218,9 +218,8 @@ export default {
 			this.queryParams = newParams
 			this.loadData(true)
 		},
-		getAvatarSrc(item) {
-			const userId = item?.userId || item?.user_id || ''
-			return userId ? `${config.baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.jpg'
+		getAvatarSrc(item) {			
+			return item.uid ? `${config.baseUrl}/profile/avatar/${item.uid}.png` : '/static/images/profile.jpg'
 		},
 		getDegreeText(value) {
 			const found = (this.dict.type.sys_degree || []).find(item => String(item.value) === String(value))
