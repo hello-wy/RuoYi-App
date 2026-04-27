@@ -25,15 +25,22 @@ export function removeAreaCodeAtIndex(areaCodes = [], index) {
 }
 
 export function buildUploadedCertificateUrl(baseUrl = '', result = {}) {
+  if (result.fileName) {
+    return result.fileName
+  }
+
   if (result.url) {
     return result.url
   }
 
-  if (!result.fileName) {
-    return ''
-  }
+  return ''
+}
 
-  return `${baseUrl}${result.fileName}`
+export function buildRemovedCertificateState() {
+  return {
+    certificates: '',
+    certificatePreviewUrl: ''
+  }
 }
 
 export function normalizeSelectedImage(file = {}) {
