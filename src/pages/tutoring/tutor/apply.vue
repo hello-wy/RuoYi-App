@@ -32,7 +32,9 @@
 
 				<view class="form-item">
 					<text class="form-label">城市</text>
-					<input class="form-input" v-model="form.city" placeholder="例：江宁区" maxlength="15" />
+					<view class="field-box">
+						<input class="field-input" v-model="form.city" placeholder="例：江宁区" maxlength="15" />
+					</view>
 				</view>
 			</view>
 
@@ -46,25 +48,32 @@
 
 				<view class="form-item">
 					<text class="form-label">就读/毕业学校</text>
-					<input class="form-input" v-model="form.school" placeholder="例：北京大学" maxlength="50" />
+					<view class="field-box">
+						<input class="field-input" v-model="form.school" placeholder="例：北京大学" maxlength="50" />
+					</view>
 				</view>
 
 				<view class="form-item">
 					<text class="form-label">专业名称</text>
-					<input class="form-input" v-model="form.major" placeholder="例：数学与应用数学" maxlength="50" />
+					<view class="field-box">
+						<input class="field-input" v-model="form.major" placeholder="例：数学与应用数学" maxlength="50" />
+					</view>
 				</view>
 
 				<view class="form-item">
 					<text class="form-label">最高学历</text>
-					<picker mode="selector" :range="dict.type.sys_degree" range-key="label" :value="degreeIndex" @change="onDegreeChange">
-						<view class="picker-full-box">
-							<text class="picker-text" :class="{ placeholder: !form.degree }">
-								{{ getDegreeLabel(form.degree) || '请选择学历' }}
-							</text>
-							<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
-						</view>
-					</picker>
+					<view class="field-box">
+						<picker mode="selector" :range="dict.type.sys_degree" range-key="label" :value="degreeIndex" @change="onDegreeChange">
+							<view class="picker-full-box">
+								<text class="picker-text" :class="{ placeholder: !form.degree }">
+									{{ getDegreeLabel(form.degree) || '请选择学历' }}
+								</text>
+								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
+							</view>
+						</picker>
+					</view>
 				</view>
+
 			</view>
 
 			<view class="section-card">
@@ -149,6 +158,26 @@
 					<text class="word-count">{{ (form.certificateList || '').length }}/300</text>
 				</view>
 
+				<!-- <view class="form-item">
+					<text class="form-label">证书图片</text>
+					<view v-if="certificatePreviewUrl" class="cert-upload-preview" @click="previewCertificateImage">
+						<image :src="certificatePreviewUrl" class="cert-upload-image" mode="aspectFill"></image>
+						<view class="cert-upload-actions">
+							<view class="cert-upload-action" @click.stop="chooseCertificateImage">
+								<text class="cert-upload-action-text">重新上传</text>
+							</view>
+							<view class="cert-upload-action danger" @click.stop="removeCertificateImage">
+								<text class="cert-upload-action-text danger">删除</text>
+							</view>
+						</view>
+					</view>
+					<view v-else class="cert-upload-trigger" @click="chooseCertificateImage">
+						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
+						<text class="cert-upload-trigger-text">{{ certificateUploading ? '上传中...' : '上传证书图片' }}</text>
+						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 5MB</text>
+					</view>
+				</view> -->
+
 				<view class="form-item">
 					<text class="form-label">自我评价</text>
 					<textarea class="form-textarea" v-model="form.selfJudge" placeholder="简单介绍一下您的个人特点和优势..." maxlength="300" :show-confirm-bar="false"></textarea>
@@ -221,10 +250,20 @@
 </template>
 
 <script>
-import { addTutors } from '@/api/wxmini/tutoring'
+import config from '@/config'
+import { addTutors, uploadTutorCertification } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
-import { removeAreaCodeAtIndex } from './apply.helpers'
+import {
+	buildRemovedCertificateState,
+	buildUploadedCertificateUrl,
+	chooseWechatAlbumImage,
+	getImageValidationError,
+	isChooseImageCanceled,
+	isChooseImagePermissionDenied,
+	removeAreaCodeAtIndex,
+	requestWechatImagePrivacyAuthorization
+} from './apply.helpers'
 import { tutorAgreementRoute } from './agreement.content'
 
 export default {
@@ -234,6 +273,7 @@ export default {
 		return {
 			verified: false,
 			submitting: false,
+			certificateUploading: false,
 			agreed: false,
 			identityOptions: [
 				{ label: '大学生教员', value: 0 },
@@ -261,7 +301,8 @@ export default {
 			areaPopupVisible: false,
 			areaPopupShown: false,
 			subjectPopupVisible: false,
-			subjectPopupShown: false
+			subjectPopupShown: false,
+			certificatePreviewUrl: ''
 		}
 	},
 	computed: {
@@ -336,6 +377,57 @@ export default {
 		openAgreement() {
 			uni.navigateTo({ url: tutorAgreementRoute })
 		},
+		// async chooseCertificateImage() {
+		// 	if (this.certificateUploading) return
+		// 	try {
+		// 		await requestWechatImagePrivacyAuthorization()
+		// 		const file = await chooseWechatAlbumImage()
+		// 		const error = getImageValidationError(file)
+		// 		if (error) {
+		// 			uni.showToast({ title: error, icon: 'none' })
+		// 			return
+		// 		}
+		// 		await this.uploadCertificateImage(file)
+		// 	} catch (error) {
+		// 		if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
+		// 			return
+		// 		}
+		// 		if (isChooseImagePermissionDenied(error)) {
+		// 			uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
+		// 			return
+		// 		}
+		// 		uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
+		// 	}
+		// },
+		// async uploadCertificateImage(file) {
+		// 	this.certificateUploading = true
+		// 	try {
+		// 		const result = await uploadTutorCertification(file.tempFilePath || file.path)
+		// 		const certificateUrl = buildUploadedCertificateUrl(config.baseUrl, result)
+		// 		if (!certificateUrl) {
+		// 			throw new Error('empty upload result')
+		// 		}
+		// 		this.form.certificates = certificateUrl
+		// 		this.certificatePreviewUrl = certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl
+		// 		uni.showToast({ title: '上传成功', icon: 'success' })
+		// 	} catch (error) {
+		// 		uni.showToast({ title: '上传失败，请重试', icon: 'none' })
+		// 	} finally {
+		// 		this.certificateUploading = false
+		// 	}
+		// },
+		// previewCertificateImage() {
+		// 	if (!this.certificatePreviewUrl) return
+		// 	uni.previewImage({
+		// 		urls: [this.certificatePreviewUrl],
+		// 		current: this.certificatePreviewUrl
+		// 	})
+		// },
+		// removeCertificateImage() {
+		// 	const state = buildRemovedCertificateState()
+		// 	this.form.certificates = state.certificates
+		// 	this.certificatePreviewUrl = state.certificatePreviewUrl
+		// },
 		validate() {
 			if (!this.form.realName.trim()) {
 				uni.showToast({ title: '请填写真实姓名', icon: 'none' })
@@ -413,10 +505,11 @@ export default {
 				})
 				uni.showToast({ title: '申请已提交，等待审核', icon: 'success' })
 				setTimeout(() => {
-					uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + res.data })
+					// uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + res.data })
+					uni.navigateTo({ url: '/pages/index' })
 				}, 1000)
 			} catch (e) {
-				uni.showToast({ title: '提交失败，请重试', icon: 'none' })
+				uni.showToast({ title: e || '提交失败，请重试', icon: 'none' })
 			} finally {
 				this.submitting = false
 			}
@@ -487,6 +580,34 @@ page {
 	font-weight: 500;
 	color: #334155;
 	margin-bottom: 8px;
+}
+
+.field-box {
+	width: 100%;
+	background: #F8FAFC;
+	border: 1px solid #E2E8F0;
+	border-radius: 12px;
+	padding: 12px 14px;
+	box-sizing: border-box;
+}
+
+.field-input {
+	width: 100%;
+	font-size: 14px;
+	color: #0F172A;
+	box-sizing: border-box;
+}
+
+.field-box picker {
+	display: block;
+	width: 100%;
+}
+
+.field-box .picker-full-box {
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+	padding: 0;
 }
 
 .form-input,
@@ -589,6 +710,66 @@ page {
 .subject-empty-text {
 	font-size: 13px;
 	color: #94A3B8;
+}
+
+.cert-upload-trigger,
+.cert-upload-preview {
+	width: 100%;
+	background: #F8FAFC;
+	border: 1px dashed #CBD5E1;
+	border-radius: 12px;
+	padding: 16px;
+	box-sizing: border-box;
+}
+
+.cert-upload-trigger {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.cert-upload-trigger-text {
+	font-size: 14px;
+	color: #334155;
+}
+
+.cert-upload-trigger-hint {
+	font-size: 12px;
+	color: #94A3B8;
+}
+
+.cert-upload-image {
+	width: 100%;
+	height: 180px;
+	border-radius: 10px;
+	background: #E2E8F0;
+}
+
+.cert-upload-actions {
+	margin-top: 12px;
+	display: flex;
+	gap: 12px;
+}
+
+.cert-upload-action {
+	padding: 8px 14px;
+	border-radius: 999px;
+	background: #DBEAFE;
+}
+
+.cert-upload-action.danger {
+	background: #FEE2E2;
+}
+
+.cert-upload-action-text {
+	font-size: 12px;
+	color: #1D4ED8;
+}
+
+.cert-upload-action-text.danger {
+	color: #DC2626;
 }
 
 .agree-row {

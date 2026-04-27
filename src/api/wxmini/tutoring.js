@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import upload from '@/utils/upload'
 
 // 教员库
 export function listTutors(query) {
@@ -53,5 +54,13 @@ export function addParents(data) {
         url: '/wxmini/tutoring/parents',
         method: 'post',
         data: data
+    })
+}
+
+export function uploadTutorCertification(filePath) {
+    return upload({
+        url: '/wxmini/common/uploadCertification',
+        filePath,
+        name: 'file'
     })
 }
