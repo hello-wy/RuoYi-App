@@ -138,11 +138,23 @@
 				</view>
 			</view>
 
-			<view class="bottom-placeholder"></view>
+			<view :style="{ height: `${bottomPlaceholderHeight}rpx` }"></view>
 		</scroll-view>
 
 		<view v-if="detail" class="bottom-bar">
-			<button class="contact-btn" open-type="contact">
+			<view v-if="auditMode" class="audit-action-row">
+				<button
+					v-for="action in bottomActions"
+					:key="action.key"
+					class="audit-btn"
+					:class="action.key === 'reject' ? 'reject-btn' : 'pass-btn'"
+					:disabled="reviewing"
+					@click="submitReview(action.status)"
+				>
+					{{ action.text }}
+				</button>
+			</view>
+			<button v-else class="contact-btn" open-type="contact">
 				<uni-icons type="chatboxes-filled" size="18" color="#FFFFFF"></uni-icons>
 				<text class="contact-btn-text">立即联系</text>
 			</button>
@@ -151,14 +163,22 @@
 </template>
 
 <script>
-import { getTutors } from '@/api/wxmini/tutoring'
+import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
+import { reviewTutors } from '@/api/system/tutors'
 import { useLocationStore } from '@/store'
+import {
+	buildTutorDetailBottomActions,
+	getReviewResultToast,
+	isTutorAuditMode
+} from '@/pages/mine/admin/tutor-review.helpers'
 
 export default {
 	dicts: ['sys_degree', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
 			tutorId: '',
+			auditMode: false,
+			reviewing: false,
 			detail: null,
 			loading: false,
 			error: false
@@ -166,6 +186,7 @@ export default {
 	},
 	onLoad(options) {
 		this.tutorId = options.id || ''
+		this.auditMode = isTutorAuditMode(options)
 		this.loadDetail()
 	},
 	computed: {
@@ -237,6 +258,12 @@ export default {
 			const source = this.detail?.experience || ''
 			if (!source) return []
 			return source.split(/[\n；;。]/).map(item => item.trim()).filter(Boolean).slice(0, 5)
+		},
+		bottomPlaceholderHeight() {
+			return this.auditMode ? 220 : 160
+		},
+		bottomActions() {
+			return buildTutorDetailBottomActions(this.auditMode)
 		}
 	},
 	methods: {
@@ -245,7 +272,7 @@ export default {
 			this.loading = true
 			this.error = false
 			try {
-				const res = await getTutors(this.tutorId)
+				const res = await getTutorDetail(this.tutorId)
 				this.detail = res.data || res
 			} catch (e) {
 				this.error = true
@@ -261,6 +288,21 @@ export default {
 				const found = (options || []).find(item => String(item.value) === v)
 				return found ? found.label : v
 			})
+		},
+		async submitReview(status) {
+			if (this.reviewing || !this.tutorId) return
+			this.reviewing = true
+			try {
+				await reviewTutors({ id: this.tutorId, status })
+				this.$modal.showToast(getReviewResultToast(status))
+				setTimeout(() => {
+					uni.navigateBack({ delta: 1 })
+				}, 400)
+			} catch (e) {
+				console.error('审核教员失败', e)
+			} finally {
+				this.reviewing = false
+			}
 		}
 	}
 }
@@ -507,10 +549,6 @@ export default {
 	color: #2563eb;
 }
 
-.bottom-placeholder {
-	height: 160rpx;
-}
-
 .bottom-bar {
 	position: fixed;
 	left: 0;
@@ -518,6 +556,35 @@ export default {
 	bottom: 0;
 	padding: 20rpx 24rpx 28rpx;
 	background: linear-gradient(180deg, rgba(243,247,255,0) 0%, #f3f7ff 24%, #f3f7ff 100%);
+}
+
+.audit-action-row {
+	display: flex;
+	gap: 20rpx;
+}
+
+.audit-btn {
+	flex: 1;
+	height: 92rpx;
+	border: none;
+	border-radius: 999rpx;
+	font-size: 30rpx;
+	font-weight: 700;
+	line-height: 92rpx;
+}
+
+.audit-btn::after {
+	border: none;
+}
+
+.reject-btn {
+	color: #b91c1c;
+	background: #fff1f2;
+}
+
+.pass-btn {
+	color: #ffffff;
+	background: linear-gradient(135deg, #2563eb, #3b82f6);
 }
 
 .contact-btn {
