@@ -71,3 +71,14 @@ export function getTutorExperienceList(source = '') {
     .filter(Boolean)
     .slice(0, 5)
 }
+
+export function buildTutorDetailUrl(id = '', avatarSrc = '') {
+  const encodedAvatarSrc = encodeURIComponent(avatarSrc || '')
+  return `/pages/tutoring/tutor/detail?id=${id || ''}&avatarSrc=${encodedAvatarSrc}`
+}
+
+export function resolveTutorAvatarSrc({ avatarSrc = '', detail = {}, baseUrl = '' } = {}) {
+  if (avatarSrc) return avatarSrc
+  const userId = detail?.userId || detail?.user_id || ''
+  return userId ? `${baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.png'
+}

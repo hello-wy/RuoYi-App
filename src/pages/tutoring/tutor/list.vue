@@ -32,7 +32,7 @@
 				v-for="(item, index) in list"
 				:key="item.id || index"
 				class="card"
-				@click="goDetail(item.id)"
+				@click="goDetail(item)"
 			>
 				<view class="card-main">
 					<view class="avatar-wrap">
@@ -107,6 +107,7 @@ import config from '@/config'
 import { listTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
+import { buildTutorDetailUrl } from '@/pages/tutoring/tutor/index.helpers'
 
 export default {
 	components: { TutoringFilterBar },
@@ -219,7 +220,7 @@ export default {
 			this.loadData(true)
 		},
 		getAvatarSrc(item) {			
-			return item.uid ? `${config.baseUrl}/profile/avatar/${item.uid}.png` : '/static/images/profile.jpg'
+			return item.uid ? `${config.baseUrl}/profile/avatar/${item.uid}.png` : '/static/images/profile.png'
 		},
 		getDegreeText(value) {
 			const found = (this.dict.type.sys_degree || []).find(item => String(item.value) === String(value))
@@ -256,8 +257,8 @@ export default {
 			})
 			return arr
 		},
-		goDetail(id) {
-			uni.navigateTo({ url: '/pages/tutoring/tutor/detail?id=' + id })
+		goDetail(item) {
+			uni.navigateTo({ url: buildTutorDetailUrl(item.id, this.getAvatarSrc(item)) })
 		}
 	}
 }

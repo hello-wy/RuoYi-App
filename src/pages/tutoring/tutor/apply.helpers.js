@@ -1,4 +1,4 @@
-const MAX_UPLOAD_IMAGE_SIZE = 5 * 1024 * 1024
+const MAX_UPLOAD_IMAGE_SIZE = 3 * 1024 * 1024
 const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png']
 
 function getFileExtension(path = '') {
@@ -14,7 +14,7 @@ export function getImageValidationError(file = {}) {
   }
 
   if (Number(file.size || 0) > MAX_UPLOAD_IMAGE_SIZE) {
-    return '图片大小不能超过 5MB'
+    return '图片大小不能超过 3MB'
   }
 
   return ''
@@ -34,6 +34,12 @@ export function buildUploadedCertificateUrl(baseUrl = '', result = {}) {
   }
 
   return ''
+}
+
+export function appendPreviewCacheBuster(url = '') {
+  if (!url) return ''
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}t=${Date.now()}`
 }
 
 export function buildRemovedCertificateState() {

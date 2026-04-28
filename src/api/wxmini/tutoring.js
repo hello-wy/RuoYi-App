@@ -33,6 +33,14 @@ export function getMyTutor() {
     })
 }
 
+export function updateMyTutor(data) {
+    return request({
+        url: '/wxmini/tutoring/mine/update',
+        method: 'post',
+        data: data
+    })
+}
+
 // 家教单
 export function listParents(query) {
     return request({

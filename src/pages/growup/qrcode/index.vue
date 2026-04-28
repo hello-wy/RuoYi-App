@@ -8,7 +8,7 @@
 				<view class="avatar-wrap">
 					<image
 						class="avatar"
-						:src="avatar || '/static/images/profile.jpg'"
+						:src="avatar || '/static/images/profile.png'"
 						mode="aspectFill"
 					></image>
 				</view>

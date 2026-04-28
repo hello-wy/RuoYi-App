@@ -50,7 +50,7 @@
 					<view v-else class="cert-upload-trigger" @click="chooseAvatarImage">
 						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
 						<text class="cert-upload-trigger-text">{{ avatarUploading ? '上传中...' : '上传头像' }}</text>
-						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 5MB</text>
+						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 3MB</text>
 					</view>
 				</view>
 			</view>
@@ -190,7 +190,7 @@
 					<view v-else class="cert-upload-trigger" @click="chooseCertificateImage">
 						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
 						<text class="cert-upload-trigger-text">{{ certificateUploading ? '上传中...' : '上传证书图片' }}</text>
-						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 5MB</text>
+						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 3MB</text>
 					</view>
 				</view>
 
@@ -267,10 +267,11 @@
 
 <script>
 import config from '@/config'
-import { addTutors, uploadTutorAvatar, uploadTutorCertification } from '@/api/wxmini/tutoring'
-import { useLocationStore } from '@/store'
+import { addTutors, getMyTutor, updateMyTutor, uploadTutorAvatar, uploadTutorCertification } from '@/api/wxmini/tutoring'
+import { useLocationStore, useUserStore } from '@/store'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import {
+	appendPreviewCacheBuster,
 	buildRemovedCertificateState,
 	buildUploadedCertificateUrl,
 	chooseWechatAlbumImage,
@@ -280,6 +281,7 @@ import {
 	removeAreaCodeAtIndex,
 	requestWechatImagePrivacyAuthorization
 } from './apply.helpers'
+import { buildApplyFormStateFromTutor, buildApplyPageMode } from './apply.mode'
 import { tutorAgreementRoute } from './agreement.content'
 
 export default {
@@ -287,6 +289,8 @@ export default {
 	dicts: ['sys_subject', 'sys_degree', 'sys_methods'],
 	data() {
 		return {
+			pageMode: 'create',
+			initializing: false,
 			verified: false,
 			submitting: false,
 			certificateUploading: false,
@@ -328,7 +332,52 @@ export default {
 			return useLocationStore().districts
 		}
 	},
+		onLoad(query) {
+			this.pageMode = buildApplyPageMode(query)
+			this.initPage()
+		},
+	onShow() {
+		// this.resetUploadState()
+	},
 	methods: {
+			async initPage() {
+				if (this.initializing) return
+				this.initializing = true
+				try {
+					const res = await getMyTutor()
+					const profile = res?.data || null
+					if (this.pageMode !== 'edit') {
+						if (profile) {
+							uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
+						}
+						return
+					}
+					if (!profile) {
+						uni.showToast({ title: '请先填写申请资料', icon: 'none' })
+						uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
+						return
+					}
+					const userStore = useUserStore()
+					const hydrated = buildApplyFormStateFromTutor(profile, config.baseUrl, userStore.avatar || '')
+					this.form = hydrated.form
+					this.selectedAreaCodes = hydrated.selectedAreaCodes
+					this.avatarPreviewUrl = hydrated.avatarPreviewUrl
+					this.certificatePreviewUrl = hydrated.certificatePreviewUrl
+					this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
+					this.verified = !!this.form.realName && !!this.form.idCard
+					this.agreed = true
+				} catch (error) {
+					if (this.pageMode === 'edit') {
+						uni.showToast({ title: '加载资料失败，请重试', icon: 'none' })
+					}
+				} finally {
+					this.initializing = false
+				}
+			},
+		resetUploadState() {
+			this.avatarUploading = false
+			this.certificateUploading = false
+		},
 		openAreaPopup() {
 			this.areaPopupVisible = true
 			this.$nextTick(() => setTimeout(() => {
@@ -433,10 +482,12 @@ export default {
 				if (!avatarUrl) {
 					throw new Error('empty upload result')
 				}
-				this.avatarPreviewUrl = avatarUrl.startsWith('http') ? avatarUrl : config.baseUrl + avatarUrl
+				const normalizedAvatarUrl = avatarUrl.startsWith('http') ? avatarUrl : config.baseUrl + avatarUrl
+				this.avatarPreviewUrl = appendPreviewCacheBuster(normalizedAvatarUrl)
+				useUserStore().SET_AVATAR(normalizedAvatarUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
-				uni.showToast({ title: '上传失败，请重试', icon: 'none' })
+				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
 			} finally {
 				this.avatarUploading = false
 			}
@@ -479,10 +530,10 @@ export default {
 					throw new Error('empty upload result')
 				}
 				this.form.certificates = certificateUrl
-				this.certificatePreviewUrl = certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl
+				this.certificatePreviewUrl = appendPreviewCacheBuster(certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
-				uni.showToast({ title: '上传失败，请重试', icon: 'none' })
+				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
 			} finally {
 				this.certificateUploading = false
 			}
@@ -558,36 +609,42 @@ export default {
 			}
 			return true
 		},
-		async handleSubmit() {
-			if (!this.validate() || this.submitting) return
-			this.submitting = true
-			try {
-				await addTutors({
-					realName: this.form.realName,
-					idCard: this.form.idCard,
-					identity: this.form.identity,
-					city: this.form.city.trim(),
-					school: this.form.school,
-					major: this.form.major,
-					degree: this.form.degree,
-					subjects: this.form.subjects.join(','),
-					areas: this.form.areas,
-					methods: this.form.methods,
-					experience: this.form.experience,
-					certificateList: this.form.certificateList,
-					selfJudge: this.form.selfJudge,
-					certificates: this.form.certificates
-				})
-				uni.showToast({ title: '申请已提交，等待审核', icon: 'success' })
-				setTimeout(() => {
-					uni.navigateTo({ url: '/pages/index' })
-				}, 1000)
-			} catch (e) {
-				uni.showToast({ title: e || '提交失败，请重试', icon: 'none' })
-			} finally {
-				this.submitting = false
+			async handleSubmit() {
+				if (!this.validate() || this.submitting) return
+				this.submitting = true
+				try {
+					const payload = {
+						realName: this.form.realName,
+						idCard: this.form.idCard,
+						identity: this.form.identity,
+						city: this.form.city.trim(),
+						school: this.form.school,
+						major: this.form.major,
+						degree: this.form.degree,
+						subjects: this.form.subjects.join(','),
+						areas: this.form.areas,
+						methods: this.form.methods,
+						experience: this.form.experience,
+						certificateList: this.form.certificateList,
+						selfJudge: this.form.selfJudge,
+						certificates: this.form.certificates
+					}
+					if (this.pageMode === 'edit') {
+						await updateMyTutor(payload)
+						uni.showToast({ title: '资料已更新，等待审核', icon: 'success' })
+					} else {
+						await addTutors(payload)
+						uni.showToast({ title: '申请已提交，等待审核', icon: 'success' })
+					}
+					setTimeout(() => {
+						uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
+					}, 1000)
+				} catch (e) {
+					uni.showToast({ title: e || '提交失败，请重试', icon: 'none' })
+				} finally {
+					this.submitting = false
+				}
 			}
-		}
 	}
 }
 </script>

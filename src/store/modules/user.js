@@ -10,7 +10,7 @@ import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
 import { shouldEnableRegularMineFeatures } from '@/utils/admin'
-import defAva from '@/static/images/profile.jpg'
+import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
 

@@ -212,7 +212,7 @@ export default {
 			return useLocationStore().districts || []
 		},
 		avatarSrc() {
-			return this.profile?.avatar || '/static/images/profile.jpg'
+			return useUserStore().avatar || this.profile?.avatar || '/static/images/profile.png'
 		},
 		isCertified() {
 			return String(this.profile?.status) === '1'
@@ -334,7 +334,7 @@ export default {
 			uni.navigateTo({ url: '/pages/tutoring/tutor/apply' })
 		},
 		goEdit() {
-			uni.navigateTo({ url: '/pages/tutoring/tutor/apply' })
+			uni.navigateTo({ url: '/pages/tutoring/tutor/apply?mode=edit' })
 		},
 		previewCertificate() {
 			if (!this.certificatePreviewUrls.length) return

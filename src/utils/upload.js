@@ -13,6 +13,41 @@ function joinRequestUrl(base = '', path = '') {
   return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase
 }
 
+function parseUploadResponse(response = {}) {
+  if (response.data && typeof response.data === 'object') {
+    return response.data
+  }
+
+  const raw = String(response.data || '').trim()
+  if (!raw) {
+    return {
+      code: 500,
+      msg: '上传响应数据异常'
+    }
+  }
+
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return {
+      code: response.statusCode || 500,
+      msg: raw
+    }
+  }
+}
+
+function resolveUploadErrorMessage(result = {}, fallback = errorCode['default']) {
+  const code = Number(result.code || 0)
+  const rawMessage = String(result.msg || '')
+  const normalizedMessage = rawMessage.toLowerCase()
+
+  if (code === 413 || normalizedMessage.includes('request entity too large')) {
+    return '文件过大，请上传不超过3MB的图片'
+  }
+
+  return errorCode[code] || result.msg || fallback
+}
+
 export default function upload(config) {
   const header = {
     ...(config.headers || {}),
@@ -27,7 +62,6 @@ export default function upload(config) {
     }
   }
   config.header = header
-  // get请求映射params参数
   if (config.params) {
     let url = config.url + '?' + tansParams(config.params)
     url = url.slice(0, -1)
@@ -42,26 +76,26 @@ export default function upload(config) {
       header: config.header,
       formData: config.formData,
       success: (res) => {
-        let result = JSON.parse(res.data)
+        const result = parseUploadResponse(res)
         const code = result.code || 200
-        const msg = errorCode[code] || result.msg || errorCode['default']
+        const msg = resolveUploadErrorMessage(result)
         if (code === 200) {
           resolve(result)
         } else if (code == 401) {
-          showConfirm("登录状态已过期，您可以继续留在该页面，或者重新登录?").then(res => {
+          showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
             if (res.confirm) {
               useUserStore().logOut().then(res => {
                 uni.reLaunch({ url: '/pages/login/login' })
               })
             }
           })
-          reject('无效的会话，或者会话已过期，请重新登录。')
+          reject(msg)
         } else if (code === 500) {
           toast(msg)
-          reject('500')
+          reject(msg)
         } else if (code !== 200) {
           toast(msg)
-          reject(code)
+          reject(msg)
         }
       },
       fail: (error) => {

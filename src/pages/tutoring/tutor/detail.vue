@@ -168,6 +168,7 @@ import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { getTutorById, reviewTutors } from '@/api/system/tutors'
 import request from '@/utils/request'
 import { useLocationStore } from '@/store'
+import { resolveTutorAvatarSrc } from '@/pages/tutoring/tutor/index.helpers'
 import {
 	buildTutorDetailBottomActions,
 	getReviewResultToast,
@@ -179,6 +180,7 @@ export default {
 	data() {
 		return {
 			tutorId: '',
+			avatarSrcFromRoute: '',
 			auditMode: false,
 			reviewing: false,
 			detail: null,
@@ -188,13 +190,19 @@ export default {
 	},
 	onLoad(options) {
 		this.tutorId = options.id || ''
+		console.log(options);
+		
+		this.avatarSrcFromRoute = decodeURIComponent(options.avatarSrc || '')
 		this.auditMode = isTutorAuditMode(options)
 		this.loadDetail()
 	},
 	computed: {
 		avatarSrc() {
-			const userId = this.detail?.userId || this.detail?.user_id || ''
-			return userId ? `${config.baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.jpg'
+			return resolveTutorAvatarSrc({
+				avatarSrc: this.avatarSrcFromRoute,
+				detail: this.detail,
+				baseUrl: config.baseUrl
+			})
 		},
 		isCertified() {
 			return String(this.detail?.status) === '1'
