@@ -30,6 +30,7 @@ export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarS
       school: profile.school || '',
       major: profile.major || '',
       degree: profile.degree ?? '',
+      currentGrade: profile.currentGrade || '',
       subjects,
       areas: selectedAreaCodes.join(','),
       methods: profile.methods ?? '',

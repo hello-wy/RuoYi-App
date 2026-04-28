@@ -90,6 +90,20 @@
 						</picker>
 					</view>
 				</view>
+
+				<view v-if="form.identity === 0" class="form-item">
+					<text class="form-label">当前年级</text>
+					<view class="field-box">
+						<picker mode="selector" :range="currentGradeOptions" range-key="label" :value="currentGradeIndex" @change="onCurrentGradeChange">
+							<view class="picker-full-box">
+								<text class="picker-text" :class="{ placeholder: !form.currentGrade }">
+									{{ getCurrentGradeLabel(form.currentGrade) || '请选择当前年级' }}
+								</text>
+								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
+							</view>
+						</picker>
+					</view>
+				</view>
 			</view>
 
 			<view class="section-card">
@@ -301,6 +315,15 @@ export default {
 				{ label: '在职教师', value: 1 },
 				{ label: '其他', value: 2 }
 			],
+				currentGradeOptions: [
+					{ label: '大一', value: '大一' },
+					{ label: '大二', value: '大二' },
+					{ label: '大三', value: '大三' },
+					{ label: '大四', value: '大四' },
+					{ label: '硕一', value: '硕一' },
+					{ label: '硕二', value: '硕二' },
+					{ label: '硕三', value: '硕三' }
+				],
 			form: {
 				realName: '',
 				idCard: '',
@@ -309,6 +332,7 @@ export default {
 				school: '',
 				major: '',
 				degree: '',
+					currentGrade: '',
 				subjects: [],
 				areas: '',
 				methods: '',
@@ -318,6 +342,7 @@ export default {
 				certificates: ''
 			},
 			degreeIndex: -1,
+				currentGradeIndex: -1,
 			selectedAreaCodes: [],
 			areaPopupVisible: false,
 			areaPopupShown: false,
@@ -364,6 +389,7 @@ export default {
 					this.avatarPreviewUrl = hydrated.avatarPreviewUrl
 					this.certificatePreviewUrl = hydrated.certificatePreviewUrl
 					this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
+						this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
 					this.verified = !!this.form.realName && !!this.form.idCard
 					this.agreed = true
 				} catch (error) {
@@ -403,21 +429,34 @@ export default {
 			}, 300)
 		},
 		selectIdentity(value) {
-			this.form.identity = value
-		},
+				this.form.identity = value
+				if (value !== 0) {
+					this.form.currentGrade = ''
+					this.currentGradeIndex = -1
+				}
+			},
 		getSubjectLabel(val) {
 			const item = (this.dict.type.sys_subject || []).find(o => o.value === val)
 			return item ? item.label : val
 		},
 		getDegreeLabel(val) {
-			const item = (this.dict.type.sys_degree || []).find(o => String(o.value) === String(val))
-			return item ? item.label : val
-		},
+				const item = (this.dict.type.sys_degree || []).find(o => String(o.value) === String(val))
+				return item ? item.label : val
+			},
+			getCurrentGradeLabel(val) {
+				const item = this.currentGradeOptions.find(o => o.value === val)
+				return item ? item.label : val
+			},
 		onDegreeChange(e) {
-			this.degreeIndex = e.detail.value
-			const opt = (this.dict.type.sys_degree || [])[e.detail.value]
-			this.form.degree = opt ? opt.value : ''
-		},
+				this.degreeIndex = e.detail.value
+				const opt = (this.dict.type.sys_degree || [])[e.detail.value]
+				this.form.degree = opt ? opt.value : ''
+			},
+			onCurrentGradeChange(e) {
+				this.currentGradeIndex = e.detail.value
+				const opt = this.currentGradeOptions[e.detail.value]
+				this.form.currentGrade = opt ? opt.value : ''
+			},
 		getAreaText(code) {
 			const item = this.districtOptions.find(o => o.value === code)
 			return item ? item.text : code
@@ -587,6 +626,10 @@ export default {
 				uni.showToast({ title: '请选择最高学历', icon: 'none' })
 				return false
 			}
+				if (this.form.identity === 0 && !this.form.currentGrade) {
+					uni.showToast({ title: '请选择当前年级', icon: 'none' })
+					return false
+				}
 			if (this.form.subjects.length === 0) {
 				uni.showToast({ title: '请至少选择一个可教科目', icon: 'none' })
 				return false
@@ -621,6 +664,7 @@ export default {
 						school: this.form.school,
 						major: this.form.major,
 						degree: this.form.degree,
+						currentGrade: this.form.identity === 0 ? this.form.currentGrade : '',
 						subjects: this.form.subjects.join(','),
 						areas: this.form.areas,
 						methods: this.form.methods,
