@@ -84,7 +84,7 @@
 						</view>
 						<view class="footer-item">
 							<uni-icons type="star-filled" size="16" color="#F59E0B"></uni-icons>
-							<text class="footer-item-text">{{ getDegreeText(item.degree) }}</text>
+							<text class="footer-item-text">{{ getCurrentGradeText(item.currentGrade) }}</text>
 						</view>
 					</view>
 					<view class="footer-right">
