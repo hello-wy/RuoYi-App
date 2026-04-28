@@ -84,7 +84,7 @@
 						</view>
 						<view class="footer-item">
 							<uni-icons type="star-filled" size="16" color="#F59E0B"></uni-icons>
-							<text class="footer-item-text">{{ getCurrentGradeText(item.currentGrade) }}</text>
+							<text class="footer-item-text">{{ item.currentGrade }}</text>
 						</view>
 					</view>
 					<view class="footer-right">
@@ -107,7 +107,7 @@ import config from '@/config'
 import { listTutors } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
-import { buildTutorDetailUrl } from '@/pages/tutoring/tutor/index.helpers'
+import { buildTutorDetailUrl, resolveTutorAvatarSrc } from '@/pages/tutoring/tutor/index.helpers'
 
 export default {
 	components: { TutoringFilterBar },
@@ -219,8 +219,11 @@ export default {
 			this.queryParams = newParams
 			this.loadData(true)
 		},
-		getAvatarSrc(item) {			
-			return item.uid ? `${config.baseUrl}/profile/avatar/${item.uid}.png` : '/static/images/profile.png'
+		getAvatarSrc(item) {
+			return resolveTutorAvatarSrc({
+				detail: item,
+				baseUrl: config.baseUrl
+			})
 		},
 		getDegreeText(value) {
 			const found = (this.dict.type.sys_degree || []).find(item => String(item.value) === String(value))
@@ -257,7 +260,11 @@ export default {
 			})
 			return arr
 		},
-		goDetail(item) {
+		getCurrentGradeText(value) {
+				const found = (this.dict.type.sys_class || []).find(item => String(item.value) === String(value))
+				return found ? found.label : '年级待完善'
+			},
+			goDetail(item) {
 			uni.navigateTo({ url: buildTutorDetailUrl(item.id, this.getAvatarSrc(item)) })
 		}
 	}

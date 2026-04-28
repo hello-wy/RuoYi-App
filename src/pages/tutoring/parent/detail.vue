@@ -28,19 +28,15 @@
 				<text class="order-title">{{ detail.name }}</text>
 			</view>
 
-			<!-- 快捷标签：年级 + 科目 + 方式 -->
-			<view class="quick-tags">
-				<view class="quick-tag">
-					<uni-icons type="person" size="14" color="#3B82F6"></uni-icons>
-					<dict-tag :options="dict.type.sys_class" :value="detail.grade ? detail.grade.split(',') : []"/>
-				</view>
-				<view class="quick-tag">
-					<uni-icons type="compose" size="14" color="#3B82F6"></uni-icons>
-					<dict-tag :options="dict.type.sys_subject" :value="detail.subject ? detail.subject.split(',') : []"/>
-				</view>
-				<view v-if="detail.methods && detail.methods.length" class="quick-tag">
-					<uni-icons type="time" size="14" color="#3B82F6"></uni-icons>
-					<dict-tag :options="dict.type.sys_methods" :value="detail.methods ? detail.methods.split(',') : []"/>
+			<!-- 快捷标签：仅保留方式 -->
+			<view v-if="detailQuickTags.length" class="quick-tags">
+				<view
+					v-for="(tag, index) in detailQuickTags"
+					:key="`${tag.dict}-${index}`"
+					class="quick-tag"
+				>
+					<uni-icons :type="tag.icon" size="14" color="#3B82F6"></uni-icons>
+					<dict-tag :options="dict.type[tag.dict]" :value="tag.value"/>
 				</view>
 			</view>
 
@@ -66,7 +62,6 @@
 					</view>
 				</view>
 
-				<!-- 地图占位 -->
 				<view class="map-placeholder" @click="openMap">
 					<map
 						class="map-view"
@@ -114,11 +109,9 @@
 				<text v-else class="empty-text">暂无特别要求</text>
 			</view>
 
-			<!-- 底部占位（防止被底栏遮住） -->
-			<view style="height: 140rpx;"></view>
+			<view style="height: 200rpx;"></view>
 		</view>
 
-		<!-- 底部操作栏 -->
 		<view class="bottom-bar">
 			<view class="btn-map" @click="openMap">
 				<uni-icons type="map" size="18" color="#333"></uni-icons>
@@ -131,9 +124,10 @@
 
 <script>
 import { getParents } from '@/api/wxmini/tutoring'
+import { buildParentDetailQuickTags } from './display.helpers'
 
 export default {
-	dicts: ['sys_subject', 'sys_class', 'sys_methods'],
+	dicts: ['sys_methods'],
 	data() {
 		return {
 			orderId: '',
@@ -145,6 +139,9 @@ export default {
 		}
 	},
 	computed: {
+		detailQuickTags() {
+			return buildParentDetailQuickTags(this.detail)
+		},
 		markers() {
 			if (!this.mapLat || !this.mapLng) return []
 			return [{
@@ -258,118 +255,94 @@ export default {
 .quick-tags {
 	display: flex;
 	flex-direction: row;
-	flex-wrap: wrap;
-	padding: 0 32rpx 24rpx;
 	gap: 16rpx;
+	padding: 0 32rpx 24rpx;
+	flex-wrap: wrap;
 }
 .quick-tag {
 	display: flex;
-	flex-direction: row;
 	align-items: center;
-	background: #F3F4F6;
-	border-radius: 15rpx;
-	padding: 5rpx 15rpx;
 	gap: 8rpx;
+	padding: 10rpx 18rpx;
+	background: #F4F8FF;
+	border-radius: 999rpx;
 }
-.quick-tag-text {
-	font-size: 26rpx;
-	color: #333;
-}
-
-/* 分割线 */
 .divider-full {
 	height: 16rpx;
-	background: #F5F5F5;
+	background: #F7F7F7;
 }
-
-/* 章节 */
 .section {
-	padding: 32rpx;
+	padding: 28rpx 32rpx;
 }
 .section-title {
-	font-size: 30rpx;
-	font-weight: bold;
-	color: #1A1A1A;
+	font-size: 32rpx;
+	font-weight: 600;
+	color: #222;
 	display: block;
 	margin-bottom: 24rpx;
 }
-
-/* 基础信息行 */
 .info-row {
 	display: flex;
-	flex-direction: row;
 	align-items: flex-start;
-	margin-bottom: 24rpx;
+	gap: 18rpx;
+	margin-bottom: 28rpx;
 }
 .info-content {
-	margin-left: 16rpx;
 	flex: 1;
 }
 .info-label {
-	font-size: 28rpx;
-	font-weight: 600;
-	color: #1A1A1A;
 	display: block;
-	margin-bottom: 6rpx;
+	font-size: 26rpx;
+	color: #888;
+	margin-bottom: 8rpx;
 }
 .info-value {
-	font-size: 26rpx;
-	color: #666;
+	font-size: 28rpx;
+	color: #222;
+	line-height: 1.6;
 }
-
-/* 地图 */
 .map-placeholder {
-	border-radius: 12rpx;
+	width: 100%;
+	height: 280rpx;
+	border-radius: 20rpx;
 	overflow: hidden;
-	margin-top: 12rpx;
+	background: #f5f5f5;
 }
 .map-view {
 	width: 100%;
-	height: 240rpx;
+	height: 100%;
 }
-
-/* 学员情况 */
 .student-card {
-	background: #F9FAFB;
-	border-radius: 16rpx;
+	display: flex;
+	align-items: flex-start;
+	gap: 18rpx;
+	background: #FAFBFC;
+	border-radius: 20rpx;
 	padding: 24rpx;
 }
-.student-item {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	margin-bottom: 24rpx;
-}
-.student-item:last-child {
-	margin-bottom: 0;
-}
 .student-icon-wrap {
-	width: 56rpx;
-	height: 56rpx;
+	width: 64rpx;
+	height: 64rpx;
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
-	margin-right: 20rpx;
 }
 .student-item-content {
 	flex: 1;
 }
 .student-item-label {
-	font-size: 28rpx;
-	font-weight: 600;
-	color: #1A1A1A;
 	display: block;
-	margin-bottom: 6rpx;
+	font-size: 26rpx;
+	color: #888;
+	margin-bottom: 8rpx;
 }
 .student-item-value {
-	font-size: 26rpx;
-	color: #555;
-	line-height: 1.6;
+	font-size: 28rpx;
+	color: #222;
+	line-height: 1.7;
 }
-
-/* 教员要求 */
 .requirement-list {
 	display: flex;
 	flex-direction: column;
@@ -377,44 +350,40 @@ export default {
 }
 .req-item {
 	display: flex;
-	flex-direction: row;
 	align-items: flex-start;
 	gap: 12rpx;
 }
 .req-text {
-	font-size: 28rpx;
-	color: #333;
-	line-height: 1.6;
 	flex: 1;
+	font-size: 28rpx;
+	color: #222;
+	line-height: 1.7;
 }
 .empty-text {
-	font-size: 26rpx;
+	font-size: 28rpx;
 	color: #999;
 }
-
-/* 底部操作栏 */
 .bottom-bar {
-	position: sticky;
-	bottom: 0;
+	position: fixed;
 	left: 0;
 	right: 0;
+	bottom: 0;
 	background: #fff;
-	border-top: 1rpx solid #ECECEC;
+	padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
 	display: flex;
-	flex-direction: row;
 	align-items: center;
-	padding: 20rpx 32rpx;
-	padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-	gap: 24rpx;
+	gap: 20rpx;
+	box-shadow: 0 -6rpx 24rpx rgba(0,0,0,0.06);
 }
 .btn-map {
+	width: 180rpx;
+	height: 84rpx;
+	border-radius: 18rpx;
+	background: #F7F7F7;
 	display: flex;
-	flex-direction: row;
 	align-items: center;
-	border: 1rpx solid #CCC;
-	border-radius: 12rpx;
-	padding: 18rpx 28rpx;
-	gap: 8rpx;
+	justify-content: center;
+	gap: 10rpx;
 }
 .btn-map-text {
 	font-size: 28rpx;
@@ -422,24 +391,23 @@ export default {
 }
 .btn-apply {
 	flex: 1;
-	background: #1A1A1A;
-	border-radius: 80rpx;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 9rpx 0;
+	height: 84rpx;
+	line-height: 84rpx;
+	border-radius: 18rpx;
+	background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+	border: none;
 }
 .btn-apply-text {
 	font-size: 30rpx;
+	font-weight: 600;
 	color: #fff;
-	font-weight: bold;
 }
-
-/* 加载/错误 */
-.loading-wrap, .error-wrap {
+.loading-wrap,
+.error-wrap {
+	padding: 80rpx 0;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: 100rpx 0;
+	color: #999;
 }
 </style>

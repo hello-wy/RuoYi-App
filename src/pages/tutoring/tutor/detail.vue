@@ -47,7 +47,7 @@
 								<uni-icons type="location-filled" size="20" color="#2563EB"></uni-icons>
 							</view>
 							<view class="overview-content">
-								<text class="overview-label">城市</text>
+								<text class="overview-label">地区</text>
 								<text class="overview-value">{{ cityText }}</text>
 							</view>
 						</view>
@@ -168,7 +168,10 @@ import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { getTutorById, reviewTutors } from '@/api/system/tutors'
 import request from '@/utils/request'
 import { useLocationStore } from '@/store'
-import { resolveTutorAvatarSrc } from '@/pages/tutoring/tutor/index.helpers'
+import {
+	buildTutorSubtitle,
+	resolveTutorAvatarSrc
+} from '@/pages/tutoring/tutor/index.helpers'
 import {
 	buildTutorDetailBottomActions,
 	getReviewResultToast,
@@ -210,13 +213,10 @@ export default {
 		displayName() {
 			return this.detail?.realName || '教员'
 		},
-		subtitleText() {
-			const school = this.detail?.school || ''
-			const major = this.detail?.major || ''
-			if (school && major) return `${school}  ${major}`
-			return school || major || '暂未完善院校与专业信息'
-		},
-		districtDictOptions() {
+			subtitleText() {
+				return buildTutorSubtitle(this.detail || {})
+			},
+			districtDictOptions() {
 			return (useLocationStore().districts || []).map(d => ({
 				value: d.value,
 				label: d.text,

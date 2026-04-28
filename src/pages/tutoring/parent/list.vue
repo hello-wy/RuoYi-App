@@ -51,12 +51,6 @@
 					<uni-icons type="location-filled" size="14" color="#888"></uni-icons>
 					<text class="card-region">{{ getDistrictLabel(item.region) }}</text>
 				</view>
-
-				<!-- 科目/年级标签 -->
-				<view class="card-tags">
-					<dict-tag :options="dict.type.sys_class" :value="item.grade"/>
-					<dict-tag :options="dict.type.sys_subject" :value="item.subject"/>
-				</view>
 			</view>
 
 			<!-- 加载更多 -->
@@ -99,18 +93,15 @@ export default {
 			if (!this.hasMore) return 'noMore'
 			return 'more'
 		},
-		// 区域选项：从 store 读取当前城市的区县列表
-		districtOptions() {			
+		districtOptions() {
 			return useLocationStore().districts
 		},
-		// 科目选项：从字典转换为 picker 格式
 		subjectOptions() {
 			return (this.dict.type.sys_subject || []).map(item => ({
 				value: item.value,
 				text: item.label
 			}))
 		},
-		// 年级选项：从 sys_class 字典转换为 picker 格式
 		gradeOptions() {
 			return (this.dict.type.sys_class || []).map(item => ({
 				value: item.value,
@@ -125,8 +116,6 @@ export default {
 		}
 	},
 	onLoad(options) {
-		// 支持从首页分类速查直接跳转并预填筛选条件
-		// e.g. ?region=320102  或  ?subject=1
 		if (options && options.region) {
 			this.queryParams.region = decodeURIComponent(options.region)
 		}
@@ -183,7 +172,6 @@ export default {
 			if (!this.hasMore || this.loading) return
 			this.loadData(false)
 		},
-		/** 筛选栏变化回调 */
 		onFilterChange(newParams) {
 			this.queryParams = newParams
 			this.loadData(true)
@@ -213,13 +201,11 @@ export default {
 	overflow: hidden;
 }
 
-/* 列表滚动区 */
 .list-scroll {
 	flex: 1;
 	height: 0;
 }
 
-/* 卡片 */
 .card {
 	background: #fff;
 	border-radius: 16rpx;
@@ -240,7 +226,6 @@ export default {
 	color: #999;
 }
 
-/* 方式标签 */
 .tag-weekend {
 	background-color: #EAF3FF;
 	color: #3B82F6;
@@ -264,58 +249,42 @@ export default {
 }
 
 .card-title {
-	font-size: 34rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-	margin-bottom: 12rpx;
 	display: block;
+	font-size: 34rpx;
+	font-weight: 600;
+	color: #222;
+	margin-bottom: 18rpx;
+	line-height: 1.5;
 }
 
 .card-location {
 	display: flex;
-	flex-direction: row;
 	align-items: center;
-	margin-bottom: 16rpx;
+	gap: 8rpx;
 }
 .card-region {
-	font-size: 24rpx;
-	color: #888;
-	margin-left: 6rpx;
+	font-size: 26rpx;
+	color: #666;
 }
 
-/* 科目标签 */
-.card-tags {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 12rpx;
-	margin-bottom: 20rpx;
-}
-.tag {
-	background-color: #F3F4F6;
-	color: #555;
-	font-size: 24rpx;
-	padding: 6rpx 18rpx;
-	border-radius: 8rpx;
-}
-
-/* 加载/错误 */
-.loading-wrap, .error-wrap {
+.loading-wrap,
+.error-wrap {
+	padding: 80rpx 0;
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
 	align-items: center;
-	padding: 60rpx 0;
-	gap: 16rpx;
+	justify-content: center;
+	color: #999;
+	gap: 20rpx;
 }
 
 .retry-btn {
-	padding: 12rpx 40rpx;
-	background-color: #f0f0f0;
-	border-radius: 40rpx;
+	padding: 12rpx 24rpx;
+	background: #3B82F6;
+	border-radius: 999rpx;
 }
 .retry-text {
-	font-size: 28rpx;
-	color: #555;
+	color: #fff;
+	font-size: 24rpx;
 }
 </style>

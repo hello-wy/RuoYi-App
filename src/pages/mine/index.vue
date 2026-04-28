@@ -118,7 +118,7 @@ const isAdmin = computed(() => isAdminUser(token.value, roles.value))
 const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
 
 const userIdentityLabel = computed(() => {
-  const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家', [USER_TYPES.AUNT]: '阿姨' }
+  const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家', [USER_TYPES.AUNT]: '兼职' }
   return labels[normalizedUserType.value] || '未设置'
 })
 

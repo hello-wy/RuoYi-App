@@ -92,40 +92,6 @@
 					</view>
 				</view>
 
-				<view class="form-item">
-					<text class="form-label">年级科目</text>
-					<view class="picker-row">
-						<picker
-							mode="selector"
-							:range="gradeOptions"
-							range-key="label"
-							:value="gradeIndex"
-							@change="onGradeChange"
-						>
-							<view class="picker-box">
-								<text class="picker-text" :class="{ placeholder: !form.grade }">
-									{{ form.grade ? getLabel(gradeOptions, form.grade) : '选择年级' }}
-								</text>
-								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
-							</view>
-						</picker>
-						<picker
-							mode="selector"
-							:range="subjectOptions"
-							range-key="label"
-							:value="subjectIndex"
-							@change="onSubjectChange"
-						>
-							<view class="picker-box">
-								<text class="picker-text" :class="{ placeholder: !form.subject }">
-									{{ form.subject ? getLabel(subjectOptions, form.subject) : '选择科目' }}
-								</text>
-								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
-							</view>
-						</picker>
-					</view>
-				</view>
-
 				<area-picker v-model="form.region" @change="onRegionChange"></area-picker>
 
 				<address-search
@@ -188,15 +154,15 @@
 
 				<view class="form-item">
 					<text class="form-label">授课方式</text>
-					<view class="method-tags">
+					<view class="method-tags select-tags">
 						<view
 							v-for="item in dict.type.sys_methods"
 							:key="item.value"
-							class="method-tag"
+							class="method-tag select-tag"
 							:class="{ active: form.methods === item.value }"
 							@click="toggleMethod(item.value)"
 						>
-							<text class="method-tag-text">{{ item.label }}</text>
+							<text class="method-tag-text select-tag-text">{{ item.label }}</text>
 						</view>
 					</view>
 				</view>
@@ -239,6 +205,14 @@
 		</view>
 
 		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
+		<UserTypeGuardModal
+			:visible="showUserTypeGuard"
+			:title="userTypeGuardCopy.title"
+			:content="userTypeGuardCopy.content"
+			@cancel="handleUserTypeGuardCancel"
+			@close="handleUserTypeGuardClose"
+			@confirm="openUserTypeGuide"
+		/>
 	</view>
 </template>
 
@@ -246,18 +220,29 @@
 import { addParents } from '@/api/wxmini/tutoring'
 import { listBaby } from '@/api/wxmini/baby'
 import { useUserStore } from '@/store'
+import { USER_TYPES } from '@/utils/userType'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
-import { canUseBabyPicker, normalizeBabyList, shouldShowBabyEmptyState } from './apply.helpers'
+import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
+import {
+	buildParentApplyPayload,
+	canUseBabyPicker,
+	normalizeBabyList,
+	shouldShowBabyEmptyState,
+	validateParentApplyForm
+} from './apply.helpers'
+import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.helpers'
 
 export default {
-	components: { AreaPicker, AddressSearch, LoginPopup },
-	dicts: ['sys_class', 'sys_subject', 'sys_methods'],
+	components: { AreaPicker, AddressSearch, LoginPopup, UserTypeGuardModal },
+	dicts: ['sys_methods'],
 	data() {
 		return {
 			submitting: false,
 			shouldAutoOpenLogin: false,
+			showUserTypeGuard: false,
+			userTypeGuardCopy: buildUserTypeGuardCopy('parent'),
 			babyLoading: false,
 			babyPickerVisible: false,
 			babyList: [],
@@ -282,8 +267,6 @@ export default {
 				babyId: '',
 				babyName: '',
 				babyMeta: '',
-				grade: '',
-				subject: '',
 				region: { province: '', city: '', district: '', code: '' },
 				detail: '',
 				location: '',
@@ -299,18 +282,6 @@ export default {
 		}
 	},
 	computed: {
-		gradeOptions() {
-			return this.dict.type.sys_class || []
-		},
-		subjectOptions() {
-			return this.dict.type.sys_subject || []
-		},
-		gradeIndex() {
-			return this.gradeOptions.findIndex(o => o.value === this.form.grade)
-		},
-		subjectIndex() {
-			return this.subjectOptions.findIndex(o => o.value === this.form.subject)
-		},
 		userType() {
 			return useUserStore().userType
 		},
@@ -320,24 +291,30 @@ export default {
 	},
 	onLoad() {
 		this.form.phone = useUserStore().phone
+		this.checkUserType()
 		this.loadBabyList()
 	},
 	onShow() {
+		this.checkUserType()
 		this.loadBabyList()
 	},
 	methods: {
+		checkUserType() {
+			const userStore = useUserStore()
+			this.showUserTypeGuard = shouldBlockUserTypeEntry(userStore, USER_TYPES.PARENT)
+		},
+		handleUserTypeGuardCancel() {
+			this.showUserTypeGuard = false
+		},
+		handleUserTypeGuardClose() {
+			this.showUserTypeGuard = false
+		},
+		openUserTypeGuide() {
+			this.showUserTypeGuard = false
+			uni.navigateTo({ url: '/pages/guide/index' })
+		},
 		callService() {
 			uni.makePhoneCall({ phoneNumber: '17327736231' })
-		},
-		getLabel(options, value) {
-			const item = (options || []).find(o => o.value === value)
-			return item ? item.label : value
-		},
-		onGradeChange(e) {
-			this.form.grade = (this.gradeOptions[e.detail.value] && this.gradeOptions[e.detail.value].value) || ''
-		},
-		onSubjectChange(e) {
-			this.form.subject = (this.subjectOptions[e.detail.value] && this.subjectOptions[e.detail.value].value) || ''
 		},
 		toggleMethod(value) {
 			this.form.methods = this.form.methods === value ? '' : value
@@ -436,56 +413,9 @@ export default {
 			uni.navigateTo({ url: '/pages/mine/baby/index' })
 		},
 		validate() {
-			if (!this.form.name.trim()) {
-				uni.showToast({ title: '请填写需求描述', icon: 'none' })
-				return false
-			}
-			if (!/^1[3-9]\d{9}$/.test(this.form.phone)) {
-				uni.showToast({ title: '请填写正确的手机号', icon: 'none' })
-				return false
-			}
-			if (!canUseBabyPicker(this.userType)) {
-				uni.showToast({ title: '请先切换为家长身份', icon: 'none' })
-				return false
-			}
-			if (!this.form.babyId) {
-				uni.showToast({ title: '请选择服务萌娃', icon: 'none' })
-				return false
-			}
-			if (!this.form.grade) {
-				uni.showToast({ title: '请选择年级', icon: 'none' })
-				return false
-			}
-			if (!this.form.subject) {
-				uni.showToast({ title: '请选择科目', icon: 'none' })
-				return false
-			}
-			if (!this.form.region.district) {
-				uni.showToast({ title: '请选择授课地址（省/市/区）', icon: 'none' })
-				return false
-			}
-			if (!this.form.detail.trim()) {
-				uni.showToast({ title: '请填写详细地址', icon: 'none' })
-				return false
-			}
-			if (!this.form.dayOfWeek) {
-				uni.showToast({ title: '请选择每周上课频次', icon: 'none' })
-				return false
-			}
-			if (!this.form.startTime) {
-				uni.showToast({ title: '请选择开始时间', icon: 'none' })
-				return false
-			}
-			if (!this.form.endTime) {
-				uni.showToast({ title: '请选择结束时间', icon: 'none' })
-				return false
-			}
-			if (!this.form.methods) {
-				uni.showToast({ title: '请选择授课方式', icon: 'none' })
-				return false
-			}
-			if (!this.form.description.trim()) {
-				uni.showToast({ title: '请填写学生情况描述', icon: 'none' })
+			const errorMessage = validateParentApplyForm(this.form, this.userType)
+			if (errorMessage) {
+				uni.showToast({ title: errorMessage, icon: 'none' })
 				return false
 			}
 			return true
@@ -502,23 +432,7 @@ export default {
 			if (!this.validate() || this.submitting) return
 			this.submitting = true
 			try {
-				const res = await addParents({
-					name: this.form.name,
-					phone: this.form.phone,
-					babyId: this.form.babyId,
-					grade: this.form.grade,
-					subject: this.form.subject,
-					location: this.form.location,
-					address: this.form.location,
-					geo: this.form.geo,
-					region: this.form.region_district,
-					dayOfWeek: this.form.dayOfWeek,
-					startTime: this.form.startTime,
-					endTime: this.form.endTime,
-					methods: this.form.methods,
-					brief: this.form.description,
-					requirements: this.form.requirements
-				})
+				const res = await addParents(buildParentApplyPayload(this.form))
 				uni.showToast({ title: '发布成功，等待审核', icon: 'success' })
 				setTimeout(() => {
 					uni.navigateTo({ url: '/pages/tutoring/parent/detail?id=' + res.data })
@@ -666,12 +580,6 @@ page {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-}
-
-.picker-row {
-	display: flex;
-	flex-direction: row;
-	gap: 10px;
 }
 
 .picker-box {
@@ -837,93 +745,70 @@ page {
 .time-separator {
 	font-size: 14px;
 	color: #94a3b8;
-	white-space: nowrap;
-	flex-shrink: 0;
 }
 
 .method-tags {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	gap: 8px;
-}
-
-.method-tag {
-	padding: 7px 14px;
-	border-radius: 20px;
-	border: 1.5px solid #e2e8f0;
-	background: #f8fafc;
-}
-
-.method-tag.active {
-	border-color: #3B82F6;
-	background: #EFF6FF;
-}
-
-.method-tag-text {
-	font-size: 13px;
-	color: #64748b;
-}
-
-.method-tag.active .method-tag-text {
-	color: #3B82F6;
-	font-weight: 600;
+	gap: 10px;
 }
 
 .form-textarea {
 	width: 100%;
-	min-height: 100px;
+	height: 120px;
 	background: #f8fafc;
 	border: 1.5px solid #e2e8f0;
 	border-radius: 10px;
 	padding: 12px 14px;
 	font-size: 14px;
 	color: #1e293b;
-	box-sizing: border-box;
 	line-height: 1.6;
+	box-sizing: border-box;
 }
 
 .word-count {
 	display: block;
 	text-align: right;
-	font-size: 11px;
+	font-size: 12px;
 	color: #94a3b8;
-	margin-top: 4px;
+	margin-top: 6px;
 }
 
 .tips-row {
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	padding: 10px 12px;
-	background: #f8fafc;
-	border-radius: 8px;
+	gap: 6px;
+	margin-top: 8px;
 }
 
 .tips-text {
-	font-size: 11px;
-	color: #94a3b8;
-	margin-left: 6px;
-	line-height: 1.6;
 	flex: 1;
+	font-size: 12px;
+	color: #94a3b8;
+	line-height: 1.6;
 }
 
 .submit-wrap {
-	margin-top: 8px;
-	margin-bottom: 40px;
+	position: sticky;
+	bottom: 0;
+	padding: 4px 0 16px;
+	background: linear-gradient(180deg, rgba(244, 246, 251, 0) 0%, #f4f6fb 40%);
 }
 
 .submit-btn {
-	background: #1e293b;
+	height: 48px;
 	border-radius: 14px;
-	height: 52px;
+	background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28);
 }
 
 .submit-btn.disabled {
-	opacity: 0.6;
+	opacity: 0.7;
 }
 
 .submit-text {

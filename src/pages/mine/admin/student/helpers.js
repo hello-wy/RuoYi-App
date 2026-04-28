@@ -2,7 +2,7 @@ export function getUserTypeText(value) {
   if (Number(value) === 0) return '家长'
   if (Number(value) === 1) return '学生'
   if (Number(value) === 2) return '商家'
-  if (Number(value) === 3) return '阿姨'
+  if (Number(value) === 3) return '兼职'
   return '未知'
 }
 

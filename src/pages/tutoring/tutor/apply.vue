@@ -276,6 +276,14 @@
 				</view>
 			</view>
 		</view>
+		<UserTypeGuardModal
+			:visible="showUserTypeGuard"
+			:title="userTypeGuardCopy.title"
+			:content="userTypeGuardCopy.content"
+			@cancel="handleUserTypeGuardCancel"
+			@close="handleUserTypeGuardClose"
+			@confirm="openUserTypeGuide"
+		/>
 	</view>
 </template>
 
@@ -283,7 +291,9 @@
 import config from '@/config'
 import { addTutors, getMyTutor, updateMyTutor, uploadTutorAvatar, uploadTutorCertification } from '@/api/wxmini/tutoring'
 import { useLocationStore, useUserStore } from '@/store'
+import { USER_TYPES } from '@/utils/userType'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
+import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import {
 	appendPreviewCacheBuster,
 	buildRemovedCertificateState,
@@ -297,9 +307,10 @@ import {
 } from './apply.helpers'
 import { buildApplyFormStateFromTutor, buildApplyPageMode } from './apply.mode'
 import { tutorAgreementRoute } from './agreement.content'
+import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.helpers'
 
 export default {
-	components: { RealVerify },
+	components: { RealVerify, UserTypeGuardModal },
 	dicts: ['sys_subject', 'sys_degree', 'sys_methods'],
 	data() {
 		return {
@@ -307,6 +318,8 @@ export default {
 			initializing: false,
 			verified: false,
 			submitting: false,
+			showUserTypeGuard: false,
+			userTypeGuardCopy: buildUserTypeGuardCopy('student'),
 			certificateUploading: false,
 			avatarUploading: false,
 			agreed: false,
@@ -359,12 +372,27 @@ export default {
 	},
 		onLoad(query) {
 			this.pageMode = buildApplyPageMode(query)
+			this.checkUserType()
 			this.initPage()
 		},
 	onShow() {
-		// this.resetUploadState()
+		this.checkUserType()
 	},
 	methods: {
+		checkUserType() {
+			const userStore = useUserStore()
+			this.showUserTypeGuard = shouldBlockUserTypeEntry(userStore, USER_TYPES.STUDENT)
+		},
+		handleUserTypeGuardCancel() {
+			this.showUserTypeGuard = false
+		},
+		handleUserTypeGuardClose() {
+			this.showUserTypeGuard = false
+		},
+		openUserTypeGuide() {
+			this.showUserTypeGuard = false
+			uni.navigateTo({ url: '/pages/guide/index' })
+		},
 			async initPage() {
 				if (this.initializing) return
 				this.initializing = true

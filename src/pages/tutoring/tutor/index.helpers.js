@@ -5,10 +5,10 @@ export function getTutorDisplayName(profile = {}) {
 }
 
 export function buildTutorSubtitle(profile = {}) {
-  const school = profile.school || ''
-  const major = profile.major || ''
-  if (school && major) return `${school}  ${major}`
-  return school || major || '暂未完善院校与专业信息'
+  const parts = [profile.school, profile.major, profile.currentGrade]
+    .map(item => (item || '').trim())
+    .filter(Boolean)
+  return parts.length ? parts.join('  ') : '暂未完善院校与专业信息'
 }
 
 export function formatTutorIdentity(identity) {
@@ -78,7 +78,11 @@ export function buildTutorDetailUrl(id = '', avatarSrc = '') {
 }
 
 export function resolveTutorAvatarSrc({ avatarSrc = '', detail = {}, baseUrl = '' } = {}) {
+  const detailAvatar = detail?.avatar || ''
+  if (detailAvatar) {
+    return isHttp(detailAvatar) ? detailAvatar : `${baseUrl}${detailAvatar}`
+  }
   if (avatarSrc) return avatarSrc
-  const userId = detail?.userId || detail?.user_id || ''
+  const userId = detail?.userId || detail?.user_id || detail?.uid || ''
   return userId ? `${baseUrl}/profile/avatar/${userId}.png` : '/static/images/profile.png'
 }

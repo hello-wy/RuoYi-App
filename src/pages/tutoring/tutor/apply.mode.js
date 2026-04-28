@@ -13,6 +13,21 @@ function toAbsoluteUrl(baseUrl = '', value = '') {
   return value.startsWith('http') ? value : `${baseUrl}${value}`
 }
 
+function normalizeIdentity(value) {
+  if (value === null || value === undefined || value === '') {
+    return 0
+  }
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+function normalizeMethod(value) {
+  if (value === null || value === undefined || value === '') {
+    return ''
+  }
+  return String(value)
+}
+
 export function buildApplyPageMode(query = {}) {
   return query?.mode === 'edit' ? 'edit' : 'create'
 }
@@ -25,7 +40,7 @@ export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarS
     form: {
       realName: profile.realName || '',
       idCard: profile.idCard || '',
-      identity: profile.identity ?? 0,
+      identity: normalizeIdentity(profile.identity),
       city: profile.city || '',
       school: profile.school || '',
       major: profile.major || '',
@@ -33,7 +48,7 @@ export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarS
       currentGrade: profile.currentGrade || '',
       subjects,
       areas: selectedAreaCodes.join(','),
-      methods: profile.methods ?? '',
+      methods: normalizeMethod(profile.methods),
       experience: profile.experience || '',
       certificateList: profile.certificateList || '',
       selfJudge: profile.selfJudge || '',

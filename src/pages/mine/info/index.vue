@@ -92,7 +92,7 @@ function userTypeText(value) {
   if (value === 0) return '家长'
   if (value === 1) return '学生'
   if (value === 2) return '商家'
-  if (value === 3) return '阿姨'
+  if (value === 3) return '兼职'
   return '家长 / 学生'
 }
 
