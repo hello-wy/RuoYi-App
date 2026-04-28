@@ -81,7 +81,7 @@ const form = ref({
   realName: '',
   nickName: '',
   birthDate: '',
-  gender: '',
+  gender: 0,
   schoolName: '',
   grade: '',
   specialNote: ''
@@ -146,34 +146,41 @@ function buildPayload() {
   }
 }
 
-function resolveValidateMessage(error) {
-  if (Array.isArray(error) && error[0]?.errorMessage) {
-    return error[0].errorMessage
+function validatePayload(payload) {
+  if (!payload.realName) {
+    return '请输入真实姓名'
   }
-  if (error && typeof error === 'object') {
-    const firstFieldError = Object.values(error).find(item => Array.isArray(item) && item[0]?.errorMessage)
-    if (firstFieldError?.[0]?.errorMessage) {
-      return firstFieldError[0].errorMessage
-    }
+  if (!payload.birthDate) {
+    return '请选择出生日期'
   }
-  return '请完善必填信息'
+  if (payload.gender === '' || payload.gender === null || payload.gender === undefined) {
+    return '请选择性别'
+  }
+  if (!payload.schoolName) {
+    return '请输入就读学校'
+  }
+  if (!payload.grade) {
+    return '请输入就读年级'
+  }
+  return ''
 }
 
 async function handleSubmit() {
   if (submitting.value) return
-  try {
-    await formRef.value.validate()
-  } catch (error) {
-    uni.showToast({ title: resolveValidateMessage(error), icon: 'none' })
+
+  const payload = buildPayload()
+  const errorMessage = validatePayload(payload)
+  if (errorMessage) {
+    uni.showToast({ title: errorMessage, icon: 'none' })
     return
   }
 
   submitting.value = true
   try {
     if (form.value.id) {
-      await updateBaby(buildPayload())
+      await updateBaby(payload)
     } else {
-      await addBaby(buildPayload())
+      await addBaby(payload)
     }
     proxy.$modal.msgSuccess('保存成功')
     setTimeout(() => {
@@ -240,7 +247,7 @@ page { background: #f5f7ff; }
   line-height: 1.6;
   color: #8b87a3;
 }
-.picker-full-box { min-height: 92rpx; background: #faf9ff; border: 1px solid #ebe7f7; border-radius: 20rpx; padding: 0 24rpx; display: flex; align-items: center; justify-content: space-between; }
+.picker-full-box { margin-top: 20rpx; min-height: 92rpx; background: #faf9ff; border: 1px solid #ebe7f7; border-radius: 20rpx; padding: 0 24rpx; display: flex; align-items: center; justify-content: space-between; }
 .picker-text { font-size: 30rpx; color: #241f3f; }
 .picker-text.placeholder { color: #a0aec0; }
 .field-box {
@@ -251,6 +258,7 @@ page { background: #f5f7ff; }
   background: #faf9ff;
   display: flex;
   align-items: center;
+  margin-top: 20rpx;
 }
 .field-box--textarea {
   min-height: 212rpx;
@@ -293,6 +301,7 @@ page { background: #f5f7ff; }
   justify-content: center;
   font-size: 28rpx;
   color: #5f5a75;
+  margin-top: 20rpx;
 }
 .gender-option.active {
   border-color: #5b4fd8;
