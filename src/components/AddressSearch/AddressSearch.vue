@@ -133,8 +133,7 @@ export default {
 			this.$emit('update:geo', geo)
 
 			// district → region
-			const region = item.district || ''
-			this.$emit('update:region', region)
+			this.$emit('update:region', item.district)
 
 			// 完整数据
 			this.$emit('select', { ...item, location, geo, region })

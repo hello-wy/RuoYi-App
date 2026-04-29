@@ -558,12 +558,8 @@ export default {
 				if (!avatarUrl) {
 					throw new Error('empty upload result')
 				}
-				console.log(avatarUrl);
-				
 				const normalizedAvatarUrl = avatarUrl.startsWith('https') ? avatarUrl : config.baseUrl + avatarUrl
-				console.log(normalizedAvatarUrl);
 				this.avatarPreviewUrl = appendPreviewCacheBuster(normalizedAvatarUrl)
-				console.log(this.avatarPreviewUrl);
 				useUserStore().SET_AVATAR(normalizedAvatarUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {

@@ -25,6 +25,14 @@ export function addTutors(data) {
     })
 }
 
+export function verifyRealNameByWechatPay(data) {
+    return request({
+        url: '/wxmini/tutoring/real-verify/verify',
+        method: 'post',
+        data
+    })
+}
+
 // 获取当前登录教员自己的信息
 export function getMyTutor() {
     return request({

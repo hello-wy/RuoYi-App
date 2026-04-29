@@ -89,8 +89,8 @@
 
 <script>
 import { nextTick } from 'vue'
-
-const wait = (duration = 0) => new Promise(resolve => setTimeout(resolve, duration))
+import { verifyRealNameByWechatPay } from '@/api/wxmini/tutoring'
+import { normalizeRealVerifyForm } from './realVerify.helpers'
 
 export default {
 	name: 'RealVerify',
@@ -131,23 +131,21 @@ export default {
 			this.openPopup()
 		},
 		validateVerifyForm() {
-			const realName = (this.realName || '').trim()
-			const idCard = (this.idCard || '').trim()
-			if (!realName) {
-				uni.showToast({ title: '请填写真实姓名', icon: 'none' })
-				return false
+			const normalized = normalizeRealVerifyForm({
+				realName: this.realName,
+				idCard: this.idCard,
+			})
+			if (!normalized.valid) {
+				uni.showToast({ title: normalized.message, icon: 'none' })
+				return null
 			}
-			if (!/^\d{17}[\dXx]$/.test(idCard)) {
-				uni.showToast({ title: '请填写正确的18位身份证号', icon: 'none' })
-				return false
+			if (normalized.realName !== this.realName) {
+				this.$emit('update:realName', normalized.realName)
 			}
-			if (realName !== this.realName) {
-				this.$emit('update:realName', realName)
+			if (normalized.idCard !== this.idCard) {
+				this.$emit('update:idCard', normalized.idCard)
 			}
-			if (idCard !== this.idCard) {
-				this.$emit('update:idCard', idCard)
-			}
-			return true
+			return normalized
 		},
 		openPopup() {
 			this.popupVisible = true
@@ -177,19 +175,41 @@ export default {
 				this.successVisible = false
 			}, 280)
 		},
+		handleVerifySuccess() {
+			this.$emit('update:verified', true)
+			this.verifying = false
+			this.closePopup()
+			setTimeout(() => {
+				this.openSuccessEffect()
+				setTimeout(() => {
+					this.closeSuccessEffect()
+				}, 1600)
+			}, 320)
+		},
+		handleVerifyFailure(message) {
+			this.$emit('update:verified', false)
+			this.verifying = false
+			uni.showToast({ title: message || '实名认证失败，请重试', icon: 'none' })
+		},
 		async submitVerify() {
-			if (this.verifying || !this.validateVerifyForm()) return
+			if (this.verifying) return
+			const normalized = this.validateVerifyForm()
+			if (!normalized) return
 			this.verifying = true
 			try {
-				await wait(400)
-				this.$emit('update:verified', true)
-				this.closePopup()
-				await wait(320)
-				this.openSuccessEffect()
-				await wait(1600)
-				this.closeSuccessEffect()
-			} finally {
-				this.verifying = false
+				const res = await verifyRealNameByWechatPay({
+					realName: normalized.realName,
+					idCard: normalized.idCard,
+				})
+				const matched = Boolean(res?.data?.matched)
+				if (matched) {
+					this.handleVerifySuccess()
+					return
+				}
+				this.handleVerifyFailure(res?.data?.reason || '姓名或身份证信息不匹配，请重新填写')
+			} catch (error) {
+				const message = typeof error === 'string' && error !== '500' ? error : '实名认证失败，请重试'
+				this.handleVerifyFailure(message)
 			}
 		}
 	}

@@ -26,11 +26,12 @@
         v-model="form.locationInput"
         v-model:location="form.location"
         v-model:geo="form.geo"
+        v-model:region="form.region"
         placeholder="搜索小区 / 街道 / 标志性建筑"
       />
 
       <view class="form-item">
-        <text class="form-label">详细地址</text>
+        <text class="form-label">小区名称</text>
         <input v-model="form.addressDetail" class="field-input" placeholder="如：万达广场 3 栋" />
       </view>
 
@@ -72,6 +73,7 @@ const form = ref({
   locationInput: '',
   location: '',
   geo: '',
+  region: '',
   addressDetail: '',
   doorplate: '',
   remark: '',
@@ -106,15 +108,18 @@ async function loadDetail(id) {
     addressDetail: current.addressDetail || '',
     doorplate: current.doorplate || '',
     remark: current.remark || '',
+    region: current.region || '',
     isDefault: Number(current.isDefault || 0)
   }
 }
 
 function buildPayload() {
+  console.log(form.value.addressDetail);
+  
   return {
     contactName: String(form.value.contactName || '').trim(),
     contactPhone: String(form.value.contactPhone || '').trim(),
-    region: '',
+    region: String(form.value.region || '').trim(),
     location: String(form.value.location || '').trim(),
     geo: String(form.value.geo || '').trim(),
     addressDetail: String(form.value.addressDetail || '').trim(),
