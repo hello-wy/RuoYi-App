@@ -135,6 +135,7 @@ const studyItems = computed(() => {
 })
 const primaryActionPath = computed(() => {
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '/pages/tutoring/tutor/index'
+  // TODO: 修改回家长需求页
   if (normalizedUserType.value === USER_TYPES.PARENT) return '/pages/tutoring/parent/apply'
   if (normalizedUserType.value === USER_TYPES.AUNT) return '/pages/mine/info/index'
   return profileDetail.value?.primaryAction || '/pages/guide/index'

@@ -52,7 +52,7 @@ export function listParents(query) {
 
 export function getParents(id) {
     return request({
-        url: '/system/parents/' + id,
+        url: '/wxmini/tutoring/parents/' + id,
         method: 'get'
     })
 }
@@ -62,6 +62,28 @@ export function addParents(data) {
         url: '/wxmini/tutoring/parents',
         method: 'post',
         data: data
+    })
+}
+
+export function getMyParentsList() {
+    return request({
+        url: '/wxmini/tutoring/parents/mine',
+        method: 'get'
+    })
+}
+
+export function updateMyParentDemand(id, data) {
+    return request({
+        url: '/wxmini/tutoring/parents/' + id,
+        method: 'put',
+        data
+    })
+}
+
+export function deleteMyParentDemand(id) {
+    return request({
+        url: '/wxmini/tutoring/parents/' + id,
+        method: 'delete'
     })
 }
 

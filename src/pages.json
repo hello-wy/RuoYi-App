@@ -110,6 +110,12 @@
       }
     },
     {
+      "path": "pages/mine/parent-demand/index",
+      "style": {
+        "navigationBarTitleText": "我的发布需求"
+      }
+    },
+    {
       "path": "pages/tutoring/tutor/apply",
       "style": {
         "navigationBarTitleText": "做家教"

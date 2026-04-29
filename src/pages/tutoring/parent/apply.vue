@@ -92,7 +92,31 @@
 					</view>
 				</view>
 
-				<area-picker v-model="form.region" @change="onRegionChange"></area-picker>
+				<view class="form-item">
+						<text class="form-label">年级</text>
+						<picker mode="selector" :range="gradeOptions" range-key="label" :value="gradeIndex" @change="onGradeChange">
+							<view class="picker-full-box">
+								<text class="picker-text" :class="{ placeholder: !form.grade }">
+									{{ form.grade ? getLabel(gradeOptions, form.grade) : '请选择年级' }}
+								</text>
+								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
+							</view>
+						</picker>
+					</view>
+
+					<view class="form-item">
+						<text class="form-label">学科</text>
+						<picker mode="selector" :range="subjectOptions" range-key="label" :value="subjectIndex" @change="onSubjectChange">
+							<view class="picker-full-box">
+								<text class="picker-text" :class="{ placeholder: !form.subject }">
+									{{ form.subject ? getLabel(subjectOptions, form.subject) : '请选择学科' }}
+								</text>
+								<uni-icons type="bottom" size="12" color="#aaa"></uni-icons>
+							</view>
+						</picker>
+					</view>
+
+					<area-picker v-model="form.region" @change="onRegionChange"></area-picker>
 
 				<address-search
 					v-model="form.detail"
@@ -198,8 +222,8 @@
 			</view>
 
 			<view class="submit-wrap">
-				<view class="submit-btn" :class="{ disabled: submitting }" @click="handleSubmit">
-					<text class="submit-text">{{ submitting ? '提交中...' : '立即发布' }}</text>
+				<view class="submit-btn" :class="{ disabled: submitting || loadingDetail }" @click="handleSubmit">
+					<text class="submit-text">{{ submitButtonText }}</text>
 				</view>
 			</view>
 		</view>
@@ -217,7 +241,7 @@
 </template>
 
 <script>
-import { addParents } from '@/api/wxmini/tutoring'
+import { addParents, getParents, updateMyParentDemand } from '@/api/wxmini/tutoring'
 import { listBaby } from '@/api/wxmini/baby'
 import { useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
@@ -226,6 +250,7 @@ import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import {
+	buildParentApplyForm,
 	buildParentApplyPayload,
 	canUseBabyPicker,
 	normalizeBabyList,
@@ -236,16 +261,19 @@ import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.
 
 export default {
 	components: { AreaPicker, AddressSearch, LoginPopup, UserTypeGuardModal },
-	dicts: ['sys_methods'],
+	dicts: ['sys_methods', 'sys_class', 'sys_subject'],
 	data() {
 		return {
 			submitting: false,
+			loadingDetail: false,
 			shouldAutoOpenLogin: false,
 			showUserTypeGuard: false,
 			userTypeGuardCopy: buildUserTypeGuardCopy('parent'),
 			babyLoading: false,
 			babyPickerVisible: false,
 			babyList: [],
+			demandId: '',
+			fromMine: false,
 			weekDays: [
 				{ label: '周一', value: '1' },
 				{ label: '周二', value: '2' },
@@ -267,6 +295,8 @@ export default {
 				babyId: '',
 				babyName: '',
 				babyMeta: '',
+				grade: '',
+				subject: '',
 				region: { province: '', city: '', district: '', code: '' },
 				detail: '',
 				location: '',
@@ -285,14 +315,39 @@ export default {
 		userType() {
 			return useUserStore().userType
 		},
+		gradeOptions() {
+			return this.dict.type.sys_class || []
+		},
+		subjectOptions() {
+			return this.dict.type.sys_subject || []
+		},
+		gradeIndex() {
+			return Math.max(0, this.gradeOptions.findIndex(item => item.value === this.form.grade))
+		},
+		subjectIndex() {
+			return Math.max(0, this.subjectOptions.findIndex(item => item.value === this.form.subject))
+		},
 		showBabyEmptyState() {
 			return shouldShowBabyEmptyState(this.babyPickerVisible, this.babyList)
+		},
+		isEditMode() {
+			return Boolean(this.demandId)
+		},
+		submitButtonText() {
+			if (this.submitting) return this.isEditMode ? '保存中...' : '提交中...'
+			return this.isEditMode ? '保存需求' : '立即发布'
 		}
 	},
-	onLoad() {
+	onLoad(options) {
+		this.demandId = options?.id || ''
+		this.fromMine = String(options?.fromMine || '') === '1'
 		this.form.phone = useUserStore().phone
 		this.checkUserType()
 		this.loadBabyList()
+		if (this.isEditMode) {
+			uni.setNavigationBarTitle({ title: '编辑需求' })
+			this.loadDetail()
+		}
 	},
 	onShow() {
 		this.checkUserType()
@@ -315,6 +370,16 @@ export default {
 		},
 		callService() {
 			uni.makePhoneCall({ phoneNumber: '17327736231' })
+		},
+		getLabel(options, value) {
+			const item = (options || []).find(option => option.value === value)
+			return item ? item.label : value
+		},
+		onGradeChange(e) {
+			this.form.grade = (this.gradeOptions[e.detail.value] && this.gradeOptions[e.detail.value].value) || ''
+		},
+		onSubjectChange(e) {
+			this.form.subject = (this.subjectOptions[e.detail.value] && this.subjectOptions[e.detail.value].value) || ''
 		},
 		toggleMethod(value) {
 			this.form.methods = this.form.methods === value ? '' : value
@@ -339,6 +404,11 @@ export default {
 			const m = mIdx === 0 ? '00' : '30'
 			return `${h}:${m}`
 		},
+		timeToIndex(value, fallback = [8, 0]) {
+			const match = String(value || '').match(/^(\d{1,2}):(00|30)$/)
+			if (!match) return fallback
+			return [Number(match[1]), match[2] === '30' ? 1 : 0]
+		},
 		onStartTimeChange(e) {
 			const [hIdx, mIdx] = e.detail.value
 			this.startTimeIndex = [hIdx, mIdx]
@@ -362,6 +432,12 @@ export default {
 		onRegionChange(val) {
 			this.form.region = val
 		},
+		applyBabyDefaults(baby, force = false) {
+			if (!baby) return
+			if (force || !this.form.grade) {
+				this.form.grade = baby.grade || ''
+			}
+		},
 		async loadBabyList() {
 			if (!canUseBabyPicker(this.userType)) {
 				this.babyList = []
@@ -376,11 +452,13 @@ export default {
 				const res = await listBaby()
 				const babyList = normalizeBabyList(res?.data)
 				this.babyList = babyList
+				if (this.isEditMode && this.loadingDetail) return
 				if (!this.form.babyId) return
 				const selected = babyList.find(item => String(item.id) === String(this.form.babyId))
 				if (selected) {
 					this.form.babyName = selected.displayName
 					this.form.babyMeta = selected.meta || ''
+					this.applyBabyDefaults(selected)
 				} else {
 					this.form.babyId = ''
 					this.form.babyName = ''
@@ -390,6 +468,24 @@ export default {
 				this.babyList = []
 			} finally {
 				this.babyLoading = false
+			}
+		},
+		async loadDetail() {
+			if (!this.demandId) return
+			this.loadingDetail = true
+			try {
+				const res = await getParents(this.demandId)
+				this.form = buildParentApplyForm(res.data || {}, this.babyList)
+				this.form.phone = useUserStore().phone
+				this.startTimeIndex = this.timeToIndex(this.form.startTime, [8, 0])
+				this.endTimeIndex = this.timeToIndex(this.form.endTime, [10, 0])
+			} catch (e) {
+				uni.showToast({ title: '加载需求失败，请重试', icon: 'none' })
+				setTimeout(() => {
+					uni.navigateBack({ delta: 1 })
+				}, 1200)
+			} finally {
+				this.loadingDetail = false
 			}
 		},
 		handleBabyPickerToggle() {
@@ -406,6 +502,7 @@ export default {
 			this.form.babyId = item.id
 			this.form.babyName = item.displayName
 			this.form.babyMeta = item.meta || ''
+			this.applyBabyDefaults(item, !this.form.grade)
 			this.babyPickerVisible = false
 		},
 		handleToBabyManager() {
@@ -423,6 +520,18 @@ export default {
 		handleLoginPopupClose() {
 			this.shouldAutoOpenLogin = false
 		},
+		handleSubmitSuccess(targetId) {
+			const successTitle = this.isEditMode ? '保存成功' : '发布成功，等待审核'
+			uni.showToast({ title: successTitle, icon: 'success' })
+			setTimeout(() => {
+				if (this.isEditMode) {
+					uni.redirectTo({ url: `/pages/tutoring/parent/detail?id=${this.demandId}&scene=mine` })
+					return
+				}
+				const scene = this.fromMine ? '&scene=mine' : ''
+				uni.redirectTo({ url: `/pages/tutoring/parent/detail?id=${targetId}${scene}` })
+			}, 1000)
+		},
 		async handleSubmit() {
 			const userStore = useUserStore()
 			if (!userStore.token) {
@@ -432,13 +541,16 @@ export default {
 			if (!this.validate() || this.submitting) return
 			this.submitting = true
 			try {
-				const res = await addParents(buildParentApplyPayload(this.form))
-				uni.showToast({ title: '发布成功，等待审核', icon: 'success' })
-				setTimeout(() => {
-					uni.navigateTo({ url: '/pages/tutoring/parent/detail?id=' + res.data })
-				}, 1000)
+				const payload = buildParentApplyPayload(this.form)
+				if (this.isEditMode) {
+					await updateMyParentDemand(this.demandId, payload)
+					this.handleSubmitSuccess(this.demandId)
+					return
+				}
+				const res = await addParents(payload)
+				this.handleSubmitSuccess(res.data)
 			} catch (e) {
-				uni.showToast({ title: '发布失败，请重试', icon: 'none' })
+				uni.showToast({ title: this.isEditMode ? '保存失败，请重试' : '发布失败，请重试', icon: 'none' })
 			} finally {
 				this.submitting = false
 			}

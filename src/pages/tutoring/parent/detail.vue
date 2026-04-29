@@ -58,7 +58,7 @@
 					<uni-icons type="location" size="18" color="#666"></uni-icons>
 					<view class="info-content">
 						<text class="info-label">上课地点</text>
-						<text class="info-value">{{ detail.location || (detail.region + '（详细地址接单后可见）') }}</text>
+						<text class="info-value">{{ locationText }}</text>
 					</view>
 				</view>
 
@@ -113,24 +113,36 @@
 		</view>
 
 		<view class="bottom-bar">
-			<view class="btn-map" @click="openMap">
-				<uni-icons type="map" size="18" color="#333"></uni-icons>
-				<text class="btn-map-text">查看地图</text>
-			</view>
-			<button class="btn-apply btn-apply-text" type="primary" size="small" open-type="contact">立即申请</button>
+			<template v-if="isMineScene">
+				<view class="btn-map" @click="handleDelete">
+					<uni-icons type="trash" size="18" color="#DC2626"></uni-icons>
+					<text class="btn-map-text btn-map-text-danger">删除需求</text>
+				</view>
+				<view class="btn-apply btn-apply-text" @click="handleEdit">编辑需求</view>
+			</template>
+			<template v-else>
+				<view class="btn-map" @click="openMap">
+					<uni-icons type="map" size="18" color="#333"></uni-icons>
+					<text class="btn-map-text">查看地图</text>
+				</view>
+				<button class="btn-apply btn-apply-text" type="primary" size="small" open-type="contact">立即申请</button>
+			</template>
 		</view>
 	</view>
 </template>
 
 <script>
-import { getParents } from '@/api/wxmini/tutoring'
+import { deleteMyParentDemand, getParents } from '@/api/wxmini/tutoring'
 import { buildParentDetailQuickTags } from './display.helpers'
+import { getParentDetailLocationText, normalizeParentDetail } from './detail.helpers'
 
 export default {
-	dicts: ['sys_methods'],
+	dicts: ['sys_methods', 'sys_class', 'sys_subject'],
 	data() {
 		return {
 			orderId: '',
+			scene: '',
+			deleting: false,
 			detail: null,
 			loading: false,
 			error: false,
@@ -149,10 +161,17 @@ export default {
 				latitude: this.mapLat,
 				longitude: this.mapLng,
 			}]
+		},
+		isMineScene() {
+			return this.scene === 'mine'
+		},
+		locationText() {
+			return getParentDetailLocationText(this.detail || {})
 		}
 	},
 	onLoad(options) {
 		this.orderId = options.id || ''
+		this.scene = options.scene || ''
 		this.loadDetail()
 	},
 	methods: {
@@ -162,9 +181,16 @@ export default {
 			this.error = false
 			try {
 				const res = await getParents(this.orderId)
-				this.detail = res.data || res
-				this.mapLng = res.data.geo.split(',')[0]
-				this.mapLat = res.data.geo.split(',')[1]
+				this.detail = normalizeParentDetail(res.data || res)
+				if (!this.detail) {
+					this.error = true
+					return
+				}
+				const geo = String(this.detail.geo || '').split(',')
+				if (geo.length === 2) {
+					this.mapLng = Number(geo[0]) || this.mapLng
+					this.mapLat = Number(geo[1]) || this.mapLat
+				}
 			} catch (e) {
 				this.error = true
 				console.error('加载家教订单详情失败', e)
@@ -198,10 +224,37 @@ export default {
 			return text.split(/[，,。\n]/).map(s => s.trim()).filter(Boolean).slice(0, 5)
 		},
 		openMap() {
+			if (!this.detail) return
 			uni.openLocation({
 				latitude: this.mapLat,
 				longitude: this.mapLng,
-				name: this.detail ? (this.detail.location || this.detail.region || '上课地点') : '上课地点'
+				name: this.detail.location || this.detail.region || '上课地点'
+			})
+		},
+		handleEdit() {
+			if (!this.orderId) return
+			uni.navigateTo({ url: `/pages/tutoring/parent/apply?id=${this.orderId}&fromMine=1` })
+		},
+		handleDelete() {
+			if (this.deleting || !this.orderId) return
+			uni.showModal({
+				title: '提示',
+				content: '确认删除这条需求吗？',
+				success: async ({ confirm }) => {
+					if (!confirm) return
+					this.deleting = true
+					try {
+						await deleteMyParentDemand(this.orderId)
+						uni.showToast({ title: '删除成功', icon: 'success' })
+						setTimeout(() => {
+							uni.navigateBack({ delta: 1 })
+						}, 600)
+					} catch (e) {
+						uni.showToast({ title: '删除失败，请重试', icon: 'none' })
+					} finally {
+						this.deleting = false
+					}
+				}
 			})
 		},
 		applyOrder() {
@@ -265,7 +318,7 @@ export default {
 	gap: 8rpx;
 	padding: 10rpx 18rpx;
 	background: #F4F8FF;
-	border-radius: 999rpx;
+	border-radius: 15rpx;
 }
 .divider-full {
 	height: 16rpx;
@@ -389,13 +442,18 @@ export default {
 	font-size: 28rpx;
 	color: #333;
 }
+.btn-map-text-danger {
+	color: #DC2626;
+}
 .btn-apply {
-	flex: 1;
-	height: 84rpx;
-	line-height: 84rpx;
-	border-radius: 18rpx;
-	background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
-	border: none;
+		flex: 1;
+		height: 84rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 18rpx;
+		background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+		border: none;
 }
 .btn-apply-text {
 	font-size: 30rpx;

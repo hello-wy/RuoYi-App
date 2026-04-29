@@ -30,7 +30,7 @@
 		<service-grid></service-grid>
 
 		<!-- 分类速查组件 -->
-		<category-quick-search></category-quick-search>
+		<!-- <category-quick-search></category-quick-search> -->
 
 		<!-- 底部组件 -->
 		<homebottom></homebottom>
@@ -39,7 +39,7 @@
 
 <script>
 import homebottom from '@/pages/common/bottom/bottom'
-import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
+// import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
 import { useLocationStore } from '@/store'
 import { findCityNodeByName } from '@/utils/pca'
@@ -47,7 +47,7 @@ import { findCityNodeByName } from '@/utils/pca'
 export default {
 	components: {
 		homebottom,
-		CategoryQuickSearch,
+		// CategoryQuickSearch,
 		ServiceGrid
 	},
 	data() {

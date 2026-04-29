@@ -46,6 +46,16 @@
 				<!-- 标题 -->
 				<text class="card-title">{{ item.name }}</text>
 
+				<view v-if="buildCardTags(item).length" class="card-tags">
+					<view
+						v-for="(tag, tagIndex) in buildCardTags(item)"
+						:key="`${item.id || index}-${tag.dict}-${tagIndex}`"
+						class="card-tag"
+					>
+						<dict-tag :options="dict.type[tag.dict]" :value="tag.value"/>
+					</view>
+				</view>
+
 				<!-- 区域 -->
 				<view class="card-location">
 					<uni-icons type="location-filled" size="14" color="#888"></uni-icons>
@@ -66,6 +76,7 @@
 import { listParents } from '@/api/wxmini/tutoring'
 import { useLocationStore } from '@/store'
 import TutoringFilterBar from '@/components/TutoringFilterBar/TutoringFilterBar.vue'
+import { buildParentListTags } from './display.helpers'
 
 export default {
 	components: { TutoringFilterBar },
@@ -185,6 +196,9 @@ export default {
 			const s = String(id)
 			return s.slice(-8).toUpperCase()
 		},
+		buildCardTags(item) {
+			return buildParentListTags(item)
+		},
 		goDetail(id) {
 			uni.navigateTo({ url: '/pages/tutoring/parent/detail?id=' + id })
 		}
@@ -226,28 +240,6 @@ export default {
 	color: #999;
 }
 
-.tag-weekend {
-	background-color: #EAF3FF;
-	color: #3B82F6;
-	font-size: 22rpx;
-	padding: 4rpx 14rpx;
-	border-radius: 20rpx;
-}
-.tag-daily {
-	background-color: #E6F9F0;
-	color: #10B981;
-	font-size: 22rpx;
-	padding: 4rpx 14rpx;
-	border-radius: 20rpx;
-}
-.tag-urgent-red {
-	background-color: #FFF0F0;
-	color: #EF4444;
-	font-size: 22rpx;
-	padding: 4rpx 14rpx;
-	border-radius: 20rpx;
-}
-
 .card-title {
 	display: block;
 	font-size: 34rpx;
@@ -255,6 +247,23 @@ export default {
 	color: #222;
 	margin-bottom: 18rpx;
 	line-height: 1.5;
+}
+
+.card-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12rpx;
+	margin-bottom: 16rpx;
+}
+
+.card-tag {
+	display: inline-flex;
+	align-items: center;
+	padding: 8rpx 16rpx;
+	border-radius: 15rpx;
+	background: #f4f8ff;
+	color: #3B82F6;
+	font-size: 24rpx;
 }
 
 .card-location {

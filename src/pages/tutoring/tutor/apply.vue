@@ -345,7 +345,7 @@ export default {
 				school: '',
 				major: '',
 				degree: '',
-					currentGrade: '',
+				currentGrade: '',
 				subjects: [],
 				areas: '',
 				methods: '',
@@ -355,7 +355,7 @@ export default {
 				certificates: ''
 			},
 			degreeIndex: -1,
-				currentGradeIndex: -1,
+			currentGradeIndex: -1,
 			selectedAreaCodes: [],
 			areaPopupVisible: false,
 			areaPopupShown: false,
@@ -370,11 +370,10 @@ export default {
 			return useLocationStore().districts
 		}
 	},
-		onLoad(query) {
-			this.pageMode = buildApplyPageMode(query)
-			this.checkUserType()
-			this.initPage()
-		},
+	onLoad(query) {
+		this.pageMode = buildApplyPageMode(query)
+		this.checkUserType()
+	},
 	onShow() {
 		this.checkUserType()
 	},
@@ -382,6 +381,9 @@ export default {
 		checkUserType() {
 			const userStore = useUserStore()
 			this.showUserTypeGuard = shouldBlockUserTypeEntry(userStore, USER_TYPES.STUDENT)
+			if (!this.showUserTypeGuard) {
+				this.initPage()
+			}
 		},
 		handleUserTypeGuardCancel() {
 			this.showUserTypeGuard = false

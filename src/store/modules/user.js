@@ -87,7 +87,7 @@ export const useUserStore = defineStore('user', () => {
     return hasUserType(primary) ? primary : fallback
   }
 
-  const applyWxSession = (profile) => {
+  const applyWxSession = async (profile) => {
     const jobSignupOrderStore = useJobSignupOrderStore()
     setToken(profile.apiToken)
     SET_TOKEN(profile.apiToken)
@@ -96,13 +96,11 @@ export const useUserStore = defineStore('user', () => {
     SET_SESSION_KEY(profile.sessionKey || '')
     SET_USER_TYPE(profile.userType)
     SET_PHONE(profile.phone || '')
-    SET_ID(profile.openId || '')
+    SET_ID(profile.userId || '')
     SET_NAME(profile.userName || '')
     SET_AVATAR(resolveAvatar(profile.avatarUrl || profile.avatar || ''))
     syncEnrollment()
-    if (profile.apiToken) {
-      jobSignupOrderStore.refresh().catch(() => {})
-    }
+    jobSignupOrderStore.refresh().catch(() => {})
     return profile
   }
 
@@ -110,6 +108,7 @@ export const useUserStore = defineStore('user', () => {
     apiToken: loginData.apiToken || '',
     sessionKey: phoneData.sessionKey || loginData.sessionKey || '',
     openId: phoneData.openId || loginData.openId || '',
+    userId: phoneData.userId || loginData.userId || '',
     userName: phoneData.userName || loginData.userName || '',
     userType: resolveUserTypeValue(phoneData.userType, loginData.userType),
     phone: phoneData.phone || phoneData.phoneNumber || loginData.phone || '',
@@ -162,8 +161,12 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxLogin = (appid, code) => {
     return new Promise((resolve, reject) => {
-      wxminiLogin(appid, code).then(res => {
-        resolve(applyWxSession(buildWxProfile(res.data)))
+      wxminiLogin(appid, code).then(async res => {
+        try {
+          resolve(await applyWxSession(buildWxProfile(res.data)))
+        } catch (error) {
+          reject(error)
+        }
       }).catch(error => {
         reject(error)
       })
@@ -179,9 +182,13 @@ export const useUserStore = defineStore('user', () => {
           reject(new Error('未获取到微信临时登录态'))
           return
         }
-        bindWxminiPhone(appid, phoneCode, temporaryToken).then(phoneRes => {
-          const profile = buildWxProfile(loginData, phoneRes.data || {})
-          resolve(applyWxSession(profile))
+        bindWxminiPhone(appid, phoneCode, temporaryToken).then(async phoneRes => {
+          try {
+            const profile = buildWxProfile(loginData, phoneRes.data || {})
+            resolve(await applyWxSession(profile))
+          } catch (error) {
+            reject(error)
+          }
         }).catch(error => {
           reject(error)
         })
