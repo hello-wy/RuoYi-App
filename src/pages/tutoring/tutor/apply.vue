@@ -10,6 +10,7 @@
 				</view>
 
 				<real-verify
+					ref="realVerify"
 					v-model:verified="verified"
 					v-model:real-name="form.realName"
 					v-model:id-card="form.idCard"
@@ -289,7 +290,13 @@
 
 <script>
 import config from '@/config'
-import { addTutors, getMyTutor, updateMyTutor, uploadTutorAvatar, uploadTutorCertification } from '@/api/wxmini/tutoring'
+import {
+	addTutors,
+	getMyTutor,
+	updateMyTutor,
+	uploadTutorAvatar,
+	uploadTutorCertification,
+} from '@/api/wxmini/tutoring'
 import { useLocationStore, useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
@@ -298,7 +305,6 @@ import {
 	appendPreviewCacheBuster,
 	buildRemovedCertificateState,
 	buildUploadedCertificateUrl,
-	buildUploadedPreviewUrl,
 	chooseWechatAlbumImage,
 	getImageValidationError,
 	isChooseImageCanceled,
@@ -363,7 +369,7 @@ export default {
 			subjectPopupVisible: false,
 			subjectPopupShown: false,
 			certificatePreviewUrl: '',
-			avatarPreviewUrl: ''
+			avatarPreviewUrl: useUserStore().avatar || ''
 		}
 	},
 	computed: {
@@ -420,8 +426,8 @@ export default {
 					this.avatarPreviewUrl = hydrated.avatarPreviewUrl
 					this.certificatePreviewUrl = hydrated.certificatePreviewUrl
 					this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
-						this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
-					this.verified = !!this.form.realName && !!this.form.idCard
+					this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
+					this.verified = false
 					this.agreed = true
 				} catch (error) {
 					if (this.pageMode === 'edit') {
@@ -548,13 +554,17 @@ export default {
 			this.avatarUploading = true
 			try {
 				const result = await uploadTutorAvatar(file.tempFilePath || file.path)
-				const avatarPath = buildUploadedCertificateUrl(result)
-				if (!avatarPath) {
+				const avatarUrl = buildUploadedCertificateUrl(result)
+				if (!avatarUrl) {
 					throw new Error('empty upload result')
 				}
-				const avatarPreviewUrl = buildUploadedPreviewUrl(config.baseUrl, result)
-				this.avatarPreviewUrl = appendPreviewCacheBuster(avatarPreviewUrl)
-				useUserStore().SET_AVATAR(avatarPreviewUrl)
+				console.log(avatarUrl);
+				
+				const normalizedAvatarUrl = avatarUrl.startsWith('https') ? avatarUrl : config.baseUrl + avatarUrl
+				console.log(normalizedAvatarUrl);
+				this.avatarPreviewUrl = appendPreviewCacheBuster(normalizedAvatarUrl)
+				console.log(this.avatarPreviewUrl);
+				useUserStore().SET_AVATAR(normalizedAvatarUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
 				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
@@ -595,13 +605,12 @@ export default {
 			this.certificateUploading = true
 			try {
 				const result = await uploadTutorCertification(file.tempFilePath || file.path)
-				const certificatePath = buildUploadedCertificateUrl(result)
-				if (!certificatePath) {
+				const certificateUrl = buildUploadedCertificateUrl(result)
+				if (!certificateUrl) {
 					throw new Error('empty upload result')
 				}
-				this.form.certificates = certificatePath
-				const certificatePreviewUrl = buildUploadedPreviewUrl(config.baseUrl, result)
-				this.certificatePreviewUrl = appendPreviewCacheBuster(certificatePreviewUrl)
+				this.form.certificates = certificateUrl
+				this.certificatePreviewUrl = appendPreviewCacheBuster(certificateUrl.startsWith('https') ? certificateUrl : config.baseUrl + certificateUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
 				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
@@ -628,6 +637,10 @@ export default {
 			}
 			if (!/^\d{17}[\dXx]$/.test(this.form.idCard)) {
 				uni.showToast({ title: '请填写正确的18位身份证号', icon: 'none' })
+				return false
+			}
+			if (!this.verified) {
+				uni.showToast({ title: '请先完成实人认证', icon: 'none' })
 				return false
 			}
 			if (this.form.identity === '' || this.form.identity === null || this.form.identity === undefined) {
