@@ -144,7 +144,7 @@ function resolveTarget(userType) {
   if (userType === 0) return '/pages/tutoring/parent/apply'
   if (userType === 1) return '/pages/tutoring/tutor/apply'
   if (userType === 2) return '/pages/jobs/list'
-  return '/pages/mine/index'
+  return '/pages/jobs/list'
 }
 
 function selectRole(role) {

@@ -65,9 +65,9 @@ export function addParents(data) {
     })
 }
 
-export function getMyParentsList() {
+export function getMyParentDemandDetail() {
     return request({
-        url: '/wxmini/tutoring/parents/mine',
+        url: '/wxmini/tutoring/parents/mine/detail',
         method: 'get'
     })
 }
@@ -84,6 +84,60 @@ export function deleteMyParentDemand(id) {
     return request({
         url: '/wxmini/tutoring/parents/' + id,
         method: 'delete'
+    })
+}
+
+export function listServiceAddresses() {
+    return request({
+        url: '/wxmini/address/list',
+        method: 'get'
+    }).then(res => {
+        const list = Array.isArray(res?.data) ? res.data : []
+        return {
+            ...res,
+            data: list.map(item => ({
+                id: item.id,
+                contactName: item.contactName || '',
+                contactPhone: item.contactPhone || '',
+                region: item.region || '',
+                location: item.location || '',
+                geo: item.geo || '',
+                addressDetail: item.addressDetail || '',
+                doorplate: item.doorplate || '',
+                isDefault: Number(item.isDefault || 0),
+                remark: item.remark || ''
+            }))
+        }
+    })
+}
+
+export function addServiceAddress(data) {
+    return request({
+        url: '/wxmini/address',
+        method: 'post',
+        data
+    })
+}
+
+export function updateServiceAddress(id, data) {
+    return request({
+        url: '/wxmini/address/' + id,
+        method: 'put',
+        data
+    })
+}
+
+export function deleteServiceAddress(id) {
+    return request({
+        url: '/wxmini/address/' + id,
+        method: 'delete'
+    })
+}
+
+export function setDefaultServiceAddress(id) {
+    return request({
+        url: '/wxmini/address/' + id + '/default',
+        method: 'put'
     })
 }
 

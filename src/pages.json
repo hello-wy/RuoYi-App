@@ -104,6 +104,12 @@
       }
     },
     {
+      "path": "pages/tutoring/address/edit",
+      "style": {
+        "navigationBarTitleText": "服务地址"
+      }
+    },
+    {
       "path": "pages/tutoring/parent/apply",
       "style": {
         "navigationBarTitleText": "请家教"

@@ -298,6 +298,7 @@ import {
 	appendPreviewCacheBuster,
 	buildRemovedCertificateState,
 	buildUploadedCertificateUrl,
+	buildUploadedPreviewUrl,
 	chooseWechatAlbumImage,
 	getImageValidationError,
 	isChooseImageCanceled,
@@ -547,13 +548,13 @@ export default {
 			this.avatarUploading = true
 			try {
 				const result = await uploadTutorAvatar(file.tempFilePath || file.path)
-				const avatarUrl = buildUploadedCertificateUrl(config.baseUrl, result)
-				if (!avatarUrl) {
+				const avatarPath = buildUploadedCertificateUrl(result)
+				if (!avatarPath) {
 					throw new Error('empty upload result')
 				}
-				const normalizedAvatarUrl = avatarUrl.startsWith('http') ? avatarUrl : config.baseUrl + avatarUrl
-				this.avatarPreviewUrl = appendPreviewCacheBuster(normalizedAvatarUrl)
-				useUserStore().SET_AVATAR(normalizedAvatarUrl)
+				const avatarPreviewUrl = buildUploadedPreviewUrl(config.baseUrl, result)
+				this.avatarPreviewUrl = appendPreviewCacheBuster(avatarPreviewUrl)
+				useUserStore().SET_AVATAR(avatarPreviewUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
 				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
@@ -594,12 +595,13 @@ export default {
 			this.certificateUploading = true
 			try {
 				const result = await uploadTutorCertification(file.tempFilePath || file.path)
-				const certificateUrl = buildUploadedCertificateUrl(config.baseUrl, result)
-				if (!certificateUrl) {
+				const certificatePath = buildUploadedCertificateUrl(result)
+				if (!certificatePath) {
 					throw new Error('empty upload result')
 				}
-				this.form.certificates = certificateUrl
-				this.certificatePreviewUrl = appendPreviewCacheBuster(certificateUrl.startsWith('http') ? certificateUrl : config.baseUrl + certificateUrl)
+				this.form.certificates = certificatePath
+				const certificatePreviewUrl = buildUploadedPreviewUrl(config.baseUrl, result)
+				this.certificatePreviewUrl = appendPreviewCacheBuster(certificatePreviewUrl)
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
 				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })

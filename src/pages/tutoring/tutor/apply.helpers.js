@@ -6,6 +6,16 @@ function getFileExtension(path = '') {
   return segments.length > 1 ? segments.pop().toLowerCase() : ''
 }
 
+function joinBaseUrl(baseUrl = '', path = '') {
+  const normalizedBase = String(baseUrl || '').replace(/\/+$/, '')
+  const normalizedPath = String(path || '').replace(/^\/+/, '')
+  return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase
+}
+
+function stripUploadedUrlOrigin(value = '') {
+  return String(value || '').replace(/^https?:\/\/[^/]+/i, '')
+}
+
 export function getImageValidationError(file = {}) {
   const filePath = file.path || file.tempFilePath || ''
   const extension = getFileExtension(filePath)
@@ -24,16 +34,14 @@ export function removeAreaCodeAtIndex(areaCodes = [], index) {
   return areaCodes.filter((_, currentIndex) => currentIndex !== index)
 }
 
-export function buildUploadedCertificateUrl(baseUrl = '', result = {}) {
-  if (result.fileName) {
-    return result.fileName
-  }
+export function buildUploadedCertificateUrl(result = {}) {
+  const rawValue = result.fileName || result.url || ''
+  return rawValue ? stripUploadedUrlOrigin(rawValue) : ''
+}
 
-  if (result.url) {
-    return result.url
-  }
-
-  return ''
+export function buildUploadedPreviewUrl(baseUrl = '', result = {}) {
+  const filePath = buildUploadedCertificateUrl(result)
+  return filePath ? joinBaseUrl(baseUrl, filePath) : ''
 }
 
 export function appendPreviewCacheBuster(url = '') {

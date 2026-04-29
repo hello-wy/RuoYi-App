@@ -1,19 +1,14 @@
 <template>
 	<view class="page">
-		<!-- 加载中 -->
 		<view v-if="loading" class="loading-wrap">
 			<uni-load-more status="loading"></uni-load-more>
 		</view>
 
-		<!-- 加载失败 -->
 		<view v-else-if="error" class="error-wrap">
 			<text>加载失败，请重试</text>
 		</view>
 
-		<!-- 内容 -->
 		<view v-else-if="detail" class="content">
-
-			<!-- 状态栏 -->
 			<view class="status-bar">
 				<view class="badge-recruiting">
 					<text v-if="detail.status == 0" class="badge-text">招募中</text>
@@ -23,12 +18,10 @@
 				<text class="post-time">发布于 {{ timeAgo(detail.createDate) }}</text>
 			</view>
 
-			<!-- 标题 -->
 			<view class="title-section">
 				<text class="order-title">{{ detail.name }}</text>
 			</view>
 
-			<!-- 快捷标签：仅保留方式 -->
 			<view v-if="detailQuickTags.length" class="quick-tags">
 				<view
 					v-for="(tag, index) in detailQuickTags"
@@ -42,15 +35,22 @@
 
 			<view class="divider-full"></view>
 
-			<!-- 基础信息 -->
 			<view class="section">
 				<text class="section-title">基础信息</text>
 
 				<view class="info-row">
 					<uni-icons type="calendar" size="18" color="#666"></uni-icons>
 					<view class="info-content">
-						<text class="info-label">上课时间</text>
-						<text class="info-value">{{ formatClassTime(detail.dayOfWeek, detail.startTime, detail.endTime) }}</text>
+						<text class="info-label">服务日期</text>
+						<text class="info-value">{{ serviceDateText }}</text>
+					</view>
+				</view>
+
+				<view class="info-row">
+					<uni-icons type="calendar-filled" size="18" color="#666"></uni-icons>
+					<view class="info-content">
+						<text class="info-label">服务时段</text>
+						<text class="info-value">{{ serviceTimeText }}</text>
 					</view>
 				</view>
 
@@ -76,7 +76,16 @@
 
 			<view class="divider-full"></view>
 
-			<!-- 学员情况 -->
+			<view class="section">
+				<text class="section-title">服务需求项目</text>
+				<view v-if="demandItemValues.length" class="demand-tag-wrap">
+					<dict-tag :options="dict.type.sys_tutoring_demand_items" :value="demandItemValues" />
+				</view>
+				<text v-else class="empty-text">暂无服务需求项目</text>
+			</view>
+
+			<view class="divider-full"></view>
+
 			<view class="section">
 				<text class="section-title">学员情况</text>
 				<view class="student-card">
@@ -87,13 +96,11 @@
 						<text class="student-item-label">目前水平</text>
 						<text class="student-item-value">{{ detail.brief || '暂无描述' }}</text>
 					</view>
-
 				</view>
 			</view>
 
 			<view class="divider-full"></view>
 
-			<!-- 教员要求 -->
 			<view class="section">
 				<text class="section-title">教员要求</text>
 				<view v-if="detail.requirements" class="requirement-list">
@@ -134,10 +141,10 @@
 <script>
 import { deleteMyParentDemand, getParents } from '@/api/wxmini/tutoring'
 import { buildParentDetailQuickTags } from './display.helpers'
-import { getParentDetailLocationText, normalizeParentDetail } from './detail.helpers'
+import { getParentDemandItemValues, getParentDetailLocationText, getParentServiceDateText, getParentServiceTimeText, normalizeParentDetail } from './detail.helpers'
 
 export default {
-	dicts: ['sys_methods', 'sys_class', 'sys_subject'],
+	dicts: ['sys_methods', 'sys_class', 'sys_subject', 'sys_tutoring_demand_items'],
 	data() {
 		return {
 			orderId: '',
@@ -167,6 +174,15 @@ export default {
 		},
 		locationText() {
 			return getParentDetailLocationText(this.detail || {})
+		},
+		serviceDateText() {
+			return getParentServiceDateText(this.detail || {})
+		},
+		serviceTimeText() {
+			return getParentServiceTimeText(this.detail || {})
+		},
+		demandItemValues() {
+			return getParentDemandItemValues(this.detail || {})
 		}
 	},
 	onLoad(options) {
@@ -197,18 +213,6 @@ export default {
 			} finally {
 				this.loading = false
 			}
-		},
-		formatClassTime(dayOfWeek, startTime, endTime) {
-			const dayMap = { '1': '周一', '2': '周二', '3': '周三', '4': '周四', '5': '周五', '6': '周六', '7': '周日' }
-			const days = dayOfWeek
-				? dayOfWeek.split(',').map(d => dayMap[d.trim()] || '').filter(Boolean).join('、')
-				: ''
-			const time = (startTime && endTime) ? startTime + '-' + endTime
-				: (startTime || endTime || '')
-			if (!days && !time) return '--'
-			if (!time) return days
-			if (!days) return time
-			return days + ' ' + time
 		},
 		timeAgo(dateVal) {
 			if (!dateVal) return ''
@@ -256,9 +260,6 @@ export default {
 					}
 				}
 			})
-		},
-		applyOrder() {
-			uni.showToast({ title: '申请功能开发中', icon: 'none' })
 		}
 	}
 }
@@ -269,8 +270,6 @@ export default {
 	min-height: 100vh;
 	background: #fff;
 }
-
-/* 状态栏 */
 .status-bar {
 	display: flex;
 	flex-direction: row;
@@ -291,8 +290,6 @@ export default {
 	font-size: 24rpx;
 	color: #999;
 }
-
-/* 标题 */
 .title-section {
 	padding: 0 32rpx 20rpx;
 }
@@ -303,8 +300,6 @@ export default {
 	display: block;
 	margin-bottom: 12rpx;
 }
-
-/* 快捷标签 */
 .quick-tags {
 	display: flex;
 	flex-direction: row;
@@ -364,6 +359,10 @@ export default {
 .map-view {
 	width: 100%;
 	height: 100%;
+}
+.demand-tag-wrap {
+	display: flex;
+	flex-wrap: wrap;
 }
 .student-card {
 	display: flex;
@@ -446,14 +445,14 @@ export default {
 	color: #DC2626;
 }
 .btn-apply {
-		flex: 1;
-		height: 84rpx;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border-radius: 18rpx;
-		background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
-		border: none;
+	flex: 1;
+	height: 84rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 18rpx;
+	background: linear-gradient(90deg, #3B82F6 0%, #2563EB 100%);
+	border: none;
 }
 .btn-apply-text {
 	font-size: 30rpx;

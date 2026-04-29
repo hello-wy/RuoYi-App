@@ -33,7 +33,7 @@
               <text class="meta-text">{{ item.region || '未填写区域' }}</text>
             </view>
             <view class="meta-row">
-              <text class="meta-text">{{ formatClassTime(item.dayOfWeek, item.startTime, item.endTime) }}</text>
+              <text class="meta-text">{{ formatClassTime(item) }}</text>
               <text class="meta-text">{{ formatDate(item.createDate) }}</text>
             </view>
           </view>
@@ -50,8 +50,8 @@
 </template>
 
 <script>
-import { deleteMyParentDemand, getMyParentsList } from '@/api/wxmini/tutoring'
-import { useUserStore } from '@/store/modules/user'
+import { deleteMyParentDemand, getMyParentDemandDetail } from '@/api/wxmini/tutoring'
+import { getParentServiceDateText, getParentServiceTimeText } from '@/pages/tutoring/parent/detail.helpers'
 
 export default {
   dicts: ['sys_methods'],
@@ -72,7 +72,7 @@ export default {
       if (this.loading) return
       this.loading = true
       try {
-        const res = await getMyParentsList()
+        const res = await getMyParentDemandDetail()
         const list = Array.isArray(res.data) ? res.data : []
         this.list = list.sort((a, b) => new Date(b.createDate || 0).getTime() - new Date(a.createDate || 0).getTime())
         this.error = false
@@ -109,14 +109,10 @@ export default {
       const map = { 0: '招募中', 1: '已完成', 2: '已取消' }
       return map[status] || '未知状态'
     },
-    formatClassTime(dayOfWeek, startTime, endTime) {
-      const dayMap = { '1': '周一', '2': '周二', '3': '周三', '4': '周四', '5': '周五', '6': '周六', '7': '周日' }
-      const days = String(dayOfWeek || '').split(',').map(day => dayMap[day.trim()] || '').filter(Boolean).join('、')
-      const time = startTime && endTime ? `${startTime}-${endTime}` : (startTime || endTime || '')
-      if (!days && !time) return '未设置上课时间'
-      if (!days) return time
-      if (!time) return days
-      return `${days} ${time}`
+    formatClassTime(item) {
+      const dateText = getParentServiceDateText(item)
+      const timeText = getParentServiceTimeText(item)
+      return `${dateText} ${timeText}`.trim()
     },
     formatDate(value) {
       if (!value) return '未记录发布时间'
