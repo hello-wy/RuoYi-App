@@ -46,6 +46,9 @@
 							<view class="cert-upload-action" @click.stop="chooseAvatarImage">
 								<text class="cert-upload-action-text">重新上传</text>
 							</view>
+							<view v-if="avatarUploading" class="upload-status">
+								<text class="upload-status-text">上传中<text class="dots">...</text></text>
+							</view>
 						</view>
 					</view>
 					<view v-else class="cert-upload-trigger" @click="chooseAvatarImage">
@@ -200,6 +203,9 @@
 							<view class="cert-upload-action danger" @click.stop="removeCertificateImage">
 								<text class="cert-upload-action-text danger">删除</text>
 							</view>
+							<view v-if="certificateUploading" class="upload-status">
+								<text class="upload-status-text">上传中<text class="dots">...</text></text>
+							</view>
 						</view>
 					</view>
 					<view v-else class="cert-upload-trigger" @click="chooseCertificateImage">
@@ -291,6 +297,9 @@
 <script>
 import config from '@/config'
 import {
+	getWxUserProfileDetail,
+} from '@/api/wxmini/profile'
+import {
 	addTutors,
 	getMyTutor,
 	updateMyTutor,
@@ -303,7 +312,6 @@ import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import {
 	appendPreviewCacheBuster,
-	buildRemovedCertificateState,
 	buildUploadedCertificateUrl,
 	chooseWechatAlbumImage,
 	getImageValidationError,
@@ -359,6 +367,7 @@ export default {
 				experience: '',
 				certificateList: '',
 				selfJudge: '',
+				avatar: useUserStore().avatar || '',
 				certificates: ''
 			},
 			degreeIndex: -1,
@@ -368,13 +377,17 @@ export default {
 			areaPopupShown: false,
 			subjectPopupVisible: false,
 			subjectPopupShown: false,
-			certificatePreviewUrl: '',
-			avatarPreviewUrl: useUserStore().avatar || ''
 		}
 	},
 	computed: {
 		districtOptions() {
 			return useLocationStore().districts
+		},
+		avatarPreviewUrl() {
+			return appendPreviewCacheBuster(this.form.avatar)
+		},
+		certificatePreviewUrl() {
+			return appendPreviewCacheBuster(this.form.certificates)
 		}
 	},
 	onLoad(query) {
@@ -402,41 +415,49 @@ export default {
 			this.showUserTypeGuard = false
 			uni.navigateTo({ url: '/pages/guide/index' })
 		},
-			async initPage() {
-				if (this.initializing) return
-				this.initializing = true
-				try {
-					const res = await getMyTutor()
-					const profile = res?.data || null
-					if (this.pageMode !== 'edit') {
-						if (profile) {
-							uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
-						}
-						return
+		async initPage() {
+			if (this.initializing) return
+			this.initializing = true
+			try {
+				const [profileDetailRes, tutorRes] = await Promise.all([
+					getWxUserProfileDetail(),
+					getMyTutor()
+				])
+				const userProfile = profileDetailRes?.data || null
+				const profile = tutorRes?.data || null
+				this.verified = Number(userProfile?.isRealnameAuth || 0) === 1
+				if (this.pageMode !== 'edit') {
+					if (this.verified && !this.form.realName && userProfile?.realName) {
+						this.form.realName = userProfile.realName
 					}
-					if (!profile) {
-						uni.showToast({ title: '请先填写申请资料', icon: 'none' })
+					if (profile) {
 						uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
-						return
 					}
-					const userStore = useUserStore()
-					const hydrated = buildApplyFormStateFromTutor(profile, config.baseUrl, userStore.avatar || '')
-					this.form = hydrated.form
-					this.selectedAreaCodes = hydrated.selectedAreaCodes
-					this.avatarPreviewUrl = hydrated.avatarPreviewUrl
-					this.certificatePreviewUrl = hydrated.certificatePreviewUrl
-					this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
-					this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
-					this.verified = false
-					this.agreed = true
-				} catch (error) {
-					if (this.pageMode === 'edit') {
-						uni.showToast({ title: '加载资料失败，请重试', icon: 'none' })
-					}
-				} finally {
-					this.initializing = false
+					return
 				}
-			},
+				if (!profile) {
+					uni.showToast({ title: '请先填写申请资料', icon: 'none' })
+					uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
+					return
+				}
+				const userStore = useUserStore()
+				const hydrated = buildApplyFormStateFromTutor(profile, config.baseUrl, userStore.avatar || '')
+				this.form = hydrated.form
+				if (!this.form.realName && userProfile?.realName) {
+					this.form.realName = userProfile.realName
+				}
+				this.selectedAreaCodes = hydrated.selectedAreaCodes
+				this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
+				this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
+				this.agreed = true
+			} catch (error) {
+				if (this.pageMode === 'edit') {
+					uni.showToast({ title: '加载资料失败，请重试', icon: 'none' })
+				}
+			} finally {
+				this.initializing = false
+			}
+		},
 		resetUploadState() {
 			this.avatarUploading = false
 			this.certificateUploading = false
@@ -525,7 +546,17 @@ export default {
 		removeSubject(index) {
 			this.form.subjects.splice(index, 1)
 		},
-		openAgreement() {
+		showUploadError(error, fallback = '上传失败，请重试') {
+				const message = typeof error === 'string'
+					? error
+					: (error?.message || error?.errMsg || fallback)
+				uni.showModal({
+					title: '上传失败',
+					content: message,
+					showCancel: false
+				})
+			},
+			openAgreement() {
 			uni.navigateTo({ url: tutorAgreementRoute })
 		},
 		async chooseAvatarImage() {
@@ -556,19 +587,20 @@ export default {
 				const result = await uploadTutorAvatar(file.tempFilePath || file.path)
 				const avatarUrl = buildUploadedCertificateUrl(result)
 				if (!avatarUrl) {
-					throw new Error('empty upload result')
+					throw new Error('上传成功，但服务端没有返回头像地址，请稍后重试')
 				}
 				const normalizedAvatarUrl = avatarUrl.startsWith('https') ? avatarUrl : config.baseUrl + avatarUrl
-				this.avatarPreviewUrl = appendPreviewCacheBuster(normalizedAvatarUrl)
+				this.form.avatar = normalizedAvatarUrl
 				useUserStore().SET_AVATAR(normalizedAvatarUrl)
+				this.$forceUpdate()
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
-				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
+				this.showUploadError(error, '头像上传失败，请重试')
 			} finally {
 				this.avatarUploading = false
 			}
 		},
-		previewAvatarImage() {
+previewAvatarImage() {
 			if (!this.avatarPreviewUrl) return
 			uni.previewImage({
 				urls: [this.avatarPreviewUrl],
@@ -603,13 +635,13 @@ export default {
 				const result = await uploadTutorCertification(file.tempFilePath || file.path)
 				const certificateUrl = buildUploadedCertificateUrl(result)
 				if (!certificateUrl) {
-					throw new Error('empty upload result')
+					throw new Error('上传成功，但服务端没有返回证书图片地址，请稍后重试')
 				}
-				this.form.certificates = certificateUrl
-				this.certificatePreviewUrl = appendPreviewCacheBuster(certificateUrl.startsWith('https') ? certificateUrl : config.baseUrl + certificateUrl)
+				this.form.certificates = certificateUrl.startsWith('https') ? certificateUrl : config.baseUrl + certificateUrl
+				this.$forceUpdate()
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
-				uni.showToast({ title: typeof error === 'string' ? error : '上传失败，请重试', icon: 'none' })
+				this.showUploadError(error, '证书图片上传失败，请重试')
 			} finally {
 				this.certificateUploading = false
 			}
@@ -622,9 +654,7 @@ export default {
 			})
 		},
 		removeCertificateImage() {
-			const state = buildRemovedCertificateState()
-			this.form.certificates = state.certificates
-			this.certificatePreviewUrl = state.certificatePreviewUrl
+			this.form.certificates = ''
 		},
 		validate() {
 			if (!this.form.realName.trim()) {
@@ -712,6 +742,7 @@ export default {
 						experience: this.form.experience,
 						certificateList: this.form.certificateList,
 						selfJudge: this.form.selfJudge,
+						avatar: this.form.avatar,
 						certificates: this.form.certificates
 					}
 					if (this.pageMode === 'edit') {
@@ -967,6 +998,38 @@ page {
 	margin-top: 12px;
 	display: flex;
 	gap: 12px;
+	align-items: center;
+}
+
+.upload-status {
+	display: inline-flex;
+	align-items: center;
+}
+
+.upload-status-text {
+	font-size: 12px;
+	color: #3B82F6;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+}
+
+.dots {
+	display: inline-block;
+	letter-spacing: 2px;
+	animation: dots-animation 1.4s infinite;
+}
+
+@keyframes dots-animation {
+	0% {
+		opacity: 0.4;
+	}
+	50% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0.4;
+	}
 }
 
 .cert-upload-action {

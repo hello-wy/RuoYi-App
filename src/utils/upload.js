@@ -38,14 +38,39 @@ function parseUploadResponse(response = {}) {
 
 function resolveUploadErrorMessage(result = {}, fallback = errorCode['default']) {
   const code = Number(result.code || 0)
-  const rawMessage = String(result.msg || '')
+  const rawMessage = String(result.msg || '').trim()
   const normalizedMessage = rawMessage.toLowerCase()
 
   if (code === 413 || normalizedMessage.includes('request entity too large')) {
     return '文件过大，请上传不超过3MB的图片'
   }
 
-  return errorCode[code] || result.msg || fallback
+  return rawMessage || errorCode[code] || fallback
+}
+
+function notifyUploadError(config = {}, message = '') {
+  if (config.showError === false || !message) {
+    return
+  }
+  toast(message)
+}
+
+function resolveTransportErrorMessage(error = {}) {
+  let message = String(error?.errMsg || error?.message || '').trim()
+
+  if (!message) {
+    return '上传失败，请检查网络后重试'
+  }
+  if (message === 'Network Error') {
+    return '后端接口连接异常'
+  }
+  if (message.includes('timeout')) {
+    return '系统接口请求超时'
+  }
+  if (message.includes('Request failed with status code')) {
+    return '系统接口' + message.substr(message.length - 3) + '异常'
+  }
+  return message
 }
 
 export default function upload(config) {
@@ -89,26 +114,20 @@ export default function upload(config) {
               })
             }
           })
+          notifyUploadError(config, msg)
           reject(msg)
         } else if (code === 500) {
-          toast(msg)
+          notifyUploadError(config, msg)
           reject(msg)
         } else if (code !== 200) {
-          toast(msg)
+          notifyUploadError(config, msg)
           reject(msg)
         }
       },
       fail: (error) => {
-        let { message } = error
-        if (message == 'Network Error') {
-          message = '后端接口连接异常'
-        } else if (message.includes('timeout')) {
-          message = '系统接口请求超时'
-        } else if (message.includes('Request failed with status code')) {
-          message = '系统接口' + message.substr(message.length - 3) + '异常'
-        }
-        toast(message)
-        reject(error)
+        const message = resolveTransportErrorMessage(error)
+        notifyUploadError(config, message)
+        reject(message)
       }
     })
   })

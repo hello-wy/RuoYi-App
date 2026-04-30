@@ -52,10 +52,9 @@ export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarS
       experience: profile.experience || '',
       certificateList: profile.certificateList || '',
       selfJudge: profile.selfJudge || '',
-      certificates: profile.certificates || ''
+      avatar: avatarSrc || toAbsoluteUrl(baseUrl, profile.avatar || ''),
+      certificates: toAbsoluteUrl(baseUrl, profile.certificates || '')
     },
-    selectedAreaCodes,
-    avatarPreviewUrl: avatarSrc || toAbsoluteUrl(baseUrl, profile.avatar || ''),
-    certificatePreviewUrl: toAbsoluteUrl(baseUrl, profile.certificates || '')
+    selectedAreaCodes
   }
 }

@@ -153,7 +153,8 @@ export function uploadTutorCertification(filePath) {
     return upload({
         url: '/wxmini/common/uploadCertification',
         filePath,
-        name: 'file'
+        name: 'file',
+        showError: false
     })
 }
 
@@ -161,6 +162,7 @@ export function uploadTutorAvatar(filePath) {
     return upload({
         url: '/wxmini/common/uploadAvatar',
         filePath,
-        name: 'file'
+        name: 'file',
+        showError: false
     })
 }
