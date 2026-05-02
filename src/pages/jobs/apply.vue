@@ -21,21 +21,23 @@
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">工作标题 *</text>
+					<text class="form-label">工作标题 <text class="required-mark">*</text></text>
 					<input class="form-input" v-model="form.title" placeholder="如：初中数学辅导日结兼职" maxlength="50" />
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">岗位分类 *</text>
 					<view class="picker-row">
-						<picker class="flex-1" mode="selector" :range="categoryOptions" range-key="label" :value="categoryIndex" @change="onCategoryChange">
-							<view class="picker-box">
-								<text class="picker-text" :class="{ placeholder: form.category === '' }">{{ form.category !== '' ? getCatLabel(form.category) : '请选择分类' }}</text>
-								<uni-icons type="bottom" size="14" color="#a0aec0"></uni-icons>
-							</view>
-						</picker>
+						<view class="picker-field flex-1">
+							<text class="form-label">岗位分类 <text class="required-mark">*</text></text>
+							<picker mode="selector" :range="categoryOptions" range-key="label" :value="categoryIndex" @change="onCategoryChange">
+								<view class="picker-box">
+									<text class="picker-text" :class="{ placeholder: form.category === '' }">{{ form.category !== '' ? getCatLabel(form.category) : '请选择分类' }}</text>
+									<uni-icons type="bottom" size="14" color="#a0aec0"></uni-icons>
+								</view>
+							</picker>
+						</view>
 						<view class="salary-input-wrap">
-							<text class="form-label form-label-inline">日结薪资 *</text>
+							<text class="form-label">日结薪资 <text class="required-mark">*</text></text>
 							<view class="salary-row">
 								<text class="salary-prefix">¥</text>
 								<input class="salary-input" v-model="form.salaryDay" type="digit" placeholder="0.00" maxlength="8" />
@@ -46,7 +48,7 @@
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">工作日期 *</text>
+					<text class="form-label">工作日期 <text class="required-mark">*</text></text>
 					<picker mode="date" :value="form.workDate" @change="onDateChange">
 						<view class="picker-full-box">
 							<text class="picker-text" :class="{ placeholder: !form.workDate }">{{ form.workDate || '请选择日期' }}</text>
@@ -56,12 +58,12 @@
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">报名人数 *</text>
+					<text class="form-label">报名人数 <text class="required-mark">*</text></text>
 					<input class="form-input" v-model="form.signupLimit" type="number" placeholder="请输入报名人数" maxlength="4" />
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">工作时段 *</text>
+					<text class="form-label">工作时段 <text class="required-mark">*</text></text>
 					<view class="time-row">
 						<picker mode="multiSelector" :range="timeRange" :value="startTimeIndex" @change="onStartTimeChange" @columnchange="onStartColumnChange">
 							<view class="picker-box">
@@ -97,11 +99,11 @@
 					<text class="method-title">联系方式</text>
 				</view>
 				<view class="form-item">
-					<text class="form-label">联系人姓名 *</text>
+					<text class="form-label">联系人姓名 <text class="required-mark">*</text></text>
 					<input class="form-input" v-model="form.contacts" placeholder="请输入真实姓名" maxlength="20" />
 				</view>
 				<view class="form-item">
-					<text class="form-label">联系电话 *</text>
+					<text class="form-label">联系电话 <text class="required-mark">*</text></text>
 					<view class="form-input-row">
 						<input class="form-input flex-1" v-model="form.phone" type="number" placeholder="请输入手机号" maxlength="11" />
 						<view class="use-phone-btn" @click="useLoginPhone"><text class="use-phone-text">用默认号</text></view>
@@ -117,7 +119,7 @@
 					<text class="method-title">工作要求</text>
 				</view>
 				<view class="form-item">
-					<text class="form-label">具体要求描述 *</text>
+					<text class="form-label">具体要求描述 <text class="required-mark">*</text></text>
 					<textarea class="form-textarea" v-model="form.description" placeholder="请描述工作内容、技能要求、到岗要求等..." :maxlength="500" auto-height />
 					<text class="word-count">{{ (form.description || '').length }}/500</text>
 				</view>
@@ -129,14 +131,26 @@
 				</view>
 			</view>
 		</view>
+
+		<UserTypeGuardModal
+			:visible="showUserTypeGuard"
+			:title="userTypeGuardCopy.title"
+			:content="userTypeGuardCopy.content"
+			@cancel="handleUserTypeGuardCancel"
+			@close="handleUserTypeGuardClose"
+			@confirm="openUserTypeGuide"
+		/>
 	</view>
 </template>
 
 <script>
 import { addWxJob, getJobPublishDefaults } from '@/api/wxmini/jobs'
 import { useUserStore } from '@/store'
+import { USER_TYPES } from '@/utils/userType'
 import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
+import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
+import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../tutoring/role-guard.helpers'
 
 const CATEGORY_OPTIONS = [
 	{ value: '0', label: '家教' },
@@ -146,10 +160,12 @@ const CATEGORY_OPTIONS = [
 ]
 
 export default {
-	components: { AreaPicker, AddressSearch },
+	components: { AreaPicker, AddressSearch, UserTypeGuardModal },
 	data() {
 		return {
 			submitting: false,
+			showUserTypeGuard: false,
+			userTypeGuardCopy: buildUserTypeGuardCopy('merchant'),
 			userPhone: '',
 			categoryOptions: CATEGORY_OPTIONS,
 			timeRange: [Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0') + '时'), ['00分', '30分']],
@@ -181,18 +197,25 @@ export default {
 		}
 	},
 	onLoad() {
-		this.guardMerchant()
-		this.loadUserDefaults()
+		this.checkUserType()
 	},
 	methods: {
-		guardMerchant() {
+		checkUserType() {
 			const userStore = useUserStore()
-			if (userStore.userType !== 2) {
-				uni.showToast({ title: '仅商家可发布招聘', icon: 'none' })
-				setTimeout(() => {
-					uni.navigateBack({ delta: 1 })
-				}, 1200)
+			this.showUserTypeGuard = shouldBlockUserTypeEntry(userStore, USER_TYPES.MERCHANT)
+			if (!this.showUserTypeGuard) {
+				this.loadUserDefaults()
 			}
+		},
+		handleUserTypeGuardCancel() {
+			this.showUserTypeGuard = false
+		},
+		handleUserTypeGuardClose() {
+			this.showUserTypeGuard = false
+		},
+		openUserTypeGuide() {
+			this.showUserTypeGuard = false
+			uni.navigateTo({ url: '/pages/guide/index' })
 		},
 		async loadUserDefaults() {
 			try {
@@ -339,13 +362,14 @@ page { background: #f4f6fb; }
 .method-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
 .form-item { margin-bottom: 16px; }
 .form-label { display: block; font-size: 13px; color: #64748b; margin-bottom: 6px; }
-.form-label-inline { margin-bottom: 4px; }
+.required-mark { color: #ef4444; }
 .form-input { width: 100%; height: 44px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0 14px; font-size: 14px; color: #1e293b; box-sizing: border-box; }
 .form-input-row { display: flex; flex-direction: row; align-items: center; }
 .flex-1 { flex: 1; }
 .use-phone-btn { margin-left: 10px; padding: 0 12px; height: 40px; border-radius: 10px; background: #eff6ff; display: flex; align-items: center; justify-content: center; }
 .use-phone-text { font-size: 12px; color: #2563eb; }
-.picker-row { display: flex; gap: 12px; }
+.picker-row { display: flex; gap: 12px; align-items: flex-start; }
+.picker-field { min-width: 0; }
 .picker-box, .picker-full-box { height: 44px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 0 14px; display: flex; align-items: center; justify-content: space-between; }
 .picker-text { font-size: 14px; color: #1e293b; }
 .picker-text.placeholder { color: #94a3b8; }
