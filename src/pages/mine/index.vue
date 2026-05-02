@@ -79,7 +79,89 @@
         </template>
       </view>
     </view>
+  <view v-if="showMerchantAgentEntry" class="agent-float-btn" @click="handleOpenMerchantAgent">
+      <uni-icons type="staff-filled" size="18" color="#ffffff" />
+      <text class="agent-float-text">{{ agentPopupLoading ? '加载中...' : '成为代理' }}</text>
+    </view>
   </scroll-view>
+
+  <view v-if="showMerchantAgentPopup" class="dialog-overlay" @touchmove.stop.prevent>
+    <view class="dialog-mask" :class="{ 'dialog-mask--active': merchantAgentPopupVisible }" @click="closeMerchantAgentPopup"></view>
+    <view class="dialog-sheet" :class="{ 'dialog-sheet--active': merchantAgentPopupVisible }">
+      <view class="dialog-card">
+        <view class="dialog-header">
+          <text class="dialog-title">{{ merchantAgentPopup.title }}</text>
+          <view class="dialog-close" @click="closeMerchantAgentPopup">
+            <uni-icons type="closeempty" size="18" color="#64748B" />
+          </view>
+        </view>
+        <text class="dialog-content">{{ merchantAgentPopup.content }}</text>
+        <image
+          v-if="merchantAgentPopup.imageUrl"
+          class="dialog-qrcode"
+          :src="merchantAgentPopup.imageUrl"
+          mode="aspectFit"
+          @click="previewPopupImage(merchantAgentPopup.imageUrl)"
+        />
+        <text v-if="merchantAgentPopup.tips" class="dialog-tips">{{ merchantAgentPopup.tips }}</text>
+        <view v-if="merchantAgentPopup.contact" class="dialog-contact-row">
+          <text class="dialog-contact-label">联系方式</text>
+          <text class="dialog-contact-value">{{ merchantAgentPopup.contact }}</text>
+        </view>
+        <view class="dialog-btn-row" :class="{ 'is-single': !merchantAgentPopup.contact }">
+          <view
+            v-if="merchantAgentPopup.contact"
+            class="dialog-btn dialog-btn-secondary"
+            @click="copyText(merchantAgentPopup.contact, '联系方式已复制')"
+          >
+            <text class="dialog-btn-secondary-text">复制联系方式</text>
+          </view>
+          <view class="dialog-btn dialog-btn-primary" @click="closeMerchantAgentPopup">
+            <text class="dialog-btn-primary-text">{{ merchantAgentPopup.buttonText }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view v-if="showParttimeGroupPopup" class="dialog-overlay" @touchmove.stop.prevent>
+    <view class="dialog-mask" :class="{ 'dialog-mask--active': parttimeGroupPopupVisible }" @click="closeParttimeGroupPopup"></view>
+    <view class="dialog-sheet" :class="{ 'dialog-sheet--active': parttimeGroupPopupVisible }">
+      <view class="dialog-card">
+        <view class="dialog-header">
+          <text class="dialog-title">{{ parttimeGroupPopup.title }}</text>
+          <view class="dialog-close" @click="closeParttimeGroupPopup">
+            <uni-icons type="closeempty" size="18" color="#64748B" />
+          </view>
+        </view>
+        <text class="dialog-content">{{ parttimeGroupPopup.content }}</text>
+        <image
+          v-if="parttimeGroupPopup.imageUrl"
+          class="dialog-qrcode"
+          :src="parttimeGroupPopup.imageUrl"
+          mode="aspectFit"
+          @click="previewPopupImage(parttimeGroupPopup.imageUrl)"
+        />
+        <text v-if="parttimeGroupPopup.tips" class="dialog-tips">{{ parttimeGroupPopup.tips }}</text>
+        <view v-if="parttimeGroupPopup.contact" class="dialog-contact-row">
+          <text class="dialog-contact-label">群备注</text>
+          <text class="dialog-contact-value">{{ parttimeGroupPopup.contact }}</text>
+        </view>
+        <view class="dialog-btn-row" :class="{ 'is-single': !parttimeGroupPopup.contact }">
+          <view
+            v-if="parttimeGroupPopup.contact"
+            class="dialog-btn dialog-btn-secondary"
+            @click="copyText(parttimeGroupPopup.contact, '群备注已复制')"
+          >
+            <text class="dialog-btn-secondary-text">复制群备注</text>
+          </view>
+          <view class="dialog-btn dialog-btn-primary" @click="closeParttimeGroupPopup">
+            <text class="dialog-btn-primary-text">{{ parttimeGroupPopup.buttonText }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 
   <login-popup
     :auto-open="shouldAutoOpenLogin"
@@ -100,6 +182,7 @@ import { useUserStore } from '@/store'
 import { hasUserType, normalizeUserType, USER_TYPES } from '@/utils/userType'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
+import { getMerchantAgentConfig, getParttimeGroupQrcode } from '@/api/wxmini/config'
 import { isAdminUser, shouldEnableRegularMineFeatures } from '@/utils/admin'
 
 const { proxy } = getCurrentInstance()
@@ -109,6 +192,20 @@ const jifen = ref(0)
 const enrollmentList = ref(0)
 const shouldAutoOpenLogin = ref(false)
 const profileDetail = ref(null)
+const agentPopupLoading = ref(false)
+const groupPopupLoading = ref(false)
+const showMerchantAgentPopup = ref(false)
+const merchantAgentPopupVisible = ref(false)
+const showParttimeGroupPopup = ref(false)
+const parttimeGroupPopupVisible = ref(false)
+const merchantAgentPopup = ref(createPopupState({
+  title: '成为代理',
+  content: '加载中...'
+}))
+const parttimeGroupPopup = ref(createPopupState({
+  title: '兼职群二维码',
+  content: '加载中...'
+}))
 
 const hasLogin = computed(() => Boolean(token.value))
 const normalizedUserType = computed(() => normalizeUserType(userType.value))
@@ -116,6 +213,10 @@ const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value)
 
 const isAdmin = computed(() => isAdminUser(token.value, roles.value))
 const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
+const showWalletEntry = computed(() => shouldEnableRegularContent.value && hasLogin.value)
+const showScheduleEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
+const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
+const showMerchantAgentEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT && shouldEnableRegularContent.value)
 
 const userIdentityLabel = computed(() => {
   const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家', [USER_TYPES.AUNT]: '兼职' }
@@ -135,8 +236,8 @@ const studyItems = computed(() => {
 })
 const primaryActionPath = computed(() => {
   if (normalizedUserType.value === USER_TYPES.STUDENT) return '/pages/tutoring/tutor/index'
-  // TODO: 修改回家长需求页
   if (normalizedUserType.value === USER_TYPES.PARENT) return '/pages/tutoring/parent/apply'
+  if (normalizedUserType.value === USER_TYPES.MERCHANT) return '/pages/jobs/apply'
   if (normalizedUserType.value === USER_TYPES.AUNT) return '/pages/mine/info/index'
   return profileDetail.value?.primaryAction || '/pages/guide/index'
 })
@@ -156,7 +257,9 @@ const primaryActionDesc = computed(() => {
 })
 
 const baseMenuItems = [
-
+  { key: 'wallet', label: '我的钱包', icon: 'wallet-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', description: '收入提现与工资流水', visible: showWalletEntry, onClick: handleToWallet },
+  { key: 'schedule', label: '兼职安排', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '查看近期工作安排', visible: showScheduleEntry, onClick: handleToSchedule },
+  { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: showParttimeGroupEntry, onClick: handleOpenParttimeGroup },
   { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
@@ -166,16 +269,30 @@ const baseMenuItems = [
 
 const menuItems = computed(() => {
   if (isAdmin.value) {
-    return [{ key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin },
-        { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
+    return [
+      { key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin },
+      { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
     ]
   }
 
   return baseMenuItems.filter(item => {
-    if (item.key !== 'baby') return true
-    return normalizedUserType.value === USER_TYPES.PARENT
+    if (item.key === 'baby') return normalizedUserType.value === USER_TYPES.PARENT
+    if (Object.prototype.hasOwnProperty.call(item, 'visible')) return item.visible.value
+    return true
   })
 })
+
+function createPopupState(overrides = {}) {
+  return {
+    title: '温馨提示',
+    content: '',
+    tips: '',
+    imageUrl: '',
+    contact: '',
+    buttonText: '我知道了',
+    ...overrides
+  }
+}
 
 function withLogin(action) {
   if (!hasLogin.value) {
@@ -211,8 +328,8 @@ function loadEnrollment() {
 async function loadProfileDetail() {
   if (!hasLogin.value || !shouldEnableRegularContent.value) return
   const res = await getWxUserProfileDetail()
-  profileDetail.value = res.data
-  userStore.updateWxProfileState(res.data)
+  profileDetail.value = res.data || {}
+  userStore.updateWxProfileState(res.data || {})
 }
 
 async function ensureUserTypeReady() {
@@ -272,6 +389,18 @@ function handleBuilding() {
   })
 }
 
+function handleToWallet() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/wallet/index')
+  })
+}
+
+function handleToSchedule() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/jobs/schedules')
+  })
+}
+
 function handleToSetting() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/setting/index')
@@ -288,6 +417,106 @@ function handlePrimaryAction() {
   withLogin(() => {
     const target = primaryActionPath.value
     proxy.$tab.navigateTo(target)
+  })
+}
+
+function previewPopupImage(imageUrl) {
+  if (!imageUrl) return
+  uni.previewImage({ urls: [imageUrl], current: imageUrl })
+}
+
+function copyText(value, successTitle = '复制成功') {
+  if (!value) return
+  uni.setClipboardData({
+    data: String(value),
+    success: () => {
+      uni.showToast({ title: successTitle, icon: 'none' })
+    }
+  })
+}
+
+function normalizePopupResponse(data = {}, fallbackTitle = '温馨提示') {
+  return createPopupState({
+    title: data.title || fallbackTitle,
+    content: data.content || data.description || data.tips || '请按照提示完成后续操作。',
+    tips: data.tips || data.subTitle || data.remark || '',
+    imageUrl: data.qrcodeUrl || data.qrCodeUrl || data.imageUrl || data.url || '',
+    contact: data.contact || data.wechat || data.wechatNo || data.groupRemark || data.note || '',
+    buttonText: data.buttonText || '我知道了'
+  })
+}
+
+function openMerchantAgentPopup() {
+  showMerchantAgentPopup.value = true
+  setTimeout(() => {
+    merchantAgentPopupVisible.value = true
+  }, 20)
+}
+
+function closeMerchantAgentPopup() {
+  merchantAgentPopupVisible.value = false
+  setTimeout(() => {
+    showMerchantAgentPopup.value = false
+  }, 220)
+}
+
+function openParttimeGroupPopup() {
+  showParttimeGroupPopup.value = true
+  setTimeout(() => {
+    parttimeGroupPopupVisible.value = true
+  }, 20)
+}
+
+function closeParttimeGroupPopup() {
+  parttimeGroupPopupVisible.value = false
+  setTimeout(() => {
+    showParttimeGroupPopup.value = false
+  }, 220)
+}
+
+async function handleOpenMerchantAgent() {
+  withLogin(async () => {
+    if (agentPopupLoading.value) return
+    agentPopupLoading.value = true
+    merchantAgentPopup.value = createPopupState({
+      title: '成为代理',
+      content: '正在加载代理配置，请稍候...'
+    })
+    openMerchantAgentPopup()
+    try {
+      const res = await getMerchantAgentConfig()
+      merchantAgentPopup.value = normalizePopupResponse(res?.data || {}, '成为代理')
+    } catch (e) {
+      merchantAgentPopup.value = createPopupState({
+        title: '成为代理',
+        content: e?.msg || '代理配置暂未开放，请稍后重试。'
+      })
+    } finally {
+      agentPopupLoading.value = false
+    }
+  })
+}
+
+async function handleOpenParttimeGroup() {
+  withLogin(async () => {
+    if (groupPopupLoading.value) return
+    groupPopupLoading.value = true
+    parttimeGroupPopup.value = createPopupState({
+      title: '兼职群二维码',
+      content: '正在加载群二维码，请稍候...'
+    })
+    openParttimeGroupPopup()
+    try {
+      const res = await getParttimeGroupQrcode()
+      parttimeGroupPopup.value = normalizePopupResponse(res?.data || {}, '兼职群二维码')
+    } catch (e) {
+      parttimeGroupPopup.value = createPopupState({
+        title: '兼职群二维码',
+        content: e?.msg || '群二维码暂时不可用，请稍后再试。'
+      })
+    } finally {
+      groupPopupLoading.value = false
+    }
   })
 }
 

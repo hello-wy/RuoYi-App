@@ -42,6 +42,18 @@
       }
     },
     {
+      "path": "pages/jobs/schedules",
+      "style": {
+        "navigationBarTitleText": "我的安排"
+      }
+    },
+    {
+      "path": "pages/jobs/payroll",
+      "style": {
+        "navigationBarTitleText": "岗位工资台"
+      }
+    },
+    {
       "path": "pages/growup/index",
       "style": {
         "navigationBarTitleText": "育见成长"

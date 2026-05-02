@@ -22,3 +22,18 @@ export function addWxJob(data) {
     data
   })
 }
+
+export function getMyJobSchedules() {
+  return request({
+    url: '/wxmini/jobs/schedules/my',
+    method: 'get'
+  })
+}
+
+export function getJobSignupUsers(jobId, query = {}) {
+  return request({
+    url: `/wxmini/jobs/${jobId}/signup-users`,
+    method: 'get',
+    params: query
+  })
+}
