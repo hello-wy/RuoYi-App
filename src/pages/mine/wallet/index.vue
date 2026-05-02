@@ -1,31 +1,26 @@
 <template>
   <view class="wallet-page">
 
-    <!-- ===== 顶部余额卡片 ===== -->
     <view class="balance-card">
-      <!-- 加载骨架 -->
       <view v-if="infoLoading" class="skeleton-wrap">
         <view class="skeleton-amount"></view>
         <view class="skeleton-stats"></view>
       </view>
 
       <view v-else>
-        <!-- 标题行 -->
         <view class="balance-header">
-          <text class="balance-title">💰 钱包余额</text>
-          <view class="refresh-btn" @click="loadWalletInfo">
+          <text class="balance-title">钱包余额</text>
+          <view class="refresh-btn" @click="refreshAll">
             <uni-icons type="refreshempty" size="16" color="rgba(255,255,255,0.8)"></uni-icons>
           </view>
         </view>
 
-        <!-- 金额展示 -->
         <view class="balance-amount-row">
           <text class="currency-symbol">¥</text>
           <text class="balance-amount">{{ formatAmount(walletInfo.balance) }}</text>
           <text class="balance-unit">元</text>
         </view>
 
-        <!-- 三列统计 -->
         <view class="wallet-stats">
           <view class="stat-block">
             <text class="stat-value">{{ formatAmount(walletInfo.totalEarned) }}</text>
@@ -45,7 +40,6 @@
       </view>
     </view>
 
-    <!-- ===== 提现入口 ===== -->
     <view class="action-card" @click="onTapWithdraw">
       <view class="action-left">
         <view class="action-icon-bg">
@@ -59,31 +53,62 @@
       <uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
     </view>
 
-    <!-- ===== 提现记录 ===== -->
+    <view class="records-card">
+      <view class="records-header">
+        <text class="records-title">工资流水</text>
+      </view>
+
+      <view v-if="transactionsLoading" class="records-loading">
+        <uni-load-more status="loading"></uni-load-more>
+      </view>
+
+      <view v-else-if="transactionList.length === 0" class="records-empty">
+        <uni-icons type="wallet" size="44" color="#cbd5e1"></uni-icons>
+        <text class="empty-text">暂无钱包流水</text>
+      </view>
+
+      <view v-else class="records-list">
+        <view v-for="(item, index) in transactionList" :key="item.id || index" class="record-item">
+          <view class="record-left">
+            <view class="record-icon-wrap" :class="directionIconClass(item.direction)">
+              <uni-icons :type="directionIcon(item.direction)" size="18" :color="directionIconColor(item.direction)"></uni-icons>
+            </view>
+            <view class="record-info">
+              <text class="record-action">{{ transactionTitle(item) }}</text>
+              <text class="record-time">{{ formatTime(item.createTime || item.transactionTime) }}</text>
+              <text v-if="item.remark" class="record-reason">{{ item.remark }}</text>
+            </view>
+          </view>
+          <view class="record-right">
+            <text class="record-amount" :class="{ income: Number(item.direction) === 1 }">
+              {{ Number(item.direction) === 1 ? '+' : '-' }}¥{{ formatAmount(item.amount) }}
+            </text>
+            <text class="record-balance">余额 {{ formatAmount(item.balanceAfter) }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view class="records-card">
       <view class="records-header">
         <text class="records-title">提现记录</text>
       </view>
 
-      <!-- 加载中 -->
       <view v-if="recordsLoading" class="records-loading">
         <uni-load-more status="loading"></uni-load-more>
       </view>
 
-      <!-- 空态 -->
       <view v-else-if="withdrawList.length === 0" class="records-empty">
         <uni-icons type="wallet" size="44" color="#cbd5e1"></uni-icons>
         <text class="empty-text">暂无提现记录</text>
       </view>
 
-      <!-- 记录列表 -->
       <view v-else class="records-list">
         <view
           v-for="(item, index) in withdrawList"
           :key="item.id || index"
           class="record-item"
         >
-          <!-- 左：图标 + 文字 -->
           <view class="record-left">
             <view class="record-icon-wrap" :class="statusIconClass(item.status)">
               <uni-icons
@@ -99,7 +124,6 @@
             </view>
           </view>
 
-          <!-- 右：金额 + 状态 -->
           <view class="record-right">
             <text class="record-amount">-¥{{ formatAmount(item.amount) }}</text>
             <view class="status-badge" :class="statusBadgeClass(item.status)">
@@ -110,38 +134,27 @@
       </view>
     </view>
 
-    <!-- ===== 底部说明 ===== -->
     <view class="footer-tips">
-      <text class="tips-text">· 收益来源于用户完成家教服务后的确认付款</text>
+      <text class="tips-text">· 钱包收入包括兼职工资等平台入账</text>
       <text class="tips-text">· 提现到账后将自动转入微信零钱</text>
-      <text class="tips-text">· 如有疑问请联系客服：400-xxx-xxxx</text>
+      <text class="tips-text">· 如有疑问请联系客服</text>
     </view>
 
-    <!-- ===== 底部安全区 ===== -->
     <view class="safe-area-bottom"></view>
 
-    <!-- ===== 提现弹窗（Bottom Sheet） ===== -->
     <view v-if="showWithdrawSheet" class="sheet-mask" @click.self="closeSheet">
       <view class="withdraw-sheet" :class="{ 'sheet-in': sheetVisible }">
-
-        <!-- 拖动条 -->
         <view class="sheet-drag-bar"></view>
-
-        <!-- 标题 -->
         <view class="sheet-header">
           <text class="sheet-title">提现到微信钱包</text>
           <view class="sheet-close" @click="closeSheet">
             <uni-icons type="close" size="20" color="#64748b"></uni-icons>
           </view>
         </view>
-
-        <!-- 可提现余额 -->
         <view class="sheet-available">
           <text class="available-label">可提现余额</text>
           <text class="available-amount">¥{{ formatAmount(walletInfo.balance) }}</text>
         </view>
-
-        <!-- 输入框 -->
         <view class="input-section">
           <text class="input-label">提现金额</text>
           <view class="input-wrap">
@@ -160,14 +173,10 @@
           <view class="input-divider"></view>
           <text v-if="withdrawError" class="input-error">{{ withdrawError }}</text>
         </view>
-
-        <!-- 提示 -->
         <view class="sheet-tips">
           <text class="sheet-tip-item">· 最低提现金额 ¥1.00</text>
           <text class="sheet-tip-item">· 预计工作日1-3天到账</text>
         </view>
-
-        <!-- 确认按钮 -->
         <button
           class="confirm-btn"
           :class="{ 'confirm-btn-loading': withdrawLoading }"
@@ -180,21 +189,18 @@
           </view>
           <text v-else>确认提现</text>
         </button>
-
       </view>
     </view>
-
   </view>
 </template>
 
 <script>
-import { getWalletInfo, applyWithdraw, getWithdrawRecords } from '@/api/system/wallet'
+import { getWalletInfo, applyWithdraw, getWithdrawRecords, getWalletTransactions } from '@/api/wxmini/wallet'
 
 export default {
   name: 'WalletPage',
   data() {
     return {
-      // 钱包信息
       walletInfo: {
         balance: '0.00',
         frozen: '0.00',
@@ -202,12 +208,10 @@ export default {
         totalWithdrawn: '0.00'
       },
       infoLoading: false,
-
-      // 提现记录
       withdrawList: [],
+      transactionList: [],
       recordsLoading: false,
-
-      // 提现弹窗
+      transactionsLoading: false,
       showWithdrawSheet: false,
       sheetVisible: false,
       withdrawAmount: '',
@@ -218,12 +222,17 @@ export default {
   },
 
   onLoad() {
-    this.loadWalletInfo()
-    this.loadWithdrawRecords()
+    this.refreshAll()
   },
 
   methods: {
-    // ====== 数据加载 ======
+    async refreshAll() {
+      await Promise.allSettled([
+        this.loadWalletInfo(),
+        this.loadWithdrawRecords(),
+        this.loadWalletTransactions()
+      ])
+    },
     async loadWalletInfo() {
       this.infoLoading = true
       try {
@@ -254,7 +263,18 @@ export default {
       }
     },
 
-    // ====== 提现弹窗 ======
+    async loadWalletTransactions() {
+      this.transactionsLoading = true
+      try {
+        const res = await getWalletTransactions()
+        this.transactionList = res.data || res || []
+      } catch (e) {
+        this.transactionList = []
+      } finally {
+        this.transactionsLoading = false
+      }
+    },
+
     onTapWithdraw() {
       const balance = parseFloat(this.walletInfo.balance)
       if (balance <= 0) {
@@ -290,8 +310,6 @@ export default {
     async submitWithdraw() {
       const amount = parseFloat(this.withdrawAmount)
       const balance = parseFloat(this.walletInfo.balance)
-
-      // 校验
       if (!this.withdrawAmount || isNaN(amount)) {
         this.withdrawError = '请输入提现金额'
         return
@@ -312,10 +330,8 @@ export default {
         const msg = res.msg || res.data || '提现申请已提交'
         this.closeSheet()
         uni.showToast({ title: msg, icon: 'success', duration: 2500 })
-        // 刷新数据
         setTimeout(() => {
-          this.loadWalletInfo()
-          this.loadWithdrawRecords()
+          this.refreshAll()
         }, 500)
       } catch (e) {
         this.withdrawError = '提交失败，请重试'
@@ -324,7 +340,6 @@ export default {
       }
     },
 
-    // ====== 工具方法 ======
     formatAmount(val) {
       if (val === null || val === undefined || val === '') return '0.00'
       return Number(val).toFixed(2)
@@ -336,6 +351,24 @@ export default {
       if (isNaN(d.getTime())) return val
       const p = n => String(n).padStart(2, '0')
       return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+    },
+
+    transactionTitle(item) {
+      if (item.remark) return item.remark
+      if (String(item.bizType || '').toLowerCase().includes('payroll')) return '工资入账'
+      return Number(item.direction) === 1 ? '钱包收入' : '钱包支出'
+    },
+
+    directionIcon(direction) {
+      return Number(direction) === 1 ? 'arrow-up' : 'arrow-down'
+    },
+
+    directionIconColor(direction) {
+      return Number(direction) === 1 ? '#10B981' : '#EF4444'
+    },
+
+    directionIconClass(direction) {
+      return Number(direction) === 1 ? 'icon-success' : 'icon-failed'
     },
 
     statusText(status) {
@@ -678,6 +711,15 @@ page {
   font-size: 32rpx;
   font-weight: 700;
   color: #EF4444;
+}
+
+.record-amount.income {
+  color: #10B981;
+}
+
+.record-balance {
+  font-size: 22rpx;
+  color: #94a3b8;
 }
 
 .status-badge {

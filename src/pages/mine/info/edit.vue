@@ -41,6 +41,17 @@
             <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请输入个人简介" :inputBorder="false" />
           </uni-forms-item>
         </template>
+        <template v-if="isAunt">
+          <uni-forms-item label="个人简介" name="personalIntro">
+            <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请介绍你的兼职经验和优势" :inputBorder="false" />
+          </uni-forms-item>
+          <uni-forms-item label="空余时间" name="availableTime">
+            <uni-easyinput type="textarea" v-model="form.availableTime" placeholder="如：周一到周五晚间，周末全天" :inputBorder="false" />
+          </uni-forms-item>
+          <uni-forms-item label="工作经历" name="workExperience">
+            <uni-easyinput type="textarea" v-model="form.workExperience" placeholder="请填写过往兼职或实习经历" :inputBorder="false" />
+          </uni-forms-item>
+        </template>
       </uni-forms>
     </view>
 
@@ -72,7 +83,9 @@ const form = ref({
   companyPosition: '',
   industry: '',
   workYears: '',
-  personalIntro: ''
+  personalIntro: '',
+  availableTime: '',
+  workExperience: ''
 })
 
 const isMerchant = computed(() => form.value.userType === 2)
@@ -142,7 +155,9 @@ function loadProfile() {
       companyPosition: data.companyPosition || '',
       industry: data.industry || '',
       workYears: data.workYears || '',
-      personalIntro: data.personalIntro || ''
+      personalIntro: data.personalIntro || '',
+      availableTime: data.availableTime || '',
+      workExperience: data.workExperience || ''
     }
   })
 }
@@ -158,7 +173,8 @@ function buildSubmitPayload() {
     realName: form.value.realName,
     nickName: form.value.nickName,
     gender: form.value.gender,
-    age: isAunt.value && form.value.age !== '' ? Number(form.value.age) : null
+    age: isAunt.value && form.value.age !== '' ? Number(form.value.age) : null,
+    personalIntro: form.value.personalIntro || ''
   }
 
   if (isMerchant.value) {
@@ -167,7 +183,16 @@ function buildSubmitPayload() {
     payload.companyPosition = form.value.companyPosition
     payload.industry = form.value.industry
     payload.workYears = form.value.workYears
-    payload.personalIntro = form.value.personalIntro
+    payload.availableTime = ''
+    payload.workExperience = ''
+  } else if (isAunt.value) {
+    payload.companyName = ''
+    payload.companyAddress = ''
+    payload.companyPosition = ''
+    payload.industry = ''
+    payload.workYears = ''
+    payload.availableTime = form.value.availableTime || ''
+    payload.workExperience = form.value.workExperience || ''
   } else {
     payload.companyName = ''
     payload.companyAddress = ''
@@ -175,6 +200,8 @@ function buildSubmitPayload() {
     payload.industry = ''
     payload.workYears = ''
     payload.personalIntro = ''
+    payload.availableTime = ''
+    payload.workExperience = ''
   }
 
   return payload

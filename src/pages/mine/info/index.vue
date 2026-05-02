@@ -44,7 +44,10 @@ const fieldList = computed(() => {
   if (profile.value.userType === 3) {
     return [
       ...baseFields,
-      { key: 'age', label: '年龄', value: profile.value.age }
+      { key: 'age', label: '年龄', value: profile.value.age },
+      { key: 'personalIntro', label: '个人简介', value: profile.value.personalIntro, multiline: true },
+      { key: 'availableTime', label: '空余时间', value: profile.value.availableTime, multiline: true },
+      { key: 'workExperience', label: '工作经历', value: profile.value.workExperience, multiline: true }
     ]
   }
 
@@ -74,11 +77,11 @@ function handleEdit() {
 }
 
 function formatValue(value) {
-  return value === null || value === undefined || value === '' ? '' : value
+  return value === null || value === undefined || value === '' ? '未填写' : value
 }
 
 function showVerifiedBadge() {
-  return false
+  return Number(profile.value.isRealnameAuth) === 1 || profile.value.isRealnameAuth === true
 }
 
 function genderText(value) {
