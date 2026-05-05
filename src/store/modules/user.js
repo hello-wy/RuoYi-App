@@ -10,6 +10,7 @@ import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
 import { shouldEnableRegularMineFeatures } from '@/utils/admin'
+import { resolveUserDisplayName } from '@/utils/userDisplay'
 import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
@@ -97,7 +98,7 @@ export const useUserStore = defineStore('user', () => {
     SET_USER_TYPE(profile.userType)
     SET_PHONE(profile.phone || '')
     SET_ID(profile.userId || '')
-    SET_NAME(profile.userName || '')
+    SET_NAME(resolveUserDisplayName(profile))
     SET_AVATAR(resolveAvatar(profile.avatarUrl || profile.avatar || ''))
     syncEnrollment()
     jobSignupOrderStore.refresh().catch(() => {})
@@ -110,6 +111,7 @@ export const useUserStore = defineStore('user', () => {
     openId: phoneData.openId || loginData.openId || '',
     userId: phoneData.userId || loginData.userId || '',
     userName: phoneData.userName || loginData.userName || '',
+    realName: phoneData.realName || loginData.realName || '',
     userType: resolveUserTypeValue(phoneData.userType, loginData.userType),
     phone: phoneData.phone || phoneData.phoneNumber || loginData.phone || '',
     avatarUrl: phoneData.avatarUrl || loginData.avatarUrl || loginData.avatar || ''
@@ -135,10 +137,11 @@ export const useUserStore = defineStore('user', () => {
     if (Object.prototype.hasOwnProperty.call(profile, 'phone')) {
       SET_PHONE(profile.phone || '')
     }
-    if (Object.prototype.hasOwnProperty.call(profile, 'displayName')) {
+    if (Object.prototype.hasOwnProperty.call(profile, 'realName')
+      || Object.prototype.hasOwnProperty.call(profile, 'phone')) {
+      SET_NAME(resolveUserDisplayName(profile))
+    } else if (Object.prototype.hasOwnProperty.call(profile, 'displayName')) {
       SET_NAME(profile.displayName || '')
-    } else if (Object.prototype.hasOwnProperty.call(profile, 'userName')) {
-      SET_NAME(profile.userName || '')
     }
   }
 
@@ -220,7 +223,10 @@ export const useUserStore = defineStore('user', () => {
         SET_SESSION_KEY('')
         SET_USER_TYPE(accountType)
         SET_ID(userid)
-        SET_NAME(username)
+        SET_NAME(resolveUserDisplayName({
+          realName: user.realName,
+          phone: phoneNumber
+        }) || username)
         SET_AVATAR(avatar)
         resolve(res)
       }).catch(error => {

@@ -188,7 +188,7 @@ export default {
 			this.loadData(true)
 		},
 		getDistrictLabel(val) {
-			const found = this.districtOptions.find(o => o.value === val)
+			const found = this.districtOptions.find(o => String(o.value) === String(val))
 			return found ? found.text : val
 		},
 		formatId(id) {

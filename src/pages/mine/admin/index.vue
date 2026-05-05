@@ -77,11 +77,11 @@ const actionItems = [
     onClick: handleUnreadyFeature
   },
   {
-    key: 'placeholder',
-    label: '占位入口',
-    icon: 'paperclip',
+    key: 'refund',
+    label: '退款管理',
+    icon: 'undo-filled',
     iconColor: '#0f9d8f',
-    onClick: handleUnreadyFeature
+    onClick: handleRefundManagement
   }
 ]
 
@@ -91,6 +91,10 @@ function handleTutorReview() {
 
 function handleStudentManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/student/index')
+}
+
+function handleRefundManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/refund/index')
 }
 
 function handleUnreadyFeature() {

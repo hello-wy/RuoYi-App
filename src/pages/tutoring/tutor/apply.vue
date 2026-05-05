@@ -516,7 +516,7 @@ export default {
 				this.form.currentGrade = opt ? opt.value : ''
 			},
 		getAreaText(code) {
-			const item = this.districtOptions.find(o => o.value === code)
+			const item = this.districtOptions.find(o => String(o.value) === String(code))
 			return item ? item.text : code
 		},
 		toggleMethod(value) {

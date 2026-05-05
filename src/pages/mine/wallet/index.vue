@@ -327,7 +327,7 @@ export default {
 
       try {
         const res = await applyWithdraw(amount.toFixed(2))
-        const msg = res.msg || res.data || '提现申请已提交'
+        const msg = res.msg || res.data || '微信提现已发起'
         this.closeSheet()
         uni.showToast({ title: msg, icon: 'success', duration: 2500 })
         setTimeout(() => {
@@ -372,7 +372,7 @@ export default {
     },
 
     statusText(status) {
-      return ['审核中', '已打款', '已拒绝'][status] || '未知'
+      return ['打款中', '已打款', '打款失败'][status] || '未知'
     },
 
     statusIcon(status) {

@@ -50,6 +50,23 @@
 			</view>
 		</view>
 
+		<view v-if="showMerchantToolbar" class="merchant-toolbar">
+			<view class="merchant-toolbar-text">
+				<text class="merchant-toolbar-title">商家工作台</text>
+				<text class="merchant-toolbar-desc">管理招聘与工资结算</text>
+			</view>
+			<view class="merchant-actions">
+				<view class="merchant-action" @click="goMerchantPublish">
+					<uni-icons type="compose" size="16" color="#2563eb"></uni-icons>
+					<text class="merchant-action-text">发布招聘</text>
+				</view>
+				<view class="merchant-action primary" @click="goMerchantSignupUsers">
+					<uni-icons type="list" size="16" color="#ffffff"></uni-icons>
+					<text class="merchant-action-text primary-text">日结查询</text>
+				</view>
+			</view>
+		</view>
+
 		<!-- 加载中 -->
 		<view v-if="loading && list.length === 0" class="loading-wrap">
 			<uni-load-more status="loading"></uni-load-more>
@@ -99,7 +116,7 @@
 				<!-- 地点行 -->
 				<view class="card-info-row">
 					<uni-icons type="location-filled" size="13" color="#888"></uni-icons>
-					<text class="card-info-text">{{ item.location || item.districtId }}</text>
+					<text class="card-info-text">{{ item.location || getDistrictLabel(item.districtId) || '地点待定' }}</text>
 				</view>
 
 				<!-- 底部：状态 + ID -->
@@ -121,29 +138,10 @@
 
 <script>
 import { listJobs } from '@/api/system/jobs'
-import { useLocationStore } from '@/store'
-
-const CATEGORY_OPTIONS = [
-	{ value: '', label: '全部' },
-	{ value: '0', label: '家教' },
-	{ value: '1', label: '助教' },
-	{ value: '2', label: '派发' },
-	{ value: '3', label: '其他' }
-]
-
-const CAT_STYLES = {
-	'0': { bg: '#EAF3FF', color: '#3B82F6' },
-	'1': { bg: '#EEF9F0', color: '#10B981' },
-	'2': { bg: '#FFF8E6', color: '#F59E0B' },
-	'3': { bg: '#F3F4F6', color: '#888' }
-}
-
-const STATUS_OPTIONS = [
-	{ value: '', label: '全部状态' },
-	{ value: '0', label: '招募中' },
-	{ value: '1', label: '已满员' },
-	{ value: '2', label: '已结束' }
-]
+import { useLocationStore, useUserStore } from '@/store'
+import { findDistrictNodeByCode } from '@/utils/pca'
+import { USER_TYPES } from '@/utils/userType'
+import { CATEGORY_OPTIONS, STATUS_OPTIONS, formatId, getCatLabel, getCatStyle, getStatusClass, getStatusLabel } from './list.helpers'
 
 export default {
 	dicts:['sys_daily_category'],
@@ -175,11 +173,11 @@ export default {
 			return [{ value: '', text: '全部区域' }, ...useLocationStore().districts]
 		},
 		districtIndex() {
-			const idx = this.districtOptions.findIndex(d => d.value === this.queryParams.districtId)
+			const idx = this.districtOptions.findIndex(d => String(d.value) === String(this.queryParams.districtId))
 			return idx < 0 ? 0 : idx
 		},
 		districtLabel() {
-			const found = this.districtOptions.find(d => d.value === this.queryParams.districtId)
+			const found = this.districtOptions.find(d => String(d.value) === String(this.queryParams.districtId))
 			return found && found.value ? found.text : ''
 		},
 		statusIndex() {
@@ -192,6 +190,9 @@ export default {
 		},
 		hasFilter() {
 			return this.queryParams.category !== '' || this.queryParams.districtId !== '' || this.queryParams.status !== ''
+		},
+		showMerchantToolbar() {
+			return useUserStore().userType === USER_TYPES.MERCHANT
 		}
 	},
 	onLoad() {
@@ -268,234 +269,30 @@ export default {
 			this.queryParams = { category: '', districtId: '', status: '' }
 			this.loadData(true)
 		},
-		getCatLabel(val) {
-			const s = String(val)
-			const map = { '0': '家教', '1': '助教', '2': '派发', '3': '其他' }
-			return map[s] || '其他'
-		},
-		getCatStyle(val) {
-			const s = String(val)
-			const style = CAT_STYLES[s] || CAT_STYLES['3']
-			return `background:${style.bg}; color:${style.color};`
-		},
-		getStatusLabel(val) {
-			const map = { '0': '招募中', '1': '已满员', '2': '已结束' }
-			return map[String(val)] || '--'
-		},
-		getStatusClass(val) {
-			const map = { '0': 'status-open', '1': 'status-full', '2': 'status-end' }
-			return map[String(val)] || ''
-		},
-		formatId(id) {
-			if (!id) return '----'
-			return String(id).slice(-8).toUpperCase()
+		getCatLabel,
+		getCatStyle,
+		getStatusLabel,
+		getStatusClass,
+		formatId,
+		getDistrictLabel(val) {
+			if (!val) return ''
+			const found = (this.districtOptions || []).find(d => String(d.value) === String(val))
+			if (found) return found.text
+
+			const district = findDistrictNodeByCode(val)
+			return district ? district.text : ''
 		},
 		goDetail(id) {
 			uni.navigateTo({ url: '/pages/jobs/detail?id=' + id })
+		},
+		goMerchantPublish() {
+			uni.navigateTo({ url: '/pages/jobs/apply' })
+		},
+		goMerchantSignupUsers() {
+			uni.navigateTo({ url: '/pages/jobs/signup-users' })
 		}
 	}
 }
 </script>
 
-<style scoped>
-.page {
-	height: 100vh;
-	display: flex;
-	flex-direction: column;
-	background-color: #F5F5F5;
-	overflow: hidden;
-}
-
-/* 分类快选 */
-.category-bar {
-	background: #fff;
-	white-space: nowrap;
-	border-bottom: 1rpx solid #F0F0F0;
-}
-.category-inner {
-	display: flex;
-	flex-direction: row;
-	padding: 16rpx 24rpx;
-	gap: 16rpx;
-}
-.cat-chip {
-	display: inline-flex;
-	align-items: center;
-	padding: 10rpx 28rpx;
-	border-radius: 10rpx;
-	background: #F3F4F6;
-	flex-shrink: 0;
-}
-.cat-chip-active {
-	background: #1A1A1A;
-}
-.cat-chip-text {
-	font-size: 26rpx;
-	color: #555;
-}
-.cat-chip-text-active {
-	color: #fff;
-	font-weight: 600;
-}
-
-/* 筛选行 */
-.filter-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: 16rpx 24rpx;
-	gap: 16rpx;
-	background: #fff;
-	border-bottom: 1rpx solid #F0F0F0;
-}
-.filter-btn {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: 12rpx 20rpx;
-	border-radius: 8rpx;
-	background: #F3F4F6;
-	gap: 6rpx;
-}
-.filter-btn.active {
-	background: #EAF3FF;
-}
-.filter-btn-text {
-	font-size: 26rpx;
-	color: #555;
-}
-.filter-btn.active .filter-btn-text {
-	color: #3B82F6;
-}
-.filter-reset {
-	margin-left: auto;
-	padding: 12rpx 20rpx;
-}
-.filter-reset-text {
-	font-size: 26rpx;
-	color: #EF4444;
-}
-
-/* 列表 */
-.list-scroll {
-	flex: 1;
-	height: 0;
-}
-
-/* 卡片 */
-.card {
-	background: #fff;
-	border-radius: 16rpx;
-	margin: 20rpx 24rpx;
-	padding: 28rpx 28rpx 22rpx;
-	box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
-}
-.card-top {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 14rpx;
-}
-.cat-tag {
-	padding: 4rpx 18rpx;
-	border-radius: 20rpx;
-}
-.cat-tag-text {
-	font-size: 22rpx;
-	font-weight: 600;
-}
-.salary-wrap {
-	display: flex;
-	flex-direction: row;
-	align-items: baseline;
-}
-.salary-value {
-	font-size: 36rpx;
-	font-weight: bold;
-	color: #EF4444;
-}
-.salary-unit {
-	font-size: 22rpx;
-	color: #EF4444;
-	margin-left: 2rpx;
-}
-.card-title {
-	font-size: 32rpx;
-	font-weight: bold;
-	color: #1A1A1A;
-	margin-bottom: 16rpx;
-	display: block;
-}
-.card-info-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	margin-bottom: 10rpx;
-	gap: 8rpx;
-}
-.card-info-text {
-	font-size: 24rpx;
-	color: #888;
-}
-.card-bottom {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	margin-top: 16rpx;
-}
-/* 状态徽章 */
-.status-badge {
-	padding: 4rpx 16rpx;
-	border-radius: 8rpx;
-}
-.status-badge-text {
-	font-size: 22rpx;
-}
-.status-open {
-	background: #EEF9F0;
-}
-.status-open .status-badge-text {
-	color: #10B981;
-}
-.status-full {
-	background: #FFF8E6;
-}
-.status-full .status-badge-text {
-	color: #F59E0B;
-}
-.status-end {
-	background: #F3F4F6;
-}
-.status-end .status-badge-text {
-	color: #888;
-}
-.card-id {
-	font-size: 22rpx;
-	color: #CCC;
-}
-
-/* 加载/错误 */
-.loading-wrap, .error-wrap {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	padding: 60rpx 0;
-	gap: 16rpx;
-}
-.error-text {
-	font-size: 28rpx;
-	color: #999;
-}
-.retry-btn {
-	padding: 12rpx 40rpx;
-	background: #f0f0f0;
-	border-radius: 40rpx;
-}
-.retry-text {
-	font-size: 28rpx;
-	color: #555;
-}
-</style>
+<style scoped src="./list.scss"></style>

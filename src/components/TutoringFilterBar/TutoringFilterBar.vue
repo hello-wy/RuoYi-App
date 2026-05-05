@@ -116,7 +116,7 @@ export default {
 			return !!(this.value.region || this.value.subject || this.value.grade || this.value.methods)
 		},
 		regionIndex() {
-			return Math.max(0, this.districtOptions.findIndex(o => o.value === this.value.region))
+			return Math.max(0, this.districtOptions.findIndex(o => String(o.value) === String(this.value.region)))
 		},
 		subjectIndex() {
 			return Math.max(0, this.subjectOptions.findIndex(o => o.value === this.value.subject))

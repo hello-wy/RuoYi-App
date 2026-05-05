@@ -46,7 +46,7 @@ export default {
 					path: '/pages/tutoring/tutor/apply'
 				},
 				{
-					name: '兼职日结',
+					name: '兼职/全职',
 					icon: 'wallet-filled',
 					color: '#333',
 					path: '/pages/jobs/list'

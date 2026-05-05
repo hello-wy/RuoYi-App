@@ -3,10 +3,13 @@
     <view class="profile-hero">
       <view class="hero-top">
         <view class="hero-main">
-          <text class="hero-name">{{ profile.displayName || '' }}</text>
-          <view class="hero-badge" v-if="showVerifiedBadge()">
-            <uni-icons type="checkmarkempty" size="14" color="#4f46e5" />
-            <text class="hero-badge-text">实名认证用户</text>
+          <text class="hero-name">{{ profileRealNameText }}</text>
+          <view class="hero-badge" :class="{ 'is-verified': isProfileVerified }" @click="handleVerifyClick">
+            <view class="verify-shield">
+              <uni-icons type="auth-filled" size="18" :color="verifyShieldColor" />
+              <text class="shield-mark">{{ isProfileVerified ? '✓' : '?' }}</text>
+            </view>
+            <text class="hero-badge-text">{{ isProfileVerified ? '已实名认证' : '未实名认证' }}</text>
           </view>
         </view>
         <view class="edit-btn" @click="handleEdit">
@@ -23,18 +26,37 @@
       </view>
     </view>
   </scroll-view>
+  <RealVerify
+    ref="realVerifyRef"
+    v-model:verified="verifyForm.verified"
+    v-model:realName="verifyForm.realName"
+    v-model:idCard="verifyForm.idCard"
+    type="icon"
+  />
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
+import RealVerify from '@/components/RealVerify/RealVerify.vue'
+import { isRealnameAuthed, resolveProfileRealNameText } from '@/utils/userDisplay'
 
 const profile = ref({})
+const realVerifyRef = ref(null)
+const verifyForm = ref({
+  verified: false,
+  realName: '',
+  idCard: ''
+})
+
+const isProfileVerified = computed(() => isRealnameAuthed(profile.value.isRealnameAuth))
+const profileRealNameText = computed(() => resolveProfileRealNameText(profile.value))
+const verifyShieldColor = computed(() => isProfileVerified.value ? '#16A34A' : '#9CA3AF')
 
 const fieldList = computed(() => {
   const baseFields = [
-    { key: 'realName', label: '姓名', value: profile.value.realName },
+    { key: 'realName', label: '姓名', value: profileRealNameText.value },
     { key: 'nickName', label: '昵称', value: profile.value.nickName },
     { key: 'gender', label: '性别', value: genderText(profile.value.gender) },
     { key: 'phone', label: '手机号码', value: profile.value.phone },
@@ -69,6 +91,8 @@ const fieldList = computed(() => {
 function loadProfile() {
   getWxUserProfileDetail().then(res => {
     profile.value = res.data || {}
+    verifyForm.value.verified = isRealnameAuthed(profile.value.isRealnameAuth)
+    verifyForm.value.realName = profile.value.realName || ''
   })
 }
 
@@ -80,8 +104,9 @@ function formatValue(value) {
   return value === null || value === undefined || value === '' ? '未填写' : value
 }
 
-function showVerifiedBadge() {
-  return Number(profile.value.isRealnameAuth) === 1 || profile.value.isRealnameAuth === true
+function handleVerifyClick() {
+  if (isProfileVerified.value) return
+  realVerifyRef.value?.openPopup()
 }
 
 function genderText(value) {
@@ -101,6 +126,10 @@ function userTypeText(value) {
 
 onShow(() => {
   loadProfile()
+})
+
+watch(() => verifyForm.value.verified, value => {
+  if (value) loadProfile()
 })
 </script>
 
@@ -148,6 +177,31 @@ page {
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.hero-badge.is-verified {
+  background: rgba(236, 253, 245, 0.9);
+}
+
+.verify-shield {
+  position: relative;
+  width: 38rpx;
+  height: 38rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shield-mark {
+  position: absolute;
+  top: 8rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 18rpx;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
 }
 
 .hero-badge-text {

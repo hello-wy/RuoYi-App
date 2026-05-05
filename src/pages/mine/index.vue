@@ -4,9 +4,13 @@
       <view class="header-top">
         <view class="user-left">
           <view class="user-detail">
-            <view v-if="!name" @click="handleToLogin" class="login-tip">点击登录</view>
+            <view v-if="!hasLogin" @click="handleToLogin" class="login-tip">点击登录</view>
             <view v-else class="user-name-row">
-              <text class="user-name">{{ name }}</text>
+              <text class="user-name">{{ mineDisplayName }}</text>
+              <view class="verify-shield-btn" @click.stop="handleVerifyClick">
+                <uni-icons type="auth-filled" size="18" :color="verifyShieldColor" />
+                <text class="shield-mark">{{ isProfileVerified ? '✓' : '?' }}</text>
+              </view>
               <view v-if="shouldEnableRegularContent" class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
                 <text class="tag-text">{{ userIdentityLabel }}</text>
                 <uni-icons type="redo" size="12" color="#ffffff" />
@@ -79,50 +83,11 @@
         </template>
       </view>
     </view>
-  <view v-if="showMerchantAgentEntry" class="agent-float-btn" @click="handleOpenMerchantAgent">
+  <view class="agent-float-btn" @click="handleOpenMerchantAgent">
       <uni-icons type="staff-filled" size="18" color="#ffffff" />
-      <text class="agent-float-text">{{ agentPopupLoading ? '加载中...' : '成为代理' }}</text>
+      <text class="agent-float-text">代理</text>
     </view>
   </scroll-view>
-
-  <view v-if="showMerchantAgentPopup" class="dialog-overlay" @touchmove.stop.prevent>
-    <view class="dialog-mask" :class="{ 'dialog-mask--active': merchantAgentPopupVisible }" @click="closeMerchantAgentPopup"></view>
-    <view class="dialog-sheet" :class="{ 'dialog-sheet--active': merchantAgentPopupVisible }">
-      <view class="dialog-card">
-        <view class="dialog-header">
-          <text class="dialog-title">{{ merchantAgentPopup.title }}</text>
-          <view class="dialog-close" @click="closeMerchantAgentPopup">
-            <uni-icons type="closeempty" size="18" color="#64748B" />
-          </view>
-        </view>
-        <text class="dialog-content">{{ merchantAgentPopup.content }}</text>
-        <image
-          v-if="merchantAgentPopup.imageUrl"
-          class="dialog-qrcode"
-          :src="merchantAgentPopup.imageUrl"
-          mode="aspectFit"
-          @click="previewPopupImage(merchantAgentPopup.imageUrl)"
-        />
-        <text v-if="merchantAgentPopup.tips" class="dialog-tips">{{ merchantAgentPopup.tips }}</text>
-        <view v-if="merchantAgentPopup.contact" class="dialog-contact-row">
-          <text class="dialog-contact-label">联系方式</text>
-          <text class="dialog-contact-value">{{ merchantAgentPopup.contact }}</text>
-        </view>
-        <view class="dialog-btn-row" :class="{ 'is-single': !merchantAgentPopup.contact }">
-          <view
-            v-if="merchantAgentPopup.contact"
-            class="dialog-btn dialog-btn-secondary"
-            @click="copyText(merchantAgentPopup.contact, '联系方式已复制')"
-          >
-            <text class="dialog-btn-secondary-text">复制联系方式</text>
-          </view>
-          <view class="dialog-btn dialog-btn-primary" @click="closeMerchantAgentPopup">
-            <text class="dialog-btn-primary-text">{{ merchantAgentPopup.buttonText }}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-  </view>
 
   <view v-if="showParttimeGroupPopup" class="dialog-overlay" @touchmove.stop.prevent>
     <view class="dialog-mask" :class="{ 'dialog-mask--active': parttimeGroupPopupVisible }" @click="closeParttimeGroupPopup"></view>
@@ -163,6 +128,52 @@
     </view>
   </view>
 
+  <view v-if="showAgentPopup" class="dialog-overlay" @touchmove.stop.prevent>
+    <view class="dialog-mask" :class="{ 'dialog-mask--active': agentPopupVisible }" @click="closeAgentPopup"></view>
+    <view class="agent-dialog-sheet" :class="{ 'agent-dialog-sheet--active': agentPopupVisible }">
+      <view class="agent-card">
+        <view class="agent-header">
+          <view class="agent-header-left">
+            <text class="agent-title">{{ agentPopup.title }}</text>
+            <text class="agent-subtitle">您的专属教育顾问</text>
+          </view>
+          <image
+            v-if="agentPopup.imageUrl"
+            class="agent-illustration"
+            :src="agentPopup.imageUrl"
+            mode="aspectFit"
+          />
+          <view v-else class="agent-illustration-placeholder">
+            <uni-icons type="staff-filled" size="64" color="#d4f5ed" />
+          </view>
+          <view class="agent-close" @click="closeAgentPopup">
+            <uni-icons type="closeempty" size="16" color="#ffffff" />
+          </view>
+        </view>
+
+        <scroll-view v-if="agentPopup.content" scroll-y class="agent-body">
+          <text class="agent-content">{{ agentPopup.content }}</text>
+        </scroll-view>
+
+        <view v-if="agentPopup.contact || agentPopup.phone" class="agent-contact-section">
+          <view v-if="agentPopup.contact" class="agent-contact-row">
+            <text class="agent-contact-label">联系人：</text>
+            <text class="agent-contact-value">{{ agentPopup.contact }}</text>
+          </view>
+          <view v-if="agentPopup.contact && agentPopup.phone" class="agent-contact-divider"></view>
+          <view v-if="agentPopup.phone" class="agent-contact-row">
+            <text class="agent-contact-label">联系电话：</text>
+            <text class="agent-contact-value" @click="callAgentPhone">{{ agentPopup.phone }}</text>
+          </view>
+        </view>
+
+        <view class="agent-call-btn" @click="callAgentPhone">
+          <text class="agent-call-btn-text">立即呼叫</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
   <login-popup
     :auto-open="shouldAutoOpenLogin"
     account-success-url=""
@@ -171,37 +182,52 @@
     @close="handleLoginPopupClose"
     @success="handleLoginSuccess"
   />
+  <RealVerify
+    ref="realVerifyRef"
+    v-model:verified="verifyForm.verified"
+    v-model:realName="verifyForm.realName"
+    v-model:idCard="verifyForm.idCard"
+    type="icon"
+  />
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, ref } from 'vue'
+import { computed, getCurrentInstance, ref, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import { useUserStore } from '@/store'
 import { hasUserType, normalizeUserType, USER_TYPES } from '@/utils/userType'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
-import { getMerchantAgentConfig, getParttimeGroupQrcode } from '@/api/wxmini/config'
+import { getParttimeGroupQrcode, getMerchantAgentConfig } from '@/api/wxmini/config'
 import { isAdminUser, shouldEnableRegularMineFeatures } from '@/utils/admin'
+import { isRealnameAuthed, resolveUserDisplayName } from '@/utils/userDisplay'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const { name, roles, token, userType } = storeToRefs(userStore)
+const { phone, roles, token, userType } = storeToRefs(userStore)
 const jifen = ref(0)
 const enrollmentList = ref(0)
 const shouldAutoOpenLogin = ref(false)
 const profileDetail = ref(null)
-const agentPopupLoading = ref(false)
+const realVerifyRef = ref(null)
+const verifyForm = ref({
+  verified: false,
+  realName: '',
+  idCard: ''
+})
 const groupPopupLoading = ref(false)
-const showMerchantAgentPopup = ref(false)
-const merchantAgentPopupVisible = ref(false)
+const showAgentPopup = ref(false)
+const agentPopupVisible = ref(false)
+const agentPopupLoading = ref(false)
+const agentPopup = ref(createPopupState({
+  title: '正在加载',
+  content: '请稍候...'
+}))
 const showParttimeGroupPopup = ref(false)
 const parttimeGroupPopupVisible = ref(false)
-const merchantAgentPopup = ref(createPopupState({
-  title: '成为代理',
-  content: '加载中...'
-}))
 const parttimeGroupPopup = ref(createPopupState({
   title: '兼职群二维码',
   content: '加载中...'
@@ -216,7 +242,12 @@ const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeature
 const showWalletEntry = computed(() => shouldEnableRegularContent.value && hasLogin.value)
 const showScheduleEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
 const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
-const showMerchantAgentEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT && shouldEnableRegularContent.value)
+const showMerchantPayrollEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT && shouldEnableRegularContent.value)
+const isProfileVerified = computed(() => isRealnameAuthed(profileDetail.value?.isRealnameAuth))
+const mineDisplayName = computed(() => resolveUserDisplayName(profileDetail.value || {
+  phone: phone.value
+}))
+const verifyShieldColor = computed(() => isProfileVerified.value ? '#22C55E' : '#D1D5DB')
 
 const userIdentityLabel = computed(() => {
   const labels = { [USER_TYPES.PARENT]: '家长', [USER_TYPES.STUDENT]: '学生', [USER_TYPES.MERCHANT]: '商家', [USER_TYPES.AUNT]: '兼职' }
@@ -258,6 +289,7 @@ const primaryActionDesc = computed(() => {
 
 const baseMenuItems = [
   { key: 'wallet', label: '我的钱包', icon: 'wallet-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', description: '收入提现与工资流水', visible: showWalletEntry, onClick: handleToWallet },
+  { key: 'merchantPayroll', label: '兼职日结查询', icon: 'list', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '报名人员与工资结算', visible: showMerchantPayrollEntry, onClick: handleToMerchantPayroll },
   { key: 'schedule', label: '兼职安排', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '查看近期工作安排', visible: showScheduleEntry, onClick: handleToSchedule },
   { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: showParttimeGroupEntry, onClick: handleOpenParttimeGroup },
   { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
@@ -329,6 +361,8 @@ async function loadProfileDetail() {
   if (!hasLogin.value || !shouldEnableRegularContent.value) return
   const res = await getWxUserProfileDetail()
   profileDetail.value = res.data || {}
+  verifyForm.value.verified = isProfileVerified.value
+  verifyForm.value.realName = profileDetail.value.realName || ''
   userStore.updateWxProfileState(res.data || {})
 }
 
@@ -371,6 +405,11 @@ function handleSwitchIdentity() {
   })
 }
 
+function handleVerifyClick() {
+  if (isProfileVerified.value) return
+  realVerifyRef.value?.openPopup()
+}
+
 function handleToOrderCenter() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/order-center/index')
@@ -398,6 +437,12 @@ function handleToWallet() {
 function handleToSchedule() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/jobs/schedules')
+  })
+}
+
+function handleToMerchantPayroll() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/jobs/signup-users')
   })
 }
 
@@ -446,20 +491,6 @@ function normalizePopupResponse(data = {}, fallbackTitle = '温馨提示') {
   })
 }
 
-function openMerchantAgentPopup() {
-  showMerchantAgentPopup.value = true
-  setTimeout(() => {
-    merchantAgentPopupVisible.value = true
-  }, 20)
-}
-
-function closeMerchantAgentPopup() {
-  merchantAgentPopupVisible.value = false
-  setTimeout(() => {
-    showMerchantAgentPopup.value = false
-  }, 220)
-}
-
 function openParttimeGroupPopup() {
   showParttimeGroupPopup.value = true
   setTimeout(() => {
@@ -474,22 +505,48 @@ function closeParttimeGroupPopup() {
   }, 220)
 }
 
-async function handleOpenMerchantAgent() {
+function openAgentPopup() {
+  showAgentPopup.value = true
+  setTimeout(() => {
+    agentPopupVisible.value = true
+  }, 20)
+}
+
+function closeAgentPopup() {
+  agentPopupVisible.value = false
+  setTimeout(() => {
+    showAgentPopup.value = false
+  }, 220)
+}
+
+function callAgentPhone() {
+  if (!agentPopup.value.phone) return
+  uni.makePhoneCall({ phoneNumber: agentPopup.value.phone })
+}
+
+function handleOpenMerchantAgent() {
   withLogin(async () => {
     if (agentPopupLoading.value) return
     agentPopupLoading.value = true
-    merchantAgentPopup.value = createPopupState({
-      title: '成为代理',
-      content: '正在加载代理配置，请稍候...'
+    agentPopup.value = createPopupState({
+      title: '正在加载',
+      content: '请稍候...'
     })
-    openMerchantAgentPopup()
+    openAgentPopup()
     try {
       const res = await getMerchantAgentConfig()
-      merchantAgentPopup.value = normalizePopupResponse(res?.data || {}, '成为代理')
+      const data = res?.data || {}
+      agentPopup.value = {
+        title: data.title || '学优职傢',
+        content: data.content || data.description || data.tips || '',
+        contact: data.contact || '',
+        phone: data.phone || '',
+        imageUrl: data.imageUrl || data.illustrationUrl || ''
+      }
     } catch (e) {
-      merchantAgentPopup.value = createPopupState({
-        title: '成为代理',
-        content: e?.msg || '代理配置暂未开放，请稍后重试。'
+      agentPopup.value = createPopupState({
+        title: '加载失败',
+        content: e?.msg || '代理信息暂时不可用，请稍后再试。'
       })
     } finally {
       agentPopupLoading.value = false
@@ -531,6 +588,10 @@ onShow(() => {
   if (hasLogin.value) {
     initRegularMineData()
   }
+})
+
+watch(() => verifyForm.value.verified, value => {
+  if (value) loadProfileDetail()
 })
 </script>
 

@@ -7,7 +7,6 @@ export const ORDER_TYPE_OPTIONS = [
 export const STATUS_FILTER_OPTIONS = [
   { key: 'all', label: '全部' },
   { key: 'paid', label: '已支付' },
-  { key: 'canceled', label: '已取消' },
   { key: 'refunded', label: '已退款' }
 ]
 

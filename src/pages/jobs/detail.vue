@@ -49,7 +49,7 @@
 					<view class="section-text-wrap">
 						<text class="section-label">工作地点</text>
 						<text class="section-value">{{ detail.location || '详细地址接单后可见' }}</text>
-						<text v-if="detail.districtId" class="section-sub">{{ detail.districtId }}</text>
+						<text v-if="districtLabel" class="section-sub">{{ districtLabel }}</text>
 					</view>
 					<uni-icons type="right" size="16" color="#CCC"></uni-icons>
 				</view>
@@ -111,8 +111,9 @@
 
 <script>
 import { getJobs } from '@/api/system/jobs'
-import { useJobSignupOrderStore, useUserStore } from '@/store'
+import { useJobSignupOrderStore, useUserStore, useLocationStore } from '@/store'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import { findDistrictNodeByCode } from '@/utils/pca'
 
 const CAT_MAP = { '0': '家教', '1': '助教', '2': '派发', '3': '其他' }
 const HERO_CLASSES = { '0': 'hero-blue', '1': 'hero-green', '2': 'hero-amber', '3': 'hero-slate' }
@@ -140,6 +141,10 @@ export default {
 		statusBadgeClass() { return STATUS_BADGE_CLASS[String(this.detail && this.detail.status)] || '' },
 		markers() { return !this.mapLat || !this.mapLng ? [] : [{ id: 1, latitude: this.mapLat, longitude: this.mapLng }] },
 		avatarChar() { const name = (this.detail && this.detail.contacts) || ''; return name ? name.slice(-1) : '人' },
+		districtLabel() {
+			const districtId = this.detail && this.detail.districtId
+			return this.getDistrictLabel(districtId)
+		},
 		applyButtonText() {
 			if (!this.detail) return '立即报名'
 			if (Number(this.detail.status) === 1) return '已满员'
@@ -189,6 +194,14 @@ export default {
 			const orderStore = useJobSignupOrderStore()
 			orderStore.hydrate()
 			this.isSignedUp = orderStore.hasPaidOrder(this.jobId)
+		},
+		getDistrictLabel(val) {
+			if (!val) return ''
+			const found = useLocationStore().districts.find(d => String(d.value) === String(val))
+			if (found) return found.text
+
+			const district = findDistrictNodeByCode(val)
+			return district ? district.text : ''
 		},
 		parseDesc(text) { return !text ? [] : text.split(/[，,。\n；;]/).map(s => s.trim()).filter(Boolean) },
 		timeAgo(dateVal) {

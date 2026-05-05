@@ -12,15 +12,13 @@
 				<text class="method-desc">仅商家身份可发布招聘，联系方式默认带出当前账号手机号，支持手动修改。</text>
 			</view>
 
-			<view v-if="!realVerify.verified" class="method-card realverify-card">
-				<RealVerify
-					v-model:verified="realVerify.verified"
-					v-model:realName="realVerify.realName"
-					v-model:idCard="realVerify.idCard"
-					type="banner"
-				/>
-				<text class="realverify-tip">发布兼职前需先完成实人认证，认证成功后可继续提交招聘信息。</text>
-			</view>
+			<real-verify
+				class="realverify-entry"
+				v-model:verified="realVerify.verified"
+				v-model:real-name="realVerify.realName"
+				v-model:id-card="realVerify.idCard"
+				type="banner"
+			></real-verify>
 
 			<view class="method-card">
 				<view class="method-header">
@@ -163,6 +161,7 @@ import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../tutoring/role-guard.helpers'
+import { isRealnameAuthed } from '@/utils/userDisplay'
 
 const CATEGORY_OPTIONS = [
 	{ value: '0', label: '家教' },
@@ -229,8 +228,11 @@ export default {
 			try {
 				const res = await getWxUserProfileDetail()
 				const data = res?.data || {}
-				this.realVerify.verified = Number(data.isRealnameAuth) === 1 || data.isRealnameAuth === true
+				this.realVerify.verified = isRealnameAuthed(data.isRealnameAuth)
 				this.realVerify.realName = data.realName || ''
+				if (data.realName && !this.form.contacts) {
+					this.form.contacts = data.realName
+				}
 			} catch (e) {}
 		},
 		handleUserTypeGuardCancel() {
@@ -306,7 +308,7 @@ export default {
 		},
 		validate() {
 			if (!this.realVerify.verified) {
-				uni.showToast({ title: '请先完成实人认证', icon: 'none' }); return false
+				uni.showToast({ title: '请先完成实名认证', icon: 'none' }); return false
 			}
 			if (!this.form.title.trim()) {
 				uni.showToast({ title: '请填写工作标题', icon: 'none' }); return false
@@ -383,8 +385,7 @@ page { background: #f4f6fb; }
 .page-body { padding: 16px; }
 .method-card { background: #fff; border-radius: 16px; padding: 20px 16px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05); }
 .method-hint { background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); }
-.realverify-card { padding-bottom: 16px; }
-.realverify-tip { display: block; margin-top: 10px; font-size: 12px; color: #64748b; line-height: 1.6; }
+.realverify-entry { display: block; margin-bottom: 12px; }
 .method-header { display: flex; flex-direction: row; align-items: center; margin-bottom: 10px; }
 .method-badge { width: 26px; height: 26px; border-radius: 50%; background: #3B82F6; display: flex; align-items: center; justify-content: center; margin-right: 10px; flex-shrink: 0; }
 .method-badge-dark { background: #1e293b; }

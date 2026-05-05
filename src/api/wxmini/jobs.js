@@ -30,10 +30,25 @@ export function getMyJobSchedules() {
   })
 }
 
+export function getMyPublishedJobs() {
+  return request({
+    url: '/wxmini/jobs/mine/published',
+    method: 'get'
+  })
+}
+
 export function getJobSignupUsers(jobId, query = {}) {
   return request({
     url: `/wxmini/jobs/${jobId}/signup-users`,
     method: 'get',
     params: query
+  })
+}
+
+export function updateMerchantJobStatus(jobId, data) {
+  return request({
+    url: `/wxmini/jobs/${jobId}/status`,
+    method: 'post',
+    data
   })
 }

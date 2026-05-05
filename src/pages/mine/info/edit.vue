@@ -2,100 +2,137 @@
   <view class="edit-page">
     <view class="edit-card">
       <view class="edit-title">编辑资料</view>
-      <uni-forms ref="formRef" :model="form" :rules="rules" label-position="top">
-        <uni-forms-item label="姓名" name="realName">
-          <uni-easyinput v-model="form.realName" placeholder="请输入姓名" />
-        </uni-forms-item>
-        <uni-forms-item label="昵称" name="nickName">
-          <uni-easyinput v-model="form.nickName" placeholder="请输入昵称" />
-        </uni-forms-item>
-        <uni-forms-item label="性别" name="gender">
-          <uni-data-checkbox v-model="form.gender" :localdata="genderOptions" />
-        </uni-forms-item>
-        <uni-forms-item v-if="isAunt" label="年龄" name="age">
-          <uni-easyinput v-model="form.age" placeholder="请输入年龄" type="number" />
-        </uni-forms-item>
-        <uni-forms-item label="手机号码" name="phone">
-          <uni-easyinput v-model="form.phone" placeholder="请输入手机号码" disabled/>
-        </uni-forms-item>
-        <uni-forms-item label="用户类型" name="userTypeText">
-          <uni-easyinput :value="userTypeText" disabled />
-        </uni-forms-item>
-        <template v-if="isMerchant">
-          <uni-forms-item label="公司名称" name="companyName">
-            <uni-easyinput v-model="form.companyName" placeholder="请输入公司名称" />
-          </uni-forms-item>
-          <uni-forms-item label="公司地址" name="companyAddress">
-            <uni-easyinput v-model="form.companyAddress" placeholder="请输入公司地址" />
-          </uni-forms-item>
-          <uni-forms-item label="公司职务" name="companyPosition">
-            <uni-easyinput v-model="form.companyPosition" placeholder="请输入公司职务" />
-          </uni-forms-item>
-          <uni-forms-item label="所属行业" name="industry">
-            <uni-easyinput v-model="form.industry" placeholder="请输入所属行业" />
-          </uni-forms-item>
-          <uni-forms-item label="工作年限" name="workYears">
-            <uni-easyinput v-model="form.workYears" placeholder="如：5年" />
-          </uni-forms-item>
-          <uni-forms-item label="个人简介" name="personalIntro">
-            <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请输入个人简介" :inputBorder="false" />
-          </uni-forms-item>
-        </template>
-        <template v-if="isAunt">
-          <uni-forms-item label="个人简介" name="personalIntro">
-            <uni-easyinput type="textarea" v-model="form.personalIntro" placeholder="请介绍你的兼职经验和优势" :inputBorder="false" />
-          </uni-forms-item>
-          <uni-forms-item label="空余时间" name="availableTime">
-            <uni-easyinput type="textarea" v-model="form.availableTime" placeholder="如：周一到周五晚间，周末全天" :inputBorder="false" />
-          </uni-forms-item>
-          <uni-forms-item label="工作经历" name="workExperience">
-            <uni-easyinput type="textarea" v-model="form.workExperience" placeholder="请填写过往兼职或实习经历" :inputBorder="false" />
-          </uni-forms-item>
-        </template>
-      </uni-forms>
+
+      <view class="form-item">
+        <text class="form-label">姓名</text>
+        <input
+          v-model="form.realName"
+          class="field-input"
+          :class="{ 'is-disabled': isRealnameVerified }"
+          :disabled="isRealnameVerified"
+          placeholder="请输入姓名"
+        />
+        <view v-if="!isRealnameVerified" class="verify-link-row">
+          <text class="verify-link" @click="handleVerifyClick">去实名</text>
+        </view>
+      </view>
+      <view class="form-item">
+        <text class="form-label">昵称</text>
+        <input v-model="form.nickName" class="field-input" placeholder="请输入昵称" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">性别</text>
+        <view class="gender-group">
+          <view
+            v-for="option in genderOptions"
+            :key="option.value"
+            class="gender-option"
+            :class="{ active: Number(form.gender) === option.value }"
+            @click="form.gender = option.value"
+          >
+            {{ option.text }}
+          </view>
+        </view>
+      </view>
+      <view v-if="isAunt" class="form-item">
+        <text class="form-label">年龄</text>
+        <input v-model="form.age" class="field-input" placeholder="请输入年龄" type="number" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">手机号码</text>
+        <input v-model="form.phone" class="field-input is-disabled" disabled placeholder="请输入手机号码" />
+      </view>
+      <view class="form-item">
+        <text class="form-label">用户类型</text>
+        <input :value="userTypeText" class="field-input is-disabled" disabled />
+      </view>
+
+      <template v-if="isMerchant">
+        <view class="form-item">
+          <text class="form-label">公司名称</text>
+          <input v-model="form.companyName" class="field-input" placeholder="请输入公司名称" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">公司地址</text>
+          <input v-model="form.companyAddress" class="field-input" placeholder="请输入公司地址" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">公司职务</text>
+          <input v-model="form.companyPosition" class="field-input" placeholder="请输入公司职务" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">所属行业</text>
+          <input v-model="form.industry" class="field-input" placeholder="请输入所属行业" />
+        </view>
+        <view class="form-item">
+          <text class="form-label">工作年限</text>
+          <input v-model="form.workYears" class="field-input" placeholder="如：5年" />
+        </view>
+      </template>
+
+      <view v-if="isMerchant || isAunt" class="form-item">
+        <text class="form-label">个人简介</text>
+        <textarea v-model="form.personalIntro" class="field-textarea" :placeholder="introPlaceholder"></textarea>
+      </view>
+      <template v-if="isAunt">
+        <view class="form-item">
+          <text class="form-label">空余时间</text>
+          <textarea v-model="form.availableTime" class="field-textarea" placeholder="如：周一到周五晚间，周末全天"></textarea>
+        </view>
+        <view class="form-item">
+          <text class="form-label">工作经历</text>
+          <textarea v-model="form.workExperience" class="field-textarea" placeholder="请填写过往兼职或实习经历"></textarea>
+        </view>
+      </template>
     </view>
 
     <view class="submit-bar">
-      <button class="submit-btn" @click="handleSubmit">保存资料</button>
+      <button class="submit-btn" :disabled="submitting" @click="handleSubmit">{{ submitting ? '保存中...' : '保存资料' }}</button>
     </view>
+    <RealVerify
+      ref="realVerifyRef"
+      v-model:verified="verifyForm.verified"
+      v-model:realName="verifyForm.realName"
+      v-model:idCard="verifyForm.idCard"
+      type="icon"
+    />
   </view>
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, ref } from 'vue'
-import { onLoad, onReady } from '@dcloudio/uni-app'
+import { computed, getCurrentInstance, ref, watch } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store'
 import { getWxUserProfileDetail, updateWxUserProfile } from '@/api/wxmini/profile'
+import RealVerify from '@/components/RealVerify/RealVerify.vue'
+import { isRealnameAuthed, resolveUserDisplayName } from '@/utils/userDisplay'
+import {
+  buildInfoSubmitPayload,
+  createInfoForm,
+  getInfoUserTypeText,
+  isAuntInfoForm,
+  isMerchantInfoForm,
+  normalizeInfoForm,
+  validateInfoForm
+} from './index.helpers'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const formRef = ref(null)
-const form = ref({
-  userName: '',
-  phone: '',
-  userType: '',
+const form = ref(createInfoForm())
+const submitting = ref(false)
+const realVerifyRef = ref(null)
+const verifyForm = ref({
+  verified: false,
   realName: '',
-  nickName: '',
-  gender: '',
-  age: '',
-  companyName: '',
-  companyAddress: '',
-  companyPosition: '',
-  industry: '',
-  workYears: '',
-  personalIntro: '',
-  availableTime: '',
-  workExperience: ''
+  idCard: ''
 })
 
-const isMerchant = computed(() => form.value.userType === 2)
-const isAunt = computed(() => form.value.userType === 3)
-const userTypeText = computed(() => {
-  if (form.value.userType === 0) return '家长'
-  if (form.value.userType === 1) return '学生'
-  if (form.value.userType === 2) return '商家'
-  if (form.value.userType === 3) return '兼职'
-  return '家长 / 学生'
+const isMerchant = computed(() => isMerchantInfoForm(form.value))
+const isAunt = computed(() => isAuntInfoForm(form.value))
+const userTypeText = computed(() => getInfoUserTypeText(form.value.userType))
+const isRealnameVerified = computed(() => isRealnameAuthed(form.value.isRealnameAuth))
+const introPlaceholder = computed(() => {
+  return isAunt.value ? '请介绍你的兼职经验和优势' : '请输入个人简介'
 })
 
 const genderOptions = [
@@ -104,182 +141,134 @@ const genderOptions = [
   { text: '未知', value: 2 }
 ]
 
-const rules = {
-  phone: {
-    rules: [
-      {
-        pattern: /^$|^1[3-9]\d{9}$/,
-        errorMessage: '请输入正确的手机号码'
-      }
-    ]
-  },
-  realName: {
-    rules: [
-      {
-        maxLength: 64,
-        errorMessage: '姓名长度不能超过64个字符'
-      }
-    ]
-  },
-  nickName: {
-    rules: [
-      {
-        maxLength: 64,
-        errorMessage: '昵称长度不能超过64个字符'
-      }
-    ]
-  },
-  age: {
-    rules: [
-      {
-        pattern: /^$|^(?:[1-9]\d?|1[01]\d|120)$/,
-        errorMessage: '请输入正确年龄'
-      }
-    ]
+async function loadProfile() {
+  const res = await getWxUserProfileDetail()
+  form.value = normalizeInfoForm(res.data || {})
+  verifyForm.value.verified = isRealnameAuthed(form.value.isRealnameAuth)
+  verifyForm.value.realName = form.value.realName || ''
+}
+
+async function handleSubmit() {
+  if (submitting.value) return
+  const errorMessage = validateInfoForm(form.value)
+  if (errorMessage) {
+    uni.showToast({ title: errorMessage, icon: 'none' })
+    return
+  }
+
+  submitting.value = true
+  try {
+    await updateWxUserProfile(buildInfoSubmitPayload(form.value, {
+      omitRealName: isRealnameVerified.value
+    }))
+    userStore.SET_NAME(resolveUserDisplayName({
+      realName: isRealnameVerified.value ? form.value.realName : '',
+      phone: form.value.phone
+    }))
+    userStore.SET_PHONE(form.value.phone || '')
+    proxy.$modal.msgSuccess('保存成功')
+    setTimeout(() => uni.navigateBack(), 300)
+  } finally {
+    submitting.value = false
   }
 }
 
-function loadProfile() {
-  getWxUserProfileDetail().then(res => {
-    const data = res.data || {}
-    form.value = {
-      userName: data.userName || '',
-      phone: data.phone || '',
-      userType: data.userType === null || data.userType === undefined ? '' : Number(data.userType),
-      realName: data.realName || '',
-      nickName: data.nickName || '',
-      gender: data.gender !== null && data.gender !== undefined ? data.gender : '',
-      age: data.age !== null && data.age !== undefined ? String(data.age) : '',
-      companyName: data.companyName || '',
-      companyAddress: data.companyAddress || '',
-      companyPosition: data.companyPosition || '',
-      industry: data.industry || '',
-      workYears: data.workYears || '',
-      personalIntro: data.personalIntro || '',
-      availableTime: data.availableTime || '',
-      workExperience: data.workExperience || ''
-    }
-  })
-}
-
-function resolveDisplayName() {
-  return form.value.realName || form.value.nickName || form.value.userName || ''
-}
-
-function buildSubmitPayload() {
-  const payload = {
-    userName: form.value.userName,
-    phone: form.value.phone,
-    realName: form.value.realName,
-    nickName: form.value.nickName,
-    gender: form.value.gender,
-    age: isAunt.value && form.value.age !== '' ? Number(form.value.age) : null,
-    personalIntro: form.value.personalIntro || ''
-  }
-
-  if (isMerchant.value) {
-    payload.companyName = form.value.companyName
-    payload.companyAddress = form.value.companyAddress
-    payload.companyPosition = form.value.companyPosition
-    payload.industry = form.value.industry
-    payload.workYears = form.value.workYears
-    payload.availableTime = ''
-    payload.workExperience = ''
-  } else if (isAunt.value) {
-    payload.companyName = ''
-    payload.companyAddress = ''
-    payload.companyPosition = ''
-    payload.industry = ''
-    payload.workYears = ''
-    payload.availableTime = form.value.availableTime || ''
-    payload.workExperience = form.value.workExperience || ''
-  } else {
-    payload.companyName = ''
-    payload.companyAddress = ''
-    payload.companyPosition = ''
-    payload.industry = ''
-    payload.workYears = ''
-    payload.personalIntro = ''
-    payload.availableTime = ''
-    payload.workExperience = ''
-  }
-
-  return payload
-}
-
-function handleSubmit() {
-  formRef.value.validate().then(() => {
-    updateWxUserProfile(buildSubmitPayload()).then(() => {
-      userStore.SET_NAME(resolveDisplayName())
-      userStore.SET_PHONE(form.value.phone || '')
-      proxy.$modal.msgSuccess('保存成功')
-      setTimeout(() => {
-        uni.navigateBack()
-      }, 300)
-    })
-  })
+function handleVerifyClick() {
+  realVerifyRef.value?.openPopup()
 }
 
 onLoad(() => {
   loadProfile()
 })
 
-onReady(() => {
-  if (formRef.value) {
-    formRef.value.setRules(rules)
-  }
+watch(() => verifyForm.value.verified, value => {
+  if (value) loadProfile()
 })
 </script>
 
 <style lang="scss" scoped>
-page {
-  background: #f5f7ff;
-}
-
+page { background: #f5f7ff; }
 .edit-page {
   min-height: 100vh;
   padding: 24rpx 24rpx 180rpx;
   background: linear-gradient(180deg, #f7f1ff 0%, #f5f7ff 36%, #f5f7ff 100%);
 }
-
 .edit-card {
   padding: 28rpx 24rpx;
   border-radius: 28rpx;
   background: #ffffff;
   box-shadow: 0 18rpx 40rpx rgba(112, 87, 193, 0.08);
 }
-
 .edit-title {
   margin-bottom: 24rpx;
   font-size: 34rpx;
   font-weight: 700;
   color: #241f3f;
 }
-
-:deep(.uni-forms-item) {
-  margin-bottom: 18rpx;
-}
-
-:deep(.uni-forms-item__label) {
+.form-item { margin-bottom: 24rpx; }
+.form-item:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  margin-bottom: 12rpx;
   font-size: 28rpx;
   color: #6f6a86;
 }
-
-:deep(.uni-easyinput__content) {
+.verify-link-row {
+  margin-top: 12rpx;
+}
+.verify-link {
+  font-size: 26rpx;
+  color: #2563eb;
+  text-decoration: underline;
+}
+.field-input,
+.field-textarea {
+  width: 100%;
+  border: 1px solid #ebe7f7;
   border-radius: 20rpx;
-  border-color: #ebe7f7 !important;
-  background: #faf9ff !important;
-}
-
-:deep(.uni-easyinput__content-input) {
-  min-height: 84rpx;
+  background: #faf9ff;
+  box-sizing: border-box;
   font-size: 30rpx;
+  color: #241f3f;
 }
-
-:deep(.uni-easyinput__content-textarea) {
+.field-input {
+  height: 92rpx;
+  padding: 0 24rpx;
+}
+.field-textarea {
   min-height: 180rpx;
+  padding: 24rpx;
+  line-height: 1.7;
 }
-
+.is-disabled {
+  color: #8b87a3;
+  background: #f3f1fa;
+}
+.gender-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+.gender-option {
+  min-width: 132rpx;
+  height: 76rpx;
+  padding: 0 28rpx;
+  border: 1px solid #d9d8ea;
+  border-radius: 999rpx;
+  background: #faf9ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #5f5a75;
+}
+.gender-option.active {
+  border-color: #5b4fd8;
+  background: rgba(91, 79, 216, 0.08);
+  color: #5b4fd8;
+  font-weight: 600;
+}
 .submit-bar {
   position: fixed;
   left: 0;
@@ -288,7 +277,6 @@ page {
   padding: 20rpx 24rpx 36rpx;
   background: linear-gradient(180deg, rgba(245, 247, 255, 0) 0%, #f5f7ff 28%, #f5f7ff 100%);
 }
-
 .submit-btn {
   height: 88rpx;
   line-height: 88rpx;
@@ -300,4 +288,5 @@ page {
   background: linear-gradient(135deg, #7c6cff 0%, #5b4fd8 100%);
   box-shadow: 0 16rpx 30rpx rgba(91, 79, 216, 0.22);
 }
+.submit-btn[disabled] { opacity: 0.7; }
 </style>

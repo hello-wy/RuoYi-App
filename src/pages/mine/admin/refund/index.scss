@@ -1,0 +1,333 @@
+$mint-bg: #f3fbf8;
+$mint-header: #dff7f0;
+$mint-border: #d7f1eb;
+$text-main: #0f172a;
+$text-body: #0f3d3a;
+$text-sub: #5f857f;
+$teal: #0f766e;
+$teal-light: #ecfdf5;
+
+page {
+  background-color: $mint-bg;
+}
+
+.refund-page {
+  min-height: 100vh;
+  background: $mint-bg;
+}
+
+.refund-header {
+  padding: 40rpx 32rpx 36rpx;
+  background: $mint-header;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $teal;
+  line-height: 1.4;
+}
+
+.header-subtitle {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.tab-bar {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 1rpx solid $mint-border;
+}
+
+.tab-item {
+  flex: 1;
+  padding: 24rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: $text-sub;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab-item.active {
+  color: $teal;
+  font-weight: 700;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 30%;
+  right: 30%;
+  height: 6rpx;
+  border-radius: 6rpx;
+  background: $teal;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid $mint-border;
+}
+
+.search-input {
+  flex: 1;
+  height: 76rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid $mint-border;
+  background: $mint-bg;
+  font-size: 28rpx;
+  color: $text-body;
+  box-sizing: border-box;
+}
+
+.search-btn {
+  flex-shrink: 0;
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 32rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+  background: $teal;
+  text-align: center;
+}
+
+.filter-bar {
+  padding: 20rpx 24rpx;
+  background: #ffffff;
+  position: relative;
+  z-index: 101;
+}
+
+.search-bar-inline {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.job-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: #ffffff;
+  box-shadow: 0 16rpx 40rpx rgba(0, 0, 0, 0.12);
+  z-index: 102;
+}
+
+.job-dropdown-scroll {
+  max-height: 480rpx;
+}
+
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  background: transparent;
+}
+
+.job-result-item {
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid $mint-border;
+}
+
+.job-result-item:last-child {
+  border-bottom: none;
+}
+
+.job-result-item:active,
+.job-result-item.active {
+  background: $teal-light;
+}
+
+.job-result-title {
+  font-size: 28rpx;
+  color: $text-body;
+}
+
+.selected-job-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx;
+  background: $teal-light;
+  border-bottom: 1rpx solid $mint-border;
+}
+
+.selected-job-text {
+  font-size: 28rpx;
+  color: $teal;
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-job-clear {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.filter-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid $mint-border;
+  background: $mint-bg;
+}
+
+.filter-picker-text {
+  font-size: 26rpx;
+  color: $text-body;
+}
+
+.filter-placeholder {
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.scroll-area {
+  height: calc(100vh - 380rpx);
+}
+
+.scroll-area-with-search {
+  height: calc(100vh - 490rpx);
+}
+
+.card-list {
+  padding: 24rpx 24rpx 40rpx;
+}
+
+.order-card {
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
+  border-radius: 28rpx;
+  border: 1rpx solid $mint-border;
+  background: #ffffff;
+  box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.user-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $text-main;
+}
+
+.status-tag {
+  font-size: 24rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 999rpx;
+  font-weight: 600;
+}
+
+.status-tag.signed {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.status-tag.unsigned {
+  color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.status-tag.paid {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.status-tag.refunded {
+  color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.status-tag.refunding {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-bottom: 24rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.info-label {
+  width: 120rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: $text-body;
+}
+
+.card-bottom {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.refund-btn {
+  padding: 12rpx 36rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #ffffff;
+  background: $teal;
+  border: none;
+  line-height: 1.5;
+}
+
+.refund-btn:active {
+  opacity: 0.85;
+}
+
+.refund-btn.disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+}
+
+.state-box {
+  padding: 120rpx 32rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-text {
+  margin-bottom: 24rpx;
+  font-size: 28rpx;
+  color: $text-sub;
+}

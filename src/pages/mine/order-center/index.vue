@@ -156,8 +156,8 @@ async function loadOrders() {
       listMySalonOrders()
     ])
 
-    jobList.value = normalizeJobOrders(jobOrders || [])
-    salonList.value = normalizeSalonOrders(salonRes.data || [])
+    jobList.value = normalizeJobOrders(jobOrders || []).filter(o => o.statusKey !== 'canceled')
+    salonList.value = normalizeSalonOrders(salonRes.data || []).filter(o => o.statusKey !== 'canceled')
     allList.value = sortOrders([...jobList.value, ...salonList.value])
   } catch (e) {
     uni.showToast({ title: '加载订单失败，请重试', icon: 'none' })

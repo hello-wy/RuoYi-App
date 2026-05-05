@@ -54,6 +54,13 @@
       }
     },
     {
+      "path": "pages/jobs/signup-users",
+      "style": {
+        "navigationBarTitleText": "兼职日结查询",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/growup/index",
       "style": {
         "navigationBarTitleText": "育见成长"
@@ -205,6 +212,12 @@
       "path": "pages/mine/admin/student/detail",
       "style": {
         "navigationBarTitleText": "学员详情"
+      }
+    },
+    {
+      "path": "pages/mine/admin/refund/index",
+      "style": {
+        "navigationBarTitleText": "退款管理"
       }
     },
     {

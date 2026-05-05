@@ -1,0 +1,292 @@
+.page {
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: #F5F5F5;
+	overflow: hidden;
+}
+
+.category-bar {
+	background: #fff;
+	white-space: nowrap;
+	border-bottom: 1rpx solid #F0F0F0;
+}
+
+.category-inner {
+	display: flex;
+	flex-direction: row;
+	padding: 16rpx 24rpx;
+	gap: 16rpx;
+}
+
+.cat-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 10rpx 28rpx;
+	border-radius: 10rpx;
+	background: #F3F4F6;
+	flex-shrink: 0;
+}
+
+.cat-chip-active {
+	background: #1A1A1A;
+}
+
+.cat-chip-text {
+	font-size: 26rpx;
+	color: #555;
+}
+
+.cat-chip-text-active {
+	color: #fff;
+	font-weight: 600;
+}
+
+.filter-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 16rpx 24rpx;
+	gap: 16rpx;
+	background: #fff;
+	border-bottom: 1rpx solid #F0F0F0;
+}
+
+.filter-btn {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 12rpx 20rpx;
+	border-radius: 8rpx;
+	background: #F3F4F6;
+	gap: 6rpx;
+}
+
+.filter-btn.active {
+	background: #EAF3FF;
+}
+
+.filter-btn-text {
+	font-size: 26rpx;
+	color: #555;
+}
+
+.filter-btn.active .filter-btn-text {
+	color: #3B82F6;
+}
+
+.filter-reset {
+	margin-left: auto;
+	padding: 12rpx 20rpx;
+}
+
+.filter-reset-text {
+	font-size: 26rpx;
+	color: #EF4444;
+}
+
+.merchant-toolbar {
+	margin: 18rpx 24rpx 0;
+	padding: 24rpx;
+	border-radius: 20rpx;
+	background: #fff;
+	box-shadow: 0 4rpx 18rpx rgba(15, 23, 42, 0.06);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18rpx;
+}
+
+.merchant-toolbar-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.merchant-toolbar-title {
+	display: block;
+	font-size: 30rpx;
+	font-weight: 700;
+	color: #0f172a;
+}
+
+.merchant-toolbar-desc {
+	display: block;
+	margin-top: 6rpx;
+	font-size: 23rpx;
+	color: #64748b;
+}
+
+.merchant-actions {
+	display: flex;
+	align-items: center;
+	gap: 12rpx;
+}
+
+.merchant-action {
+	min-width: 144rpx;
+	height: 64rpx;
+	padding: 0 18rpx;
+	border-radius: 999rpx;
+	background: #eff6ff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+	box-sizing: border-box;
+}
+
+.merchant-action.primary {
+	background: #2563eb;
+}
+
+.merchant-action-text {
+	font-size: 24rpx;
+	font-weight: 600;
+	color: #2563eb;
+}
+
+.merchant-action-text.primary-text {
+	color: #fff;
+}
+
+.list-scroll {
+	flex: 1;
+	height: 0;
+}
+
+.card {
+	background: #fff;
+	border-radius: 16rpx;
+	margin: 20rpx 24rpx;
+	padding: 28rpx 28rpx 22rpx;
+	box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+}
+
+.card-top {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 14rpx;
+}
+
+.cat-tag {
+	padding: 4rpx 18rpx;
+	border-radius: 20rpx;
+}
+
+.cat-tag-text {
+	font-size: 22rpx;
+	font-weight: 600;
+}
+
+.salary-wrap {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+}
+
+.salary-value {
+	font-size: 36rpx;
+	font-weight: bold;
+	color: #EF4444;
+}
+
+.salary-unit {
+	font-size: 22rpx;
+	color: #EF4444;
+	margin-left: 2rpx;
+}
+
+.card-title {
+	font-size: 32rpx;
+	font-weight: bold;
+	color: #1A1A1A;
+	margin-bottom: 16rpx;
+	display: block;
+}
+
+.card-info-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 10rpx;
+	gap: 8rpx;
+}
+
+.card-info-text {
+	font-size: 24rpx;
+	color: #888;
+}
+
+.card-bottom {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 16rpx;
+}
+
+.status-badge {
+	padding: 4rpx 16rpx;
+	border-radius: 8rpx;
+}
+
+.status-badge-text {
+	font-size: 22rpx;
+}
+
+.status-open {
+	background: #EEF9F0;
+}
+
+.status-open .status-badge-text {
+	color: #10B981;
+}
+
+.status-full {
+	background: #FFF8E6;
+}
+
+.status-full .status-badge-text {
+	color: #F59E0B;
+}
+
+.status-end {
+	background: #F3F4F6;
+}
+
+.status-end .status-badge-text {
+	color: #888;
+}
+
+.card-id {
+	font-size: 22rpx;
+	color: #CCC;
+}
+
+.loading-wrap,
+.error-wrap {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 60rpx 0;
+	gap: 16rpx;
+}
+
+.error-text {
+	font-size: 28rpx;
+	color: #999;
+}
+
+.retry-btn {
+	padding: 12rpx 40rpx;
+	background: #f0f0f0;
+	border-radius: 40rpx;
+}
+
+.retry-text {
+	font-size: 28rpx;
+	color: #555;
+}
