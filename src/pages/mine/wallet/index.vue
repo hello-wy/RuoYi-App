@@ -327,6 +327,7 @@ export default {
 
       try {
         const res = await applyWithdraw(amount.toFixed(2))
+
         const msg = res.msg || res.data || '微信提现已发起'
         this.closeSheet()
         uni.showToast({ title: msg, icon: 'success', duration: 2500 })

@@ -21,6 +21,7 @@ const storage = {
     if (storageNodeKeys.indexOf(key) != -1) {
       let tmp = uni.getStorageSync(storageKey)
       tmp = tmp ? tmp : {}
+
       tmp[key] = value
       uni.setStorageSync(storageKey, tmp)
     }

@@ -168,6 +168,7 @@ import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { getTutorById, reviewTutors } from '@/api/system/tutors'
 import request from '@/utils/request'
 import { useLocationStore } from '@/store'
+import { appendPreviewCacheBuster } from '@/pages/tutoring/tutor/apply.helpers'
 import {
 	buildTutorSubtitle,
 	resolveTutorAvatarSrc
@@ -201,11 +202,11 @@ export default {
 	},
 	computed: {
 		avatarSrc() {
-			return resolveTutorAvatarSrc({
+			return appendPreviewCacheBuster(resolveTutorAvatarSrc({
 				avatarSrc: this.avatarSrcFromRoute,
 				detail: this.detail,
 				baseUrl: config.baseUrl
-			})
+			}))
 		},
 		isCertified() {
 			return String(this.detail?.status) === '1'

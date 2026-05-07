@@ -182,6 +182,7 @@ import config from '@/config'
 import { useUserStore, useLocationStore } from '@/store'
 import { getMyTutor } from '@/api/wxmini/tutoring'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import { appendPreviewCacheBuster } from './apply.helpers'
 import {
 	buildTutorCertificatePreviewUrls,
 	buildTutorSubtitle,
@@ -191,7 +192,8 @@ import {
 	getTutorDisplayName,
 	getTutorExperienceList,
 	getTutorValueByDict,
-	mapTutorLabels
+	mapTutorLabels,
+	resolveTutorAvatarSrc
 } from './index.helpers'
 
 export default {
@@ -212,7 +214,11 @@ export default {
 			return useLocationStore().districts || []
 		},
 		avatarSrc() {
-			return useUserStore().avatar || this.profile?.avatar || '/static/images/profile.png'
+			return appendPreviewCacheBuster(resolveTutorAvatarSrc({
+				avatarSrc: useUserStore().avatar,
+				detail: this.profile,
+				baseUrl: config.baseUrl
+			}))
 		},
 		isCertified() {
 			return String(this.profile?.status) === '1'
@@ -265,6 +271,7 @@ export default {
 		},
 		certificatePreviewUrls() {
 			return buildTutorCertificatePreviewUrls(this.profile?.certificates, config.baseUrl)
+				.map(url => appendPreviewCacheBuster(url))
 		},
 		experienceList() {
 			return getTutorExperienceList(this.profile?.experience)
