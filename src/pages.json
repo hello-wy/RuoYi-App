@@ -215,6 +215,12 @@
       }
     },
     {
+      "path": "pages/mine/admin/job-sign-audit/index",
+      "style": {
+        "navigationBarTitleText": "签到审核"
+      }
+    },
+    {
       "path": "pages/mine/admin/refund/index",
       "style": {
         "navigationBarTitleText": "退款管理"

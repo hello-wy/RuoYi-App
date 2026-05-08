@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import upload from '@/utils/upload'
 
 export function listWxJobs(query) {
   return request({
@@ -42,6 +43,23 @@ export function getJobSignupUsers(jobId, query = {}) {
     url: `/wxmini/jobs/${jobId}/signup-users`,
     method: 'get',
     params: query
+  })
+}
+
+export function uploadJobAttendanceImage(filePath) {
+  return upload({
+    url: '/wxmini/common/uploadJobSignImage',
+    filePath,
+    name: 'file',
+    showError: false
+  })
+}
+
+export function submitJobAttendanceImage(jobId, signImageUrl) {
+  return request({
+    url: `/wxmini/jobs/${jobId}/sign-in`,
+    method: 'post',
+    data: { signImageUrl }
   })
 }
 

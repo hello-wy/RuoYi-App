@@ -65,6 +65,26 @@
             <text class="item-title">{{ item.title || '岗位安排' }}</text>
             <text class="item-status">{{ item.status || '已报名' }}</text>
           </view>
+          <view class="attendance-row">
+            <view class="attendance-status" :class="`attendance-status-${getAttendanceStatus(item).type}`">
+              <text class="attendance-status-text">签到：{{ getAttendanceStatus(item).label }}</text>
+            </view>
+            <view
+              v-if="canUploadSignImage(item)"
+              class="upload-btn"
+              :class="{ disabled: uploadingJobId === item.jobId }"
+              @click.stop="chooseAttendanceImage(item)"
+            >
+              <text class="upload-btn-text">{{ uploadingJobId === item.jobId ? '上传中...' : (getAttendanceImage(item) ? '重新上传' : '上传签到图') }}</text>
+            </view>
+          </view>
+          <view v-if="getAttendanceRejectText(item)" class="reject-row">
+            <text class="reject-text">驳回原因：{{ getAttendanceRejectText(item) }}</text>
+          </view>
+          <view v-if="getAttendanceImage(item)" class="sign-image-preview" @click.stop="previewAttendanceImage(item)">
+            <image :src="getAttendanceImage(item)" class="sign-image" mode="aspectFill"></image>
+            <text class="sign-image-tip">查看签到图</text>
+          </view>
           <view class="item-row">
             <uni-icons type="time" size="14" color="#64748b" />
             <text class="item-text">{{ item.workTime || '时段待定' }}</text>
@@ -86,7 +106,21 @@
 </template>
 
 <script>
-import { getMyJobSchedules } from '@/api/wxmini/jobs'
+import { getMyJobSchedules, submitJobAttendanceImage, uploadJobAttendanceImage } from '@/api/wxmini/jobs'
+import {
+  buildUploadedCertificateUrl,
+  chooseWechatAlbumImage,
+  getImageValidationError,
+  isChooseImageCanceled,
+  isChooseImagePermissionDenied,
+  requestWechatImagePrivacyAuthorization
+} from '@/pages/tutoring/tutor/apply.helpers'
+import {
+  buildAttendanceStatus,
+  canUploadAttendanceImage,
+  getAttendanceImageUrl,
+  getAttendanceRejectReason
+} from './schedules.helpers'
 
 const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -102,6 +136,7 @@ export default {
   data() {
     return {
       loading: false,
+      uploadingJobId: null,
       scheduleList: [],
       selectedDate: '',
       currentYear: new Date().getFullYear(),
@@ -206,6 +241,62 @@ export default {
     formatAmount(value) {
       const num = Number(value || 0)
       return Number.isNaN(num) ? '0.00' : num.toFixed(2)
+    },
+    getAttendanceStatus(item) {
+      return buildAttendanceStatus(item)
+    },
+    canUploadSignImage(item) {
+      return Boolean(item?.jobId) && canUploadAttendanceImage(item)
+    },
+    getAttendanceImage(item) {
+      return getAttendanceImageUrl(item)
+    },
+    getAttendanceRejectText(item) {
+      return getAttendanceRejectReason(item)
+    },
+    async chooseAttendanceImage(item) {
+      if (!this.canUploadSignImage(item) || this.uploadingJobId === item.jobId) return
+      try {
+        await requestWechatImagePrivacyAuthorization(typeof wx !== 'undefined' ? wx : undefined)
+        const file = await chooseWechatAlbumImage(typeof uni !== 'undefined' ? uni : undefined)
+        const error = getImageValidationError(file)
+        if (error) {
+          uni.showToast({ title: error, icon: 'none' })
+          return
+        }
+        await this.uploadAttendanceImage(item, file)
+      } catch (error) {
+        const message = error?.errMsg || error?.message || ''
+        if (isChooseImageCanceled(message)) return
+        if (isChooseImagePermissionDenied(error)) {
+          uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
+          return
+        }
+        uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
+      }
+    },
+    async uploadAttendanceImage(item, file) {
+      this.uploadingJobId = item.jobId
+      try {
+        const result = await uploadJobAttendanceImage(file.tempFilePath || file.path)
+        const signImageUrl = buildUploadedCertificateUrl(result)
+        if (!signImageUrl) {
+          throw new Error('上传成功，但服务端没有返回签到图片地址，请稍后重试')
+        }
+        await submitJobAttendanceImage(item.jobId, signImageUrl)
+        uni.showToast({ title: '已提交审核', icon: 'success' })
+        await this.loadData()
+      } catch (error) {
+        const message = typeof error === 'string' ? error : (error?.message || '签到图上传失败，请重试')
+        uni.showModal({ title: '上传失败', content: message, showCancel: false })
+      } finally {
+        this.uploadingJobId = null
+      }
+    },
+    previewAttendanceImage(item) {
+      const url = this.getAttendanceImage(item)
+      if (!url) return
+      uni.previewImage({ urls: [url], current: url })
     },
     goJobDetail(jobId) {
       uni.navigateTo({ url: `/pages/jobs/detail?id=${jobId}` })
@@ -415,6 +506,95 @@ page {
   align-items: center;
   gap: 10rpx;
   margin-top: 14rpx;
+}
+
+.attendance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.attendance-status {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+}
+
+.attendance-status-pending {
+  background: #fef3c7;
+}
+
+.attendance-status-approved {
+  background: #dcfce7;
+}
+
+.attendance-status-rejected {
+  background: #fee2e2;
+}
+
+.attendance-status-text {
+  font-size: 22rpx;
+  color: #475569;
+}
+
+.attendance-status-pending .attendance-status-text {
+  color: #b45309;
+}
+
+.attendance-status-approved .attendance-status-text {
+  color: #15803d;
+}
+
+.attendance-status-rejected .attendance-status-text {
+  color: #dc2626;
+}
+
+.upload-btn {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #dbeafe;
+}
+
+.upload-btn.disabled {
+  opacity: 0.6;
+}
+
+.upload-btn-text {
+  font-size: 22rpx;
+  color: #1d4ed8;
+}
+
+.reject-row {
+  margin-top: 12rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 12rpx;
+  background: #fef2f2;
+}
+
+.reject-text {
+  font-size: 22rpx;
+  color: #dc2626;
+}
+
+.sign-image-preview {
+  margin-top: 14rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.sign-image {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 12rpx;
+  background: #e2e8f0;
+}
+
+.sign-image-tip {
+  font-size: 22rpx;
+  color: #2563eb;
 }
 
 .item-text {

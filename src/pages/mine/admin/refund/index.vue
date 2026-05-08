@@ -81,12 +81,18 @@
                 已退款
               </text>
               <text
-                v-else-if="item.signedIn"
-                class="status-tag signed"
+                v-else-if="isJobRefundable(item)"
+                class="status-tag audit-approved"
               >
-                已签到
+                审核通过
               </text>
-              <text v-else class="status-tag unsigned">未签到</text>
+              <text
+                v-else-if="item.signedIn"
+                class="status-tag audit-pending"
+              >
+                待审核
+              </text>
+              <text v-else class="status-tag unsigned">未提交</text>
             </view>
 
             <view class="info-list">
@@ -106,7 +112,7 @@
 
             <view class="card-bottom">
               <button
-                v-if="item.status === 1 && item.signedIn"
+                v-if="isJobRefundable(item)"
                 class="refund-btn"
                 @click="handleJobRefund(item)"
               >
@@ -207,6 +213,7 @@ import { ref, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { listJobRefundOrders, refundJobOrder, listSalonRefundOrders, refundSalonOrder } from '@/api/system/refund'
+import { canRefundJobOrder } from '../job-sign-audit.helpers'
 import { listJobs } from '@/api/system/jobs'
 import { requireAdminAccess } from '../access'
 
@@ -390,6 +397,10 @@ function loadMoreSalonOrders() {
   if (salonLoadMoreStatus.value === 'noMore') return
   salonPageNum.value++
   loadSalonOrders(false)
+}
+
+function isJobRefundable(item) {
+  return canRefundJobOrder(item)
 }
 
 function handleJobRefund(item) {

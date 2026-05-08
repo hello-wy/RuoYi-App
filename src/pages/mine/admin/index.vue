@@ -77,6 +77,13 @@ const actionItems = [
     onClick: handleUnreadyFeature
   },
   {
+    key: 'job-sign-audit',
+    label: '签到审核',
+    icon: 'checkmarkempty',
+    iconColor: '#0d9488',
+    onClick: handleJobSignAudit
+  },
+  {
     key: 'refund',
     label: '退款管理',
     icon: 'undo-filled',
@@ -91,6 +98,10 @@ function handleTutorReview() {
 
 function handleStudentManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/student/index')
+}
+
+function handleJobSignAudit() {
+  proxy.$tab.navigateTo('/pages/mine/admin/job-sign-audit/index')
 }
 
 function handleRefundManagement() {
