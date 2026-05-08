@@ -19,7 +19,7 @@
 			<image
 				class="cover-image"
 				:src="detail.coverImg || '/static/images/banner/default.jpg'"
-				mode="aspectFill"
+				mode="widthFix"
 			></image>
 
 			<!-- ===== 价格与销量 ===== -->
@@ -60,8 +60,8 @@
 					<view class="section-title-bar"></view>
 					<text class="section-title-text">详情</text>
 				</view>
-				<!-- 富文本渲染 -->
-				<rich-text class="rich-content" :nodes="detail.description || ''"></rich-text>
+				<!-- 原样文本渲染，保留数据库换行 -->
+				<text class="rich-content">{{ formatDescription(detail.description) }}</text>
 			</view>
 
 			<!-- 底部占位，防止被操作栏遮挡 -->
@@ -181,6 +181,10 @@ export default {
 			const m = String(d.getMonth() + 1).padStart(2, '0')
 			const day = String(d.getDate()).padStart(2, '0')
 			return `${y}-${m}-${day}`
+		},
+		formatDescription(val) {
+			if (!val) return ''
+			return String(val).replace(/↵/g, '\n')
 		}
 	}
 }
@@ -356,6 +360,8 @@ export default {
 	font-size: 28rpx;
 	line-height: 1.8;
 	color: #374151;
+	white-space: pre-wrap;
+	word-break: break-all;
 }
 
 .bottom-placeholder {

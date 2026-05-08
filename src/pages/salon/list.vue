@@ -34,7 +34,7 @@
 					>
 						<image
 							class="card-cover"
-							:src="resolveCover(item.coverImg)"
+							:src="item.coverImg"
 							mode="widthFix"
 						></image>
 
@@ -63,7 +63,7 @@
 					>
 						<image
 							class="card-cover"
-							:src="resolveCover(item.coverImg)"
+							:src="item.coverImg"
 							mode="widthFix"
 						></image>
 
