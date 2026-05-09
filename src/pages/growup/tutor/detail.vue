@@ -27,7 +27,7 @@
         <view class="avatar-wrap">
           <image
             class="avatar"
-            :src="detail.avatar || '/static/images/tabbar/mine.png'"
+            :src="detail.avatarUrl || '/static/images/tabbar/mine.png'"
             mode="aspectFill"
           ></image>
         </view>
@@ -256,14 +256,17 @@ page {
   z-index: 1;
 }
 
-.avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.6);
-  background: #e2e8f0;
-  display: block;
-}
+	.avatar {
+	  width: 96px;
+	  height: 96px;
+	  border-radius: 16px;
+	  border: 4px solid rgba(255, 255, 255, 0.6);
+	  background: #e2e8f0;
+	  display: block;
+	  object-position: center 0%;
+	  transform: scale(1.2);
+	  transform-origin: center 18%;
+	}
 
 .hero-name {
   font-size: 22px;

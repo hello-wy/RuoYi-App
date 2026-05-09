@@ -129,7 +129,14 @@
 					@click="navTo('/pages/growup/detail?id=' + course.id)"
 				>
 					<view class="all-course-cover-placeholder">
-						<uni-icons type="calendar" size="22" color="rgba(255,255,255,0.8)"></uni-icons>
+						<image
+							v-if="course.id && !coverLoadFailed[course.id]"
+							class="all-course-cover-image"
+							:src="getLectureCoverUrl(course)"
+							mode="aspectFill"
+							@error="handleLectureCoverError(course.id)"
+						></image>
+						<uni-icons v-else type="calendar" size="22" color="rgba(255,255,255,0.8)"></uni-icons>
 					</view>
 					<view class="all-course-info">
 						<text class="all-course-name">{{ course.name }}</text>
@@ -239,6 +246,7 @@
 </template>
 
 <script>
+import config from '@/config'
 import { login } from '../../api/login'
 import {
 	listCourse
@@ -253,6 +261,7 @@ export default {
 			allCourses: [],
 			salons: [],
 			surveys: [],
+			coverLoadFailed: {},
 			banners: [
 				{
 					title: '育见成长·讲座活动',
@@ -269,6 +278,20 @@ export default {
 		this.loadAll()
 	},
 	methods: {
+		formatImageVersion(updateDate) {
+			const version = String(updateDate || '').replace(/\D/g, '')
+			return version ? `?v=${version}` : ''
+		},
+		getLectureCoverUrl(course) {
+			const baseUrl = String(config.baseUrl || '').replace(/\/+$/, '')
+			return `${baseUrl}/lectures/${course.id}/cover.webp${this.formatImageVersion(course.updateDate)}`
+		},
+		handleLectureCoverError(id) {
+			this.coverLoadFailed = {
+				...this.coverLoadFailed,
+				[id]: true
+			}
+		},
 		async loadAll() {
 			await this.loadRecentCourses()
 		},
@@ -617,6 +640,13 @@ page {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	overflow: hidden;
+}
+
+.all-course-cover-image {
+	width: 100%;
+	height: 100%;
+	display: block;
 }
 
 .all-course-info {

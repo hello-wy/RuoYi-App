@@ -39,7 +39,7 @@
 					<view class="tutor-avatar-wrap">
 						<image
 							class="tutor-avatar"
-							:src="tutor.avatar || '/static/images/tabbar/mine.png'"
+							:src="tutor.avatarUrl || '/static/images/tabbar/mine.png'"
 							mode="aspectFill"
 						></image>
 					</view>
@@ -229,13 +229,16 @@ page {
 	flex-shrink: 0;
 }
 
-.tutor-avatar {
-	width: 66px;
-	height: 66px;
-	border-radius: 50%;
-	background: #e2e8f0;
-	border: 3px solid #f1f5f9;
-}
+	.tutor-avatar {
+		width: 66px;
+		height: 66px;
+		border-radius: 16px;
+		background: #e2e8f0;
+		border: 3px solid #f1f5f9;
+		object-position: center 0%;
+		transform: scale(1.2);
+		transform-origin: center 50%;
+	}
 
 .tutor-info {
 	flex: 1;

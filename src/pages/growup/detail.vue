@@ -5,9 +5,6 @@
 			<view class="float-btn" @click="goBack">
 				<uni-icons type="left" size="20" color="#fff"></uni-icons>
 			</view>
-			<view v-if="detail" class="share-btn" @click="handleShare">
-				<uni-icons type="redo" size="18" color="#fff"></uni-icons>
-			</view>
 		</view>
 
 		<!-- 加载中 -->
@@ -25,26 +22,25 @@
 		</view>
 
 		<block v-else-if="detail">
-			<!-- 顶部封面图 / 渐变横幅 -->
-			<view class="cover-banner">
-				<image
-					v-if="detail.coverUrl"
-					:src="detail.coverUrl"
-					mode="aspectFill"
-					class="cover-image"
-				></image>
-				<view v-else class="cover-gradient">
-					<view class="cover-decor-circle c1"></view>
-					<view class="cover-decor-circle c2"></view>
-					<text class="cover-title-gradient">{{ detail.name }}</text>
-					<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
+			<scroll-view scroll-y class="content-scroll">
+				<!-- 顶部封面图 / 渐变横幅 -->
+				<view class="cover-banner">
+					<image
+						v-if="topCoverUrl"
+						:src="topCoverUrl"
+						mode="aspectFill"
+						class="cover-image"
+						@error="handleTopCoverError"
+					></image>
+					<view v-else class="cover-gradient">
+						<view class="cover-decor-circle c1"></view>
+						<view class="cover-decor-circle c2"></view>
+						<text class="cover-title-gradient">{{ detail.name }}</text>
+						<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
+					</view>
 				</view>
-			</view>
 
-			<!-- 内容滚动区 -->
-			<scroll-view scroll-y class="content-scroll" :style="{ top: coverHeight + 'px' }">
 				<view class="content-wrap">
-
 					<!-- 课程名称 + 基本信息 -->
 					<view class="course-info-card">
 						<text class="course-name">{{ detail.name }}</text>
@@ -84,7 +80,6 @@
 								<uni-icons type="right" size="12" color="#94a3b8"></uni-icons>
 							</view>
 						</view>
-						<!-- 已报名头像列表 -->
 						<view class="enrolled-users" v-if="detail.enrolledUsers && detail.enrolledUsers.length">
 							<view
 								class="enrolled-user-item"
@@ -129,23 +124,28 @@
 					</view>
 
 					<!-- 课程详情 -->
-					<view class="section-block" v-if="detail.detail || detail.description">
-						<text class="section-title">课程详情</text>
+					<view class="section-block detail-section" v-if="detail.detail || detail.description || posterUrls.length">
+						<text class="section-title detail-section-title">课程详情</text>
 						<view class="detail-content">
 							<rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text>
+							<view v-if="posterUrls.length" class="detail-poster-list">
+								<image
+									v-for="(poster, idx) in posterUrls"
+									:key="poster || idx"
+									:src="poster"
+									class="detail-poster-image"
+									mode="widthFix"
+								></image>
+							</view>
 						</view>
 					</view>
 
-					<!-- 底部占位 -->
 					<view style="height: 130px;"></view>
 				</view>
 			</scroll-view>
 
 			<!-- 底部操作栏 -->
 			<view class="bottom-bar">
-				<!-- <view class="bottom-tip" v-if="myEnrollmentCount !== null">
-					<text class="bottom-tip-text">温馨提示：您当前剩余学籍数：{{ myEnrollmentCount }}个</text>
-				</view> -->
 				<view class="btn-row">
 					<view
 						class="btn-enroll"
@@ -161,20 +161,47 @@
 </template>
 
 <script>
+import config from '@/config'
 import { getCourse } from '@/api/wxmini/growup'
-// import { getUserEnrollment } from '@/api/system/user'
 
 export default {
 	data() {
 		return {
 			statusBarHeight: 0,
-			coverHeight: 240,
 			type: 'course',
 			id: '',
 			loading: true,
 			error: false,
 			detail: null,
 			myEnrollmentCount: 0,
+			topCoverLoadFailed: false,
+		}
+	},
+	computed: {
+		topCoverUrl() {
+			const courseId = this.detail?.id || this.id
+			const updateDate = this.detail?.updateDate
+			const version = this.formatImageVersion(updateDate)
+			const fallbackUrl = this.detail?.coverUrl ? `${this.detail.coverUrl}${version}` : ''
+			if (!courseId) {
+				return fallbackUrl
+			}
+			if (this.topCoverLoadFailed) {
+				return fallbackUrl
+			}
+			return this.buildLectureImageUrl(courseId, 'cover.webp', updateDate)
+		},
+		posterUrls() {
+			const coverCount = Number(this.detail?.cover) || 0
+			const courseId = this.detail?.id || this.id
+			const updateDate = this.detail?.updateDate
+			if (!courseId || coverCount < 1) {
+				return []
+			}
+			return Array.from(
+				{ length: coverCount },
+				(_, index) => this.buildLectureImageUrl(courseId, `${index + 1}.webp`, updateDate)
+			)
 		}
 	},
 	onLoad(options) {
@@ -183,11 +210,21 @@ export default {
 		this.type = options.type || 'course'
 		this.id = options.id || ''
 		this.loadDetail()
-		// this.loadMyEnrollment()
 	},
 	methods: {
+		formatImageVersion(updateDate) {
+			const version = String(updateDate || '').replace(/\D/g, '')
+			return version ? `?v=${version}` : ''
+		},
+		buildLectureImageUrl(courseId, fileName, updateDate) {
+			const baseUrl = String(config.baseUrl || '').replace(/\/+$/, '')
+			return `${baseUrl}/lectures/${courseId}/${fileName}${this.formatImageVersion(updateDate)}`
+		},
 		goBack() {
 			uni.navigateBack()
+		},
+		handleTopCoverError() {
+			this.topCoverLoadFailed = true
 		},
 		formatMeta(dateStr) {
 			if (!dateStr) return ''
@@ -202,6 +239,7 @@ export default {
 		async loadDetail() {
 			this.loading = true
 			this.error = false
+			this.topCoverLoadFailed = false
 			try {
 				const res = await getCourse(this.id)
 				this.detail = res.data || res
@@ -211,25 +249,6 @@ export default {
 				this.loading = false
 			}
 		},
-		// async loadMyEnrollment() {
-		// 	try {
-		// 		const res = await getUserEnrollment()
-		// 		const data = res.data || res
-		// 		this.myEnrollmentCount = data.remainCount !== undefined
-		// 			? data.remainCount
-		// 			: (data.count !== undefined ? data.count : null)
-		// 	} catch (e) {
-		// 		this.myEnrollmentCount = 0
-		// 	}
-		// },
-		handleShare() {
-			// #ifdef MP-WEIXIN
-			uni.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage', 'shareTimeline'] })
-			// #endif
-			// #ifndef MP-WEIXIN
-			uni.showToast({ title: '请截图分享', icon: 'none' })
-			// #endif
-		},
 		viewEnrolledUsers() {
 			uni.navigateTo({ url: `/pages/growup/course/enrolled?id=${this.id}` })
 		},
@@ -238,9 +257,6 @@ export default {
 				uni.navigateTo({ url: `/pages/growup/tutor/detail?id=${teacher.id}` })
 			}
 		},
-		// handleGiftEnrollment() {
-		// 	uni.showToast({ title: '赠送学籍功能开发中', icon: 'none' })
-		// },
 		handleEnroll() {
 			if (!this.detail || this.detail.enrolled) return
 			uni.navigateTo({
@@ -261,7 +277,6 @@ page {
 	background: #f4f6fb;
 }
 
-/* 悬浮导航 */
 .float-bar {
 	position: fixed;
 	left: 0;
@@ -273,7 +288,7 @@ page {
 	z-index: 100;
 }
 
-.float-btn, .share-btn {
+.float-btn {
 	width: 36px;
 	height: 36px;
 	background: rgba(0, 0, 0, 0.35);
@@ -283,7 +298,6 @@ page {
 	justify-content: center;
 }
 
-/* 加载 / 错误 */
 .loading-wrap,
 .error-wrap {
 	display: flex;
@@ -310,33 +324,19 @@ page {
 	font-size: 14px;
 }
 
-/* 封面横幅 */
+.content-scroll {
+	height: 100vh;
+}
+
 .cover-banner {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 200px;
-	background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 60%, #7DD3FC 100%);
-	z-index: 0;
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	padding: 0 20px 20px;
+	position: relative;
+	height: 240px;
+	background: linear-gradient(160deg, #1e293b 0%, #3B82F6 100%);
 	overflow: hidden;
 }
 
-/* 封面 */
-.cover-banner {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 240px;
-	z-index: 0;
-}
-
 .cover-image {
+	display: block;
 	width: 100%;
 	height: 240px;
 }
@@ -359,8 +359,20 @@ page {
 	background: rgba(255, 255, 255, 0.08);
 }
 
-.c1 { width: 180px; height: 180px; top: -60px; right: -40px; }
-.c2 { width: 120px; height: 120px; top: 30px; right: 70px; background: rgba(255,255,255,0.05); }
+.c1 {
+	width: 180px;
+	height: 180px;
+	top: -60px;
+	right: -40px;
+}
+
+.c2 {
+	width: 120px;
+	height: 120px;
+	top: 30px;
+	right: 70px;
+	background: rgba(255, 255, 255, 0.05);
+}
 
 .cover-title-gradient {
 	font-size: 20px;
@@ -372,59 +384,25 @@ page {
 
 .cover-date-gradient {
 	font-size: 13px;
-	color: rgba(255,255,255,0.8);
-}
-
-/* 加载 / 错误 */
-.loading-wrap,
-.error-wrap {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding-top: 200px;
-	gap: 12px;
-}
-
-.error-text {
-	font-size: 14px;
-	color: #94a3b8;
-}
-
-.retry-btn {
-	background: #3B82F6;
-	border-radius: 20px;
-	padding: 8px 20px;
-}
-
-.retry-text {
-	color: #fff;
-	font-size: 14px;
-}
-
-/* 内容滚动区 */
-.content-scroll {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 10;
+	color: rgba(255, 255, 255, 0.8);
 }
 
 .content-wrap {
+	position: relative;
+	margin-top: -18px;
 	background: #f4f6fb;
 	border-radius: 20px 20px 0 0;
 	padding: 16px 14px 0;
-	min-height: 100vh;
+	min-height: calc(100vh - 222px);
+	z-index: 1;
 }
 
-/* 课程信息卡 */
 .course-info-card {
 	background: #fff;
 	border-radius: 14px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .course-name {
@@ -471,13 +449,12 @@ page {
 	line-height: 1.5;
 }
 
-/* 报名情况卡 */
 .enroll-stat-card {
 	background: #fff;
 	border-radius: 14px;
 	padding: 14px 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .enroll-stat-row {
@@ -530,7 +507,6 @@ page {
 	color: #94a3b8;
 }
 
-/* 已报名用户 */
 .enrolled-users {
 	display: flex;
 	flex-direction: row;
@@ -562,13 +538,12 @@ page {
 	text-align: center;
 }
 
-/* Section 通用 */
 .section-block {
 	background: #fff;
 	border-radius: 14px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .section-title {
@@ -579,7 +554,6 @@ page {
 	margin-bottom: 12px;
 }
 
-/* 授课老师 */
 .teacher-card {
 	display: flex;
 	flex-direction: row;
@@ -605,7 +579,6 @@ page {
 	flex: 1;
 }
 
-/* 温馨提示 */
 .tips-card {
 	background: #f8fafc;
 	border-radius: 10px;
@@ -618,7 +591,16 @@ page {
 	line-height: 1.8;
 }
 
-/* 课程详情 */
+.detail-section {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.detail-section-title,
+.detail-text {
+	padding: 0 6px;
+}
+
 .detail-content {
 	width: 100%;
 }
@@ -629,7 +611,21 @@ page {
 	line-height: 1.8;
 }
 
-/* 底部操作栏 */
+.detail-poster-list {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.detail-poster-image {
+	display: block;
+	width: 100%;
+	border-radius: 0;
+	overflow: hidden;
+	background: #f8fafc;
+}
+
 .bottom-bar {
 	position: fixed;
 	bottom: 0;
@@ -642,35 +638,10 @@ page {
 	z-index: 50;
 }
 
-.bottom-tip {
-	margin-bottom: 10px;
-}
-
-.bottom-tip-text {
-	font-size: 12px;
-	color: #ef4444;
-}
-
 .btn-row {
 	display: flex;
 	flex-direction: row;
 	gap: 12px;
-}
-
-.btn-gift {
-	flex: 1;
-	height: 50px;
-	border-radius: 25px;
-	border: 1.5px solid #94a3b8;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.btn-gift-text {
-	font-size: 15px;
-	color: #475569;
-	font-weight: 600;
 }
 
 .btn-enroll {
