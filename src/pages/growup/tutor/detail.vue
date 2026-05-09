@@ -254,19 +254,22 @@ page {
   margin-top: 80px;
   margin-bottom: 16px;
   z-index: 1;
+  width: 96px;
+  height: 96px;
+  border-radius: 16px;
+  border: 4px solid rgba(255, 255, 255, 0.6);
+  background: #e2e8f0;
+  overflow: hidden;
 }
 
-	.avatar {
-	  width: 96px;
-	  height: 96px;
-	  border-radius: 16px;
-	  border: 4px solid rgba(255, 255, 255, 0.6);
-	  background: #e2e8f0;
-	  display: block;
-	  object-position: center 0%;
-	  transform: scale(1.2);
-	  transform-origin: center 18%;
-	}
+.avatar {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: 50% 20%;
+  transform: scale(1.12);
+  transform-origin: 50% 60%;
+}
 
 .hero-name {
   font-size: 22px;

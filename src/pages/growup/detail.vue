@@ -1,163 +1,170 @@
 <template>
-	<view class="page">
-		<!-- 自定义悬浮导航 -->
-		<view class="float-bar" :style="{ top: (statusBarHeight + 8) + 'px' }">
-			<view class="float-btn" @click="goBack">
-				<uni-icons type="left" size="20" color="#fff"></uni-icons>
-			</view>
-		</view>
-
-		<!-- 加载中 -->
-		<view v-if="loading" class="loading-wrap">
-			<uni-load-more status="loading"></uni-load-more>
-		</view>
-
-		<!-- 加载失败 -->
-		<view v-else-if="error" class="error-wrap">
-			<uni-icons type="close-circle" size="40" color="#e2e8f0"></uni-icons>
-			<text class="error-text">加载失败，请重试</text>
-			<view class="retry-btn" @click="loadDetail">
-				<text class="retry-text">重新加载</text>
-			</view>
-		</view>
-
-		<block v-else-if="detail">
-			<scroll-view scroll-y class="content-scroll">
-				<!-- 顶部封面图 / 渐变横幅 -->
-				<view class="cover-banner">
-					<image
-						v-if="topCoverUrl"
-						:src="topCoverUrl"
-						mode="aspectFill"
-						class="cover-image"
-						@error="handleTopCoverError"
-					></image>
-					<view v-else class="cover-gradient">
-						<view class="cover-decor-circle c1"></view>
-						<view class="cover-decor-circle c2"></view>
-						<text class="cover-title-gradient">{{ detail.name }}</text>
-						<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
-					</view>
+		<view class="page">
+			<!-- 自定义悬浮导航 -->
+			<view class="float-bar" :style="{ top: (statusBarHeight + 8) + 'px' }">
+				<view class="float-btn" @click="goBack">
+					<uni-icons type="left" size="20" color="#fff"></uni-icons>
 				</view>
+			</view>
 
-				<view class="content-wrap">
-					<!-- 课程名称 + 基本信息 -->
-					<view class="course-info-card">
-						<text class="course-name">{{ detail.name }}</text>
-						<view class="course-meta-list">
-							<view class="course-meta-item" v-if="detail.time">
-								<view class="meta-dot"></view>
-								<text class="meta-label">上课时间：</text>
-								<text class="meta-value">{{ formatMeta(detail.time) }}-{{ formatMeta(detail.endDate) }}</text>
-							</view>
-							<view class="course-meta-item" v-if="detail.endDate">
-								<view class="meta-dot"></view>
-								<text class="meta-label">报名截止时间：</text>
-								<text class="meta-value">{{ detail.endDate }}</text>
-							</view>
-							<view class="course-meta-item" v-if="detail.location">
-								<view class="meta-dot"></view>
-								<text class="meta-label">上课地址：</text>
-								<text class="meta-value">{{ detail.location }}</text>
-							</view>
+			<!-- 加载中 -->
+			<view v-if="loading" class="loading-wrap">
+				<uni-load-more status="loading"></uni-load-more>
+			</view>
+
+			<!-- 加载失败 -->
+			<view v-else-if="error" class="error-wrap">
+				<uni-icons type="close-circle" size="40" color="#e2e8f0"></uni-icons>
+				<text class="error-text">加载失败，请重试</text>
+				<view class="retry-btn" @click="loadDetail">
+					<text class="retry-text">重新加载</text>
+				</view>
+			</view>
+
+			<block v-else-if="detail">
+				<scroll-view scroll-y class="content-scroll">
+					<!-- 顶部封面图 / 渐变横幅 -->
+					<view class="cover-banner">
+						<image
+							v-if="topCoverUrl"
+							:src="topCoverUrl"
+							mode="aspectFill"
+							class="cover-image"
+							@error="handleTopCoverError"
+						></image>
+						<view v-else class="cover-gradient">
+							<view class="cover-decor-circle c1"></view>
+							<view class="cover-decor-circle c2"></view>
+							<text class="cover-title-gradient">{{ detail.name }}</text>
+							<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
 						</view>
 					</view>
 
-					<!-- 报名情况 -->
-					<view class="enroll-stat-card" v-if="detail.enrolledCount !== undefined || detail.remainCount !== undefined">
-						<view class="enroll-stat-row">
-							<view class="stat-item">
-								<text class="stat-label">已报名：</text>
-								<text class="stat-value-dark">{{ detail.enrolledCount || 0 }}人</text>
-							</view>
-							<view class="stat-divider"></view>
-							<view class="stat-item">
-								<text class="stat-label">剩余报名：</text>
-								<text class="stat-value-red">{{ detail.remainCount || 0 }}人</text>
-							</view>
-							<view class="stat-more" @click="viewEnrolledUsers">
-								<text class="stat-more-text">更多</text>
-								<uni-icons type="right" size="12" color="#94a3b8"></uni-icons>
+					<view class="content-wrap">
+						<!-- 课程名称 + 基本信息 -->
+						<view class="course-info-card">
+							<text class="course-name">{{ detail.name }}</text>
+							<view class="course-meta-list">
+								<view class="course-meta-item" v-if="detail.time">
+									<view class="meta-dot"></view>
+									<text class="meta-label">上课时间：</text>
+									<text class="meta-value">{{ formatMeta(detail.time) }}-{{ formatMeta(detail.endDate) }}</text>
+								</view>
+								<view class="course-meta-item" v-if="detail.endDate">
+									<view class="meta-dot"></view>
+									<text class="meta-label">报名截止时间：</text>
+									<text class="meta-value">{{ detail.endDate }}</text>
+								</view>
+								<view class="course-meta-item" v-if="detail.location">
+									<view class="meta-dot"></view>
+									<text class="meta-label">上课地址：</text>
+									<text class="meta-value">{{ detail.location }}</text>
+								</view>
 							</view>
 						</view>
-						<view class="enrolled-users" v-if="detail.enrolledUsers && detail.enrolledUsers.length">
+
+						<!-- 报名情况 -->
+						<view class="enroll-stat-card" v-if="detail.enrolledCount !== undefined || detail.remainCount !== undefined">
+							<view class="enroll-stat-row">
+								<view class="stat-item">
+									<text class="stat-label">已报名：</text>
+									<text class="stat-value-dark">{{ detail.enrolledCount || 0 }}人</text>
+								</view>
+								<view class="stat-divider"></view>
+								<view class="stat-item">
+									<text class="stat-label">剩余报名：</text>
+									<text class="stat-value-red">{{ detail.remainCount || 0 }}人</text>
+								</view>
+								<view class="stat-more" @click="viewEnrolledUsers">
+									<text class="stat-more-text">更多</text>
+									<uni-icons type="right" size="12" color="#94a3b8"></uni-icons>
+								</view>
+							</view>
+							<view class="enrolled-users" v-if="detail.enrolledUsers && detail.enrolledUsers.length">
+								<view
+									class="enrolled-user-item"
+									v-for="(user, idx) in detail.enrolledUsers.slice(0, 5)"
+									:key="idx"
+								>
+									<image
+										:src="user.avatar || '/static/images/default_avatar.png'"
+										class="enrolled-avatar"
+										mode="aspectFill"
+									></image>
+									<text class="enrolled-name">{{ user.name || user.nickName }}</text>
+								</view>
+							</view>
+						</view>
+
+						<!-- 讲师信息 -->
+						<view class="section-block" v-if="lecturers.length">
+							<text class="section-title">讲师信息</text>
 							<view
-								class="enrolled-user-item"
-								v-for="(user, idx) in detail.enrolledUsers.slice(0, 5)"
-								:key="idx"
+								class="teacher-card"
+								v-for="teacher in lecturers"
+								:key="teacher.id || teacher.name"
+								@click="viewTeacher(teacher)"
 							>
-								<image
-									:src="user.avatar || '/static/images/default_avatar.png'"
-									class="enrolled-avatar"
-									mode="aspectFill"
-								></image>
-								<text class="enrolled-name">{{ user.name || user.nickName }}</text>
+								<view class="teacher-avatar-wrap">
+									<image
+										:src="teacher.avatarUrl || teacher.avatar || '/static/images/tabbar/mine.png'"
+										class="teacher-avatar"
+										mode="aspectFill"
+									></image>
+								</view>
+								<view class="teacher-info">
+									<text class="teacher-name">{{ teacher.name }}</text>
+									<view class="teacher-org">
+										<text class="teacher-org-text">{{ teacher.intro || teacher.org || teacher.title || '查看讲师详情' }}</text>
+									</view>
+								</view>
+								<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
 							</view>
 						</view>
-					</view>
 
-					<!-- 授课老师 -->
-					<view class="section-block" v-if="detail.teachers && detail.teachers.length">
-						<text class="section-title">授课老师</text>
+						<!-- 温馨提示 -->
+						<view class="section-block" v-if="detail.tips">
+							<text class="section-title">温馨提示</text>
+							<view class="tips-card">
+								<rich-text :nodes="detail.tips" class="tips-text"></rich-text>
+							</view>
+						</view>
+
+						<!-- 课程详情 -->
+						<view class="section-block detail-section" v-if="detail.detail || detail.description || posterUrls.length">
+							<text class="section-title detail-section-title">课程详情</text>
+							<view class="detail-content">
+								<rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text>
+								<view v-if="posterUrls.length" class="detail-poster-list">
+									<image
+										v-for="(poster, idx) in posterUrls"
+										:key="poster || idx"
+										:src="poster"
+										class="detail-poster-image"
+										mode="widthFix"
+									></image>
+								</view>
+							</view>
+						</view>
+
+						<view style="height: 130px;"></view>
+					</view>
+				</scroll-view>
+
+				<!-- 底部操作栏 -->
+				<view class="bottom-bar">
+					<view class="btn-row">
 						<view
-							class="teacher-card"
-							v-for="(teacher, idx) in detail.teachers"
-							:key="idx"
-							@click="viewTeacher(teacher)"
+							class="btn-enroll"
+							:class="{ 'btn-disabled': detail.enrolled }"
+							@click="handleEnroll"
 						>
-							<image
-								:src="teacher.avatar || '/static/images/default_avatar.png'"
-								class="teacher-avatar"
-								mode="aspectFill"
-							></image>
-							<text class="teacher-name">{{ teacher.name }}</text>
-							<uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
+							<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
 						</view>
-					</view>
-
-					<!-- 温馨提示 -->
-					<view class="section-block" v-if="detail.tips">
-						<text class="section-title">温馨提示</text>
-						<view class="tips-card">
-							<rich-text :nodes="detail.tips" class="tips-text"></rich-text>
-						</view>
-					</view>
-
-					<!-- 课程详情 -->
-					<view class="section-block detail-section" v-if="detail.detail || detail.description || posterUrls.length">
-						<text class="section-title detail-section-title">课程详情</text>
-						<view class="detail-content">
-							<rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text>
-							<view v-if="posterUrls.length" class="detail-poster-list">
-								<image
-									v-for="(poster, idx) in posterUrls"
-									:key="poster || idx"
-									:src="poster"
-									class="detail-poster-image"
-									mode="widthFix"
-								></image>
-							</view>
-						</view>
-					</view>
-
-					<view style="height: 130px;"></view>
-				</view>
-			</scroll-view>
-
-			<!-- 底部操作栏 -->
-			<view class="bottom-bar">
-				<view class="btn-row">
-					<view
-						class="btn-enroll"
-						:class="{ 'btn-disabled': detail.enrolled }"
-						@click="handleEnroll"
-					>
-						<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
 					</view>
 				</view>
-			</view>
-		</block>
-	</view>
+			</block>
+		</view>
 </template>
 
 <script>
@@ -202,6 +209,17 @@ export default {
 				{ length: coverCount },
 				(_, index) => this.buildLectureImageUrl(courseId, `${index + 1}.webp`, updateDate)
 			)
+		},
+		lecturers() {
+			const speakers = this.detail?.speakers
+			if (Array.isArray(speakers) && speakers.length) {
+				return speakers.filter(item => item && (item.id || item.name))
+			}
+			const teachers = this.detail?.teachers
+			if (Array.isArray(teachers) && teachers.length) {
+				return teachers.filter(item => item && (item.id || item.name))
+			}
+			return []
 		}
 	},
 	onLoad(options) {
@@ -558,25 +576,59 @@ page {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	padding: 10px 12px;
-	background: #f8fafc;
-	border-radius: 12px;
-	margin-bottom: 8px;
+	background: #fff;
+	border-radius: 16px;
+	padding: 16px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+	gap: 14px;
+	margin-bottom: 10px;
+}
+
+.teacher-card:last-child {
+	margin-bottom: 0;
+}
+
+.teacher-avatar-wrap {
+	flex-shrink: 0;
+	width: 66px;
+	height: 66px;
+	border-radius: 16px;
+	border: 3px solid #f1f5f9;
+	background: #e2e8f0;
+	overflow: hidden;
 }
 
 .teacher-avatar {
-	width: 50px;
-	height: 50px;
-	border-radius: 50%;
-	background: #e2e8f0;
-	margin-right: 14px;
+	width: 100%;
+	display: block;
+	object-fit: cover;
+	object-position: 50% 20%;
+	transform: scale(0.92);
+	transform-origin: 50% -90%;
+}
+
+.teacher-info {
+	flex: 1;
 }
 
 .teacher-name {
-	font-size: 15px;
-	font-weight: 600;
+	display: block;
+	font-size: 16px;
+	font-weight: 700;
 	color: #1e293b;
-	flex: 1;
+	margin-bottom: 2px;
+}
+
+.teacher-org {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+}
+
+.teacher-org-text {
+	font-size: 12px;
+	color: #94a3b8;
 }
 
 .tips-card {

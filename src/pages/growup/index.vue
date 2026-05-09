@@ -34,49 +34,49 @@
 				</view>
 			</view>
 
-			<!-- ===== 我的课程 ===== -->
+			<!-- ===== 最近课程 ===== -->
 			<view class="section-wrap">
 				<view class="section-head">
 					<view class="section-head-left">
 						<view class="section-dot blue-dot"></view>
-						<text class="section-title">我的课程</text>
+						<text class="section-title">最近课程</text>
 					</view>
-					<view class="section-more" @click="navTo('/pages/growup/detail?id=' + (myCourses && myCourses.id))">
+					<view v-if="featuredCourse" class="section-more" @click="navTo('/pages/growup/detail?id=' + featuredCourse.id)">
 						<text class="section-more-text">详情</text>
 						<uni-icons type="right" size="12" color="#3B82F6"></uni-icons>
 					</view>
 				</view>
 
-				<view v-if="allCourses.length === 0 && !coursesLoading" class="empty-card">
+				<view v-if="!featuredCourse && !coursesLoading" class="empty-card">
 					<uni-icons type="calendar" size="28" color="#cbd5e1"></uni-icons>
-					<text class="empty-text">暂无课程信息</text>
+					<text class="empty-text">暂无即将开始的课程</text>
 				</view>
 
-				<view v-if="allCourses.length > 0" class="lecture-card">
-					<view class="lecture-header" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">
-						<text class="lecture-name">{{ myCourses.name }}</text>
+				<view v-if="featuredCourse" class="lecture-card">
+					<view class="lecture-header" @click="navTo('/pages/growup/detail?id=' + featuredCourse.id + '&type=lecture')">
+						<text class="lecture-name">{{ featuredCourse.name }}</text>
 					</view>
-					<!-- <text class="lecture-detail" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">{{ myCourses.detail }}</text> -->
+					<!-- <text class="lecture-detail" @click="navTo('/pages/growup/detail?id=' + featuredCourse.id + '&type=lecture')">{{ featuredCourse.detail }}</text> -->
 					<view class="lecture-footer">
 						<view class="lecture-meta-item">
 							<uni-icons type="person" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text">{{ myCourses.speakerNames }}</text>
+							<text class="lecture-meta-text">{{ featuredCourse.speakerNames }}</text>
 						</view>
 						<view class="lecture-meta-item">
 							<uni-icons type="calendar" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text">{{ myCourses.time }}</text>
+							<text class="lecture-meta-text">{{ featuredCourse.time }}</text>
 						</view>
 						<view class="lecture-meta-item">
 							<uni-icons type="location" size="13" color="#3B82F6"></uni-icons>
-							<text class="lecture-meta-text lecture-location">{{ myCourses.location }}</text>
+							<text class="lecture-meta-text lecture-location">{{ featuredCourse.location }}</text>
 						</view>
 					</view>
 					<!-- 签到操作行 -->
 					<view class="lecture-action-row">
-						<view class="lecture-detail-btn" @click="navTo('/pages/growup/detail?id=' + myCourses.id + '&type=lecture')">
+						<view class="lecture-detail-btn" @click="navTo('/pages/growup/detail?id=' + featuredCourse.id + '&type=lecture')">
 							<text class="lecture-detail-btn-text">查看详情</text>
 						</view>
-						<view class="lecture-signin-btn" @click="navTo('/pages/growup/qrcode/index?id=' + myCourses.id + '&type=lecture&action=signin')">
+						<view class="lecture-signin-btn" @click="navTo('/pages/growup/qrcode/index?id=' + featuredCourse.id + '&type=lecture&action=signin')">
 							<uni-icons type="checkbox" size="15" color="#fff"></uni-icons>
 							<text class="lecture-signin-btn-text">去签到</text>
 						</view>
@@ -257,7 +257,7 @@ export default {
 		return {
 			refreshing: false,
 			coursesLoading: false,
-			myCourses: [],
+			featuredCourse: null,
 			allCourses: [],
 			salons: [],
 			surveys: [],
@@ -278,6 +278,31 @@ export default {
 		this.loadAll()
 	},
 	methods: {
+		parseCourseTimestamp(value) {
+			if (!value) return NaN
+			if (value instanceof Date) return value.getTime()
+			const normalized = String(value).trim().replace(/-/g, '/')
+			const timestamp = new Date(normalized).getTime()
+			return Number.isNaN(timestamp) ? NaN : timestamp
+		},
+		sortCoursesByTime(courses = []) {
+			return [...courses].sort((a, b) => {
+				const timeA = this.parseCourseTimestamp(a?.time)
+				const timeB = this.parseCourseTimestamp(b?.time)
+				if (Number.isNaN(timeA) && Number.isNaN(timeB)) return 0
+				if (Number.isNaN(timeA)) return 1
+				if (Number.isNaN(timeB)) return -1
+				return timeA - timeB
+			})
+		},
+		pickFeaturedCourse(courses = []) {
+			const now = Date.now()
+			const upcomingCourses = this.sortCoursesByTime(courses).filter(course => {
+				const courseTime = this.parseCourseTimestamp(course?.time)
+				return !Number.isNaN(courseTime) && courseTime >= now
+			})
+			return upcomingCourses[0] || null
+		},
 		formatImageVersion(updateDate) {
 			const version = String(updateDate || '').replace(/\D/g, '')
 			return version ? `?v=${version}` : ''
@@ -298,12 +323,16 @@ export default {
 		async loadRecentCourses() {
 			this.coursesLoading = true
 			try {
-				const res = await listCourse({ pageNum: 1, pageSize: 3 })
+				const res = await listCourse({ pageNum: 1, pageSize: 50 })
 				const rows = res.rows || []
-				this.allCourses = rows
-				this.myCourses = rows[0]
-				this.surveys = this.myCourses.questionnaire || []
-			} catch (e) {} finally {
+				this.allCourses = this.sortCoursesByTime(rows)
+				this.featuredCourse = this.pickFeaturedCourse(rows)
+				this.surveys = this.featuredCourse?.questionnaire || []
+			} catch (e) {
+				this.featuredCourse = null
+				this.allCourses = []
+				this.surveys = []
+			} finally {
 				this.coursesLoading = false
 			}
 		},
