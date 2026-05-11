@@ -208,6 +208,13 @@
       }
     },
     {
+      "path": "pages/mine/admin/parttime-whitelist/list",
+      "style": {
+        "navigationBarTitleText": "白名单列表",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/mine/admin/student/index",
       "style": {
         "navigationBarTitleText": "学员管理",

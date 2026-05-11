@@ -39,6 +39,23 @@ page {
   box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
 }
 
+.toolbar-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16rpx;
+}
+
+.list-btn {
+  height: 64rpx;
+  line-height: 64rpx;
+  margin: 0;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  border-color: $brand;
+  color: $brand;
+  font-size: 26rpx;
+}
+
 .form-item + .form-item {
   margin-top: 24rpx;
 }
@@ -51,7 +68,18 @@ page {
   color: $text-main;
 }
 
-.input,
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 72rpx;
+  border: 1rpx solid $border;
+  border-radius: 20rpx;
+  background: #f8fffd;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: $text-main;
+}
+
 .textarea {
   width: 100%;
   box-sizing: border-box;
@@ -61,9 +89,6 @@ page {
   padding: 22rpx 24rpx;
   font-size: 28rpx;
   color: $text-main;
-}
-
-.textarea {
   min-height: 180rpx;
 }
 

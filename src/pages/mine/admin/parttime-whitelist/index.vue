@@ -6,6 +6,9 @@
     </view>
 
     <view class="form-card">
+      <view class="toolbar-row">
+        <button class="list-btn" plain @click="openListPage">查看白名单</button>
+      </view>
       <view class="form-item">
         <text class="label">真实姓名</text>
         <input v-model="form.realName" class="input" placeholder="请输入真实姓名" />
@@ -52,6 +55,10 @@ function resetForm() {
   form.idCard = ''
   form.price = ''
   form.remark = ''
+}
+
+function openListPage() {
+  proxy.$tab.navigateTo('/pages/mine/admin/parttime-whitelist/list')
 }
 
 async function handleSubmit() {

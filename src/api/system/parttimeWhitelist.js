@@ -7,3 +7,18 @@ export function addParttimeWhitelist(data) {
     data,
   })
 }
+
+export function listParttimeWhitelist(params) {
+  return request({
+    url: '/system/parttime-whitelist/list',
+    method: 'get',
+    params,
+  })
+}
+
+export function deleteParttimeWhitelist(id) {
+  return request({
+    url: '/system/parttime-whitelist/' + id,
+    method: 'delete',
+  })
+}
