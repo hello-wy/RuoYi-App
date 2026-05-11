@@ -21,9 +21,15 @@
 				>
 					<swiper-item v-for="(item, idx) in banners" :key="idx" @click="onBannerClick(item)">
 						<view class="banner-blue-bg">
+							<image
+								v-if="item.imageSrc"
+								class="banner-image"
+								:src="item.imageSrc"
+								mode="aspectFill"
+							></image>
 							<view class="banner-content-overlay">
 								<text class="banner-title">{{ item.title }}</text>
-								<text v-if="item.subtitle" class="banner-sub">{{ item.subtitle }}</text>
+								<!-- <text v-if="item.subtitle" class="banner-sub">{{ item.subtitle }}</text> -->
 							</view>
 						</view>
 					</swiper-item>
@@ -112,10 +118,10 @@
 						<view class="section-dot green-dot"></view>
 						<text class="section-title">全部课程</text>
 					</view>
-					<!-- <view class="section-more" @click="navTo('/pages/growup/course/list')">
-						<text class="section-more-text">更多</text>
-						<uni-icons type="right" size="12" color="#3B82F6"></uni-icons>
-					</view> -->
+					<view v-if="showAllCoursesMore" class="section-more" @click="toggleAllCoursesExpanded">
+						<text class="section-more-text">{{ allCoursesExpanded ? '收起' : '更多' }}</text>
+						<uni-icons :type="allCoursesExpanded ? 'top' : 'right'" size="12" color="#3B82F6"></uni-icons>
+					</view>
 				</view>
 
 				<view v-if="allCourses.length === 0" class="empty-card">
@@ -123,7 +129,7 @@
 				</view>
 
 				<view
-					v-for="course in allCourses.slice(0, 3)"
+					v-for="course in displayedCourses"
 					:key="course.id"
 					class="all-course-card"
 					@click="navTo('/pages/growup/detail?id=' + course.id)"
@@ -140,15 +146,19 @@
 					</view>
 					<view class="all-course-info">
 						<text class="all-course-name">{{ course.name }}</text>
-						<view class="all-course-meta">
-							<uni-icons type="person" size="12" color="#94a3b8"></uni-icons>
-							<text class="all-course-meta-text">{{ course.speakerNames }}</text>
-						</view>
-						<view class="all-course-footer">
+						<view class="all-course-time-row">
+							<text class="all-course-time-label">开课时间：</text>
 							<text class="all-course-time">{{ course.time }}</text>
-							<view class="course-tag">
-								<text class="course-tag-text">讲座</text>
-							</view>
+						</view>
+						<view
+							class="all-course-location-row"
+							:class="{ 'all-course-location-row-multiline': locationMultilineMap[course.id] }"
+						>
+							<uni-icons type="location" size="12" color="#c4bfcf"></uni-icons>
+							<text
+								:id="`course-location-${course.id}`"
+								class="all-course-location"
+							>{{ course.location || '待定' }}</text>
 						</view>
 					</view>
 				</view>
@@ -247,10 +257,24 @@
 
 <script>
 import config from '@/config'
-import { login } from '../../api/login'
 import {
 	listCourse
 } from '@/api/wxmini/growup'
+import {
+	getLectureImageSrc,
+	prefetchLectureCovers,
+} from './lecture-cover'
+
+const BANNER_COURSE_ORDER = [
+	'幸福解码',
+	'心法篇',
+	'活法篇',
+	'干法篇',
+	'人格解析师',
+	'九型沟通术',
+]
+const DEFAULT_BANNER_TITLE = '育见成长·讲座活动'
+const DEFAULT_BANNER_SUBTITLE = '名师专家 · 精品公益讲座'
 
 export default {
 	data() {
@@ -259,23 +283,24 @@ export default {
 			coursesLoading: false,
 			featuredCourse: null,
 			allCourses: [],
+			allCoursesExpanded: false,
 			salons: [],
 			surveys: [],
 			coverLoadFailed: {},
-			banners: [
-				{
-					title: '育见成长·讲座活动',
-					subtitle: '名师专家 · 精品公益讲座'
-				},
-				{
-					title: '专业成长，从这里出发',
-					subtitle: '每期讲座 · 精彩不容错过'
-				}
-			]
+			locationMultilineMap: {},
+			banners: []
 		}
 	},
 	onLoad() {
 		this.loadAll()
+	},
+	computed: {
+		showAllCoursesMore() {
+			return this.allCourses.length > 3
+		},
+		displayedCourses() {
+			return this.allCoursesExpanded ? this.allCourses : this.allCourses.slice(0, 3)
+		}
 	},
 	methods: {
 		parseCourseTimestamp(value) {
@@ -284,6 +309,13 @@ export default {
 			const normalized = String(value).trim().replace(/-/g, '/')
 			const timestamp = new Date(normalized).getTime()
 			return Number.isNaN(timestamp) ? NaN : timestamp
+		},
+		filterUpcomingCourses(courses = []) {
+			const now = Date.now()
+			return courses.filter(course => {
+				const courseTime = this.parseCourseTimestamp(course?.time)
+				return !Number.isNaN(courseTime) && courseTime >= now
+			})
 		},
 		sortCoursesByTime(courses = []) {
 			return [...courses].sort((a, b) => {
@@ -295,27 +327,82 @@ export default {
 				return timeA - timeB
 			})
 		},
-		pickFeaturedCourse(courses = []) {
-			const now = Date.now()
-			const upcomingCourses = this.sortCoursesByTime(courses).filter(course => {
-				const courseTime = this.parseCourseTimestamp(course?.time)
-				return !Number.isNaN(courseTime) && courseTime >= now
-			})
-			return upcomingCourses[0] || null
+		formatBannerTitle(course) {
+			return course?.name || DEFAULT_BANNER_TITLE
 		},
-		formatImageVersion(updateDate) {
-			const version = String(updateDate || '').replace(/\D/g, '')
-			return version ? `?v=${version}` : ''
+		formatBannerSubtitle(course) {
+			return course?.speakerNames || DEFAULT_BANNER_SUBTITLE
+		},
+		buildBannerItems(courses = []) {
+			return BANNER_COURSE_ORDER.map(name => {
+				const course = courses.find(item => String(item?.name || '').includes(name))
+				return {
+					id: course?.id || name,
+					title: this.formatBannerTitle(course),
+					subtitle: this.formatBannerSubtitle(course),
+					url: course?.id ? `/pages/growup/detail?id=${course.id}` : '',
+					imageSrc: course ? getLectureImageSrc({
+						baseUrl: config.baseUrl,
+						lecture: course,
+						fileName: 'cover.webp'
+					}) : '',
+				}
+			})
+		},
+		async prefetchBannerAndCourseCovers(courses = [], options = {}) {
+			const {
+				expanded = this.allCoursesExpanded,
+			} = options
+			const bannerCourses = BANNER_COURSE_ORDER
+				.map(name => courses.find(course => String(course?.name || '').includes(name)))
+				.filter(course => course?.id)
+			const visibleCourses = (expanded ? courses : courses.slice(0, 3)).filter(course => course?.id)
+			await prefetchLectureCovers({
+				baseUrl: config.baseUrl,
+				lectures: [...bannerCourses, ...visibleCourses],
+				fileName: 'cover.webp'
+			})
+			this.banners = this.buildBannerItems(courses)
 		},
 		getLectureCoverUrl(course) {
-			const baseUrl = String(config.baseUrl || '').replace(/\/+$/, '')
-			return `${baseUrl}/lectures/${course.id}/cover.webp${this.formatImageVersion(course.updateDate)}`
+			return getLectureImageSrc({
+				baseUrl: config.baseUrl,
+				lecture: course,
+				fileName: 'cover.webp'
+			})
 		},
 		handleLectureCoverError(id) {
 			this.coverLoadFailed = {
 				...this.coverLoadFailed,
 				[id]: true
 			}
+		},
+		toggleAllCoursesExpanded() {
+			this.allCoursesExpanded = !this.allCoursesExpanded
+			this.$nextTick(async () => {
+				await this.prefetchBannerAndCourseCovers(this.allCourses, { expanded: this.allCoursesExpanded })
+				this.updateLocationAlignment()
+			})
+		},
+		updateLocationAlignment() {
+			const courses = this.displayedCourses.filter(course => course?.id)
+			if (!courses.length) {
+				this.locationMultilineMap = {}
+				return
+			}
+			const query = uni.createSelectorQuery().in(this)
+			courses.forEach(course => {
+				query.select(`#course-location-${course.id}`).boundingClientRect()
+			})
+			query.exec((rects = []) => {
+				const nextMap = {}
+				rects.forEach((rect, index) => {
+					const course = courses[index]
+					if (!course?.id || !rect?.height) return
+					nextMap[course.id] = rect.height > 18
+				})
+				this.locationMultilineMap = nextMap
+			})
 		},
 		async loadAll() {
 			await this.loadRecentCourses()
@@ -325,13 +412,22 @@ export default {
 			try {
 				const res = await listCourse({ pageNum: 1, pageSize: 50 })
 				const rows = res.rows || []
-				this.allCourses = this.sortCoursesByTime(rows)
-				this.featuredCourse = this.pickFeaturedCourse(rows)
+				const upcomingCourses = this.sortCoursesByTime(this.filterUpcomingCourses(rows))
+				this.allCourses = upcomingCourses
+				this.allCoursesExpanded = false
+				this.featuredCourse = upcomingCourses[0] || null
 				this.surveys = this.featuredCourse?.questionnaire || []
+				await this.prefetchBannerAndCourseCovers(upcomingCourses)
+				this.$nextTick(() => {
+					this.updateLocationAlignment()
+				})
 			} catch (e) {
 				this.featuredCourse = null
 				this.allCourses = []
+				this.allCoursesExpanded = false
 				this.surveys = []
+				this.banners = this.buildBannerItems([])
+				this.locationMultilineMap = {}
 			} finally {
 				this.coursesLoading = false
 			}
@@ -425,16 +521,28 @@ page {
 }
 
 .banner-blue-bg {
+	position: relative;
 	width: 100%;
 	height: 220px;
-	background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #0284C7 100%);
+	background: transparent;
 	display: flex;
 	align-items: flex-end;
 	justify-content: flex-start;
 	padding: 0 20px 24px;
+	overflow: hidden;
 }
 
+.banner-image {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+
 .banner-content-overlay {
+	position: relative;
+	z-index: 1;
 	padding: 0;
 }
 
@@ -681,50 +789,70 @@ page {
 .all-course-info {
 	flex: 1;
 	padding: 8px 12px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-width: 0;
 }
 
 .all-course-name {
-	display: block;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
 	font-size: 14px;
 	font-weight: 600;
 	color: #1e293b;
-	margin-bottom: 4px;
-}
-
-.all-course-meta {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 4px;
+	line-height: 1.45;
 	margin-bottom: 6px;
 }
 
-.all-course-meta-text {
-	font-size: 12px;
-	color: #64748b;
-}
-
-.all-course-footer {
+.all-course-time-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
+	margin-bottom: 6px;
+	min-width: 0;
+}
+
+.all-course-time-label {
+	font-size: 11px;
+	color: #94a3b8;
+	flex-shrink: 0;
 }
 
 .all-course-time {
 	font-size: 11px;
 	color: #94a3b8;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.course-tag {
-	background: #EFF6FF;
-	border-radius: 4px;
-	padding: 2px 6px;
+.all-course-location-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
 }
 
-.course-tag-text {
+.all-course-location-row-multiline {
+	align-items: flex-start;
+}
+
+.all-course-location {
+	flex: 1;
 	font-size: 11px;
-	color: #3B82F6;
+	color: #b0aabc;
+	line-height: 1.35;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	overflow: hidden;
 }
 
 /* ===== 沙龙活动 ===== */

@@ -64,26 +64,26 @@
 						</view>
 
 						<!-- 报名情况 -->
-						<view class="enroll-stat-card" v-if="detail.enrolledCount !== undefined || detail.remainCount !== undefined">
+						<view class="enroll-stat-card">
 							<view class="enroll-stat-row">
 								<view class="stat-item">
 									<text class="stat-label">已报名：</text>
-									<text class="stat-value-dark">{{ detail.enrolledCount || 0 }}人</text>
+									<text class="stat-value-dark">{{ enrolledCountDisplay }}人</text>
 								</view>
 								<view class="stat-divider"></view>
 								<view class="stat-item">
 									<text class="stat-label">剩余报名：</text>
-									<text class="stat-value-red">{{ detail.remainCount || 0 }}人</text>
+									<text class="stat-value-red">{{ remainCountDisplay }}人</text>
 								</view>
 								<view class="stat-more" @click="viewEnrolledUsers">
 									<text class="stat-more-text">更多</text>
-									<uni-icons type="right" size="12" color="#94a3b8"></uni-icons>
+									<uni-icons type="right" size="12" color="#b7b3d9"></uni-icons>
 								</view>
 							</view>
-							<view class="enrolled-users" v-if="detail.enrolledUsers && detail.enrolledUsers.length">
+							<view class="enrolled-users" v-if="displayEnrolledUsers.length">
 								<view
 									class="enrolled-user-item"
-									v-for="(user, idx) in detail.enrolledUsers.slice(0, 5)"
+									v-for="(user, idx) in displayEnrolledUsers"
 									:key="idx"
 								>
 									<image
@@ -97,36 +97,36 @@
 						</view>
 
 						<!-- 讲师信息 -->
-						<view class="section-block" v-if="lecturers.length">
-							<text class="section-title">讲师信息</text>
-							<view
-								class="teacher-card"
-								v-for="teacher in lecturers"
-								:key="teacher.id || teacher.name"
-								@click="viewTeacher(teacher)"
-							>
-								<view class="teacher-avatar-wrap">
-									<image
-										:src="teacher.avatarUrl || teacher.avatar || '/static/images/tabbar/mine.png'"
-										class="teacher-avatar"
-										mode="aspectFill"
-									></image>
-								</view>
-								<view class="teacher-info">
-									<text class="teacher-name">{{ teacher.name }}</text>
-									<view class="teacher-org">
-										<text class="teacher-org-text">{{ teacher.intro || teacher.org || teacher.title || '查看讲师详情' }}</text>
+						<view class="teacher-section" v-if="lecturers.length">
+							<text class="section-title">授课老师</text>
+							<view class="teacher-grid">
+								<view
+									class="teacher-card"
+									v-for="teacher in lecturers"
+									:key="teacher.id || teacher.name"
+									@click="viewTeacher(teacher)"
+								>
+									<view class="teacher-avatar-wrap">
+										<image
+											:src="teacher.avatarUrl || teacher.avatar || '/static/images/tabbar/mine.png'"
+											class="teacher-avatar"
+											mode="aspectFill"
+										></image>
 									</view>
+									<text class="teacher-name">{{ teacher.name }}</text>
+									<uni-icons class="teacher-arrow" type="right" size="12" color="#c8bff4"></uni-icons>
 								</view>
-								<uni-icons type="right" size="14" color="#cbd5e1"></uni-icons>
 							</view>
 						</view>
 
 						<!-- 温馨提示 -->
-						<view class="section-block" v-if="detail.tips">
+						<view class="section-block">
 							<text class="section-title">温馨提示</text>
 							<view class="tips-card">
-								<rich-text :nodes="detail.tips" class="tips-text"></rich-text>
+								<view class="tips-item" v-for="(tip, idx) in warmTips" :key="idx">
+									<text class="tips-title">{{ tip.title }}</text>
+									<text class="tips-text">{{ tip.content }}</text>
+								</view>
 							</view>
 						</view>
 
@@ -134,7 +134,7 @@
 						<view class="section-block detail-section" v-if="detail.detail || detail.description || posterUrls.length">
 							<text class="section-title detail-section-title">课程详情</text>
 							<view class="detail-content">
-								<rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text>
+								<!-- <rich-text :nodes="detail.detail || detail.description" class="detail-text"></rich-text> -->
 								<view v-if="posterUrls.length" class="detail-poster-list">
 									<image
 										v-for="(poster, idx) in posterUrls"
@@ -170,6 +170,25 @@
 <script>
 import config from '@/config'
 import { getCourse } from '@/api/wxmini/growup'
+import {
+	buildLectureImageUrl,
+	formatLectureImageVersion,
+	getLectureImageSrc,
+	resolveLectureCoverDirectoryId,
+} from './lecture-cover'
+
+const DEFAULT_ENROLLED_COUNT = 0
+const DEFAULT_REMAIN_COUNT = 150
+const DEFAULT_WARM_TIPS = [
+	{
+		title: '取消报名说明：',
+		content: '学员在开课时间42小时前可自行取消报名。取消报名后学籍及已缴押金自动退回，42小时后需联系工作人员取消，取消后将退还学籍，押金不退。'
+	},
+	{
+		title: '住宿预定说明：',
+		content: '学员可在开课前42小时预定住宿，42小时内将不能预定，取消政策同上。'
+	}
+]
 
 export default {
 	data() {
@@ -186,30 +205,34 @@ export default {
 	},
 	computed: {
 		topCoverUrl() {
-			const courseId = this.detail?.id || this.id
-			const updateDate = this.detail?.updateDate
-			const version = this.formatImageVersion(updateDate)
-			const fallbackUrl = this.detail?.coverUrl ? `${this.detail.coverUrl}${version}` : ''
-			if (!courseId) {
-				return fallbackUrl
-			}
-			if (this.topCoverLoadFailed) {
-				return fallbackUrl
-			}
-			return this.buildLectureImageUrl(courseId, 'cover.webp', updateDate)
-		},
+				const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
+				const updateDate = this.detail?.updateDate
+				const version = this.formatImageVersion(updateDate)
+				const fallbackUrl = this.detail?.coverUrl ? `${this.detail.coverUrl}${version}` : ''
+				if (!coverDirectoryId) {
+					return fallbackUrl
+				}
+				if (this.topCoverLoadFailed) {
+					return fallbackUrl
+				}
+				return getLectureImageSrc({
+					baseUrl: config.baseUrl,
+					lecture: { id: coverDirectoryId, updateDate },
+					fileName: 'cover.webp'
+				})
+			},
 		posterUrls() {
-			const coverCount = Number(this.detail?.cover) || 0
-			const courseId = this.detail?.id || this.id
-			const updateDate = this.detail?.updateDate
-			if (!courseId || coverCount < 1) {
-				return []
-			}
-			return Array.from(
-				{ length: coverCount },
-				(_, index) => this.buildLectureImageUrl(courseId, `${index + 1}.webp`, updateDate)
-			)
-		},
+				const coverCount = Number(this.detail?.cover) || 0
+				const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
+				const updateDate = this.detail?.updateDate
+				if (!coverDirectoryId || coverCount < 1) {
+					return []
+				}
+				return Array.from(
+					{ length: coverCount },
+					(_, index) => this.buildLectureImageUrl(coverDirectoryId, `${index + 1}.webp`, updateDate)
+				)
+			},
 		lecturers() {
 			const speakers = this.detail?.speakers
 			if (Array.isArray(speakers) && speakers.length) {
@@ -220,6 +243,21 @@ export default {
 				return teachers.filter(item => item && (item.id || item.name))
 			}
 			return []
+		},
+		enrolledCountDisplay() {
+			const count = Number(this.detail?.enrolledCount)
+			return Number.isFinite(count) ? count : DEFAULT_ENROLLED_COUNT
+		},
+		remainCountDisplay() {
+			const count = Number(this.detail?.remainCount)
+			return Number.isFinite(count) ? count : DEFAULT_REMAIN_COUNT
+		},
+		displayEnrolledUsers() {
+			const users = Array.isArray(this.detail?.enrolledUsers) ? this.detail.enrolledUsers : []
+			return users.slice(0, 5)
+		},
+		warmTips() {
+			return DEFAULT_WARM_TIPS
 		}
 	},
 	onLoad(options) {
@@ -231,13 +269,15 @@ export default {
 	},
 	methods: {
 		formatImageVersion(updateDate) {
-			const version = String(updateDate || '').replace(/\D/g, '')
-			return version ? `?v=${version}` : ''
-		},
-		buildLectureImageUrl(courseId, fileName, updateDate) {
-			const baseUrl = String(config.baseUrl || '').replace(/\/+$/, '')
-			return `${baseUrl}/lectures/${courseId}/${fileName}${this.formatImageVersion(updateDate)}`
-		},
+				return formatLectureImageVersion(updateDate)
+			},
+			buildLectureImageUrl(courseId, fileName, updateDate) {
+				return buildLectureImageUrl({
+					baseUrl: config.baseUrl,
+					lecture: { id: courseId, updateDate },
+					fileName,
+				})
+			},
 		goBack() {
 			uni.navigateBack()
 		},
@@ -470,8 +510,9 @@ page {
 .enroll-stat-card {
 	background: #fff;
 	border-radius: 14px;
-	padding: 14px 16px;
-	margin-bottom: 12px;
+	padding: 0;
+	margin-bottom: 16px;
+	overflow: hidden;
 	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -479,36 +520,38 @@ page {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	margin-bottom: 14px;
+	padding: 10px 14px;
+	background: linear-gradient(180deg, #f4f1ff 0%, #ece8ff 100%);
 }
 
 .stat-item {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
+	flex-shrink: 0;
 }
 
 .stat-label {
 	font-size: 13px;
-	color: #64748b;
+	color: #7c6bb4;
 }
 
 .stat-value-dark {
 	font-size: 13px;
 	font-weight: 600;
-	color: #1e293b;
+	color: #5b4dc7;
 }
 
 .stat-value-red {
 	font-size: 13px;
 	font-weight: 600;
-	color: #ef4444;
+	color: #f05b98;
 }
 
 .stat-divider {
 	width: 1px;
 	height: 14px;
-	background: #e2e8f0;
+	background: #d9d1ff;
 	margin: 0 14px;
 }
 
@@ -522,34 +565,37 @@ page {
 
 .stat-more-text {
 	font-size: 13px;
-	color: #94a3b8;
+	color: #a09abf;
 }
 
 .enrolled-users {
 	display: flex;
 	flex-direction: row;
-	gap: 16px;
+	gap: 18px;
+	padding: 14px 16px 16px;
 	flex-wrap: wrap;
+	background: #fff;
 }
 
 .enrolled-user-item {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 4px;
+	gap: 8px;
+	width: 52px;
 }
 
 .enrolled-avatar {
-	width: 46px;
-	height: 46px;
+	width: 52px;
+	height: 52px;
 	border-radius: 50%;
 	background: #e2e8f0;
 }
 
 .enrolled-name {
-	font-size: 11px;
-	color: #64748b;
-	max-width: 48px;
+	font-size: 12px;
+	color: #5b556f;
+	max-width: 64px;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -572,20 +618,28 @@ page {
 	margin-bottom: 12px;
 }
 
+.teacher-section {
+	margin-bottom: 12px;
+}
+
+.teacher-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
 .teacher-card {
+	position: relative;
+	width: calc((100% - 12px) / 2);
+	background: #fff;
+	border-radius: 14px;
+	padding: 14px 14px 12px;
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	background: #fff;
-	border-radius: 16px;
-	padding: 16px;
-	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-	gap: 14px;
-	margin-bottom: 10px;
-}
-
-.teacher-card:last-child {
-	margin-bottom: 0;
+	gap: 10px;
+	box-sizing: border-box;
 }
 
 .teacher-avatar-wrap {
@@ -607,40 +661,41 @@ page {
 	transform-origin: 50% -90%;
 }
 
-.teacher-info {
-	flex: 1;
-}
-
 .teacher-name {
-	display: block;
-	font-size: 16px;
-	font-weight: 700;
+	flex: 1;
+	font-size: 14px;
+	font-weight: 500;
 	color: #1e293b;
-	margin-bottom: 2px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.teacher-org {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 4px;
-}
-
-.teacher-org-text {
-	font-size: 12px;
-	color: #94a3b8;
+.teacher-arrow {
+	flex-shrink: 0;
 }
 
 .tips-card {
-	background: #f8fafc;
+	background: #fff;
 	border-radius: 10px;
-	padding: 12px;
+}
+
+.tips-item + .tips-item {
+	margin-top: 14px;
+}
+
+.tips-title {
+	font-size: 14px;
+	font-weight: 500;
+	color: #4b5563;
 }
 
 .tips-text {
+	display: block;
+	margin-top: 8px;
 	font-size: 13px;
-	color: #475569;
-	line-height: 1.8;
+	color: #9ca3af;
+	line-height: 1.9;
 }
 
 .detail-section {
@@ -720,3 +775,4 @@ page {
 	color: #94a3b8;
 }
 </style>
+

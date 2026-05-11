@@ -1,0 +1,77 @@
+$page-bg: #f3fbf8;
+$card-bg: #ffffff;
+$text-main: #0f172a;
+$text-sub: #4f7f78;
+$border: #c8efe4;
+$brand: #0f766e;
+
+page {
+  background: $page-bg;
+}
+
+.whitelist-page {
+  min-height: 100vh;
+  background: $page-bg;
+}
+
+.whitelist-header {
+  padding: 44rpx 32rpx 32rpx;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $brand;
+}
+
+.header-subtitle {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.form-card {
+  margin: 0 24rpx 32rpx;
+  padding: 28rpx 24rpx 32rpx;
+  background: $card-bg;
+  border: 1rpx solid $border;
+  border-radius: 28rpx;
+  box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
+}
+
+.form-item + .form-item {
+  margin-top: 24rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-main;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1rpx solid $border;
+  border-radius: 20rpx;
+  background: #f8fffd;
+  padding: 22rpx 24rpx;
+  font-size: 28rpx;
+  color: $text-main;
+}
+
+.textarea {
+  min-height: 180rpx;
+}
+
+.submit-btn {
+  margin-top: 32rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 600;
+}

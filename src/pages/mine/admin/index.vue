@@ -49,6 +49,13 @@ const actionItems = [
     onClick: handleTutorReview
   },
   {
+    key: 'parttime-whitelist',
+    label: '兼职白名单',
+    icon: 'personadd-filled',
+    iconColor: '#0d9488',
+    onClick: handleParttimeWhitelist
+  },
+  {
     key: 'student-management',
     label: '学员管理',
     icon: 'person-filled',
@@ -87,6 +94,10 @@ const actionItems = [
 
 function handleTutorReview() {
   proxy.$tab.navigateTo('/pages/mine/admin/tutor-review')
+}
+
+function handleParttimeWhitelist() {
+  proxy.$tab.navigateTo('/pages/mine/admin/parttime-whitelist/index')
 }
 
 function handleStudentManagement() {
