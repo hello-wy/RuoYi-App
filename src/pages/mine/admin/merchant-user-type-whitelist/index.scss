@@ -16,7 +16,7 @@ page {
 }
 
 .whitelist-header {
-  padding: 44rpx 32rpx 32rpx;
+  padding: 44rpx 32rpx 24rpx;
 }
 
 .header-title {
@@ -31,50 +31,28 @@ page {
   color: $text-sub;
 }
 
-.form-card,
+.action-card,
 .list-card {
-  margin: 0 24rpx 32rpx;
-  padding: 28rpx 24rpx 32rpx;
+  margin: 0 24rpx 24rpx;
+  padding: 24rpx;
   background: $card-bg;
   border: 1rpx solid $border;
   border-radius: 28rpx;
   box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
 }
 
-.form-item + .form-item {
-  margin-top: 24rpx;
+.action-card {
+  padding: 20rpx 24rpx;
 }
 
-.label {
-  display: block;
-  margin-bottom: 12rpx;
-  font-size: 28rpx;
-  font-weight: 600;
-  color: $text-main;
-}
-
-.input,
-.textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1rpx solid $border;
-  border-radius: 20rpx;
-  background: #f8fffd;
-  padding: 22rpx 24rpx;
-  font-size: 28rpx;
-  color: $text-main;
-}
-
-.textarea {
-  min-height: 180rpx;
-}
-
-.submit-btn {
-  margin-top: 32rpx;
+.open-popup-btn {
+  height: 72rpx;
+  line-height: 72rpx;
+  margin: 0;
   border-radius: 999rpx;
   background: linear-gradient(135deg, #14b8a6, #0f766e);
   color: #ffffff;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
 }
 
@@ -184,4 +162,122 @@ page {
   color: $danger;
   border: 1rpx solid rgba(220, 38, 38, 0.24);
   background: #fff5f5;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.dialog-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0);
+  transition: background 0.22s ease;
+}
+
+.dialog-mask--active {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.dialog-sheet {
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  top: 50%;
+  transform: translateY(-50%) scale(0.92);
+  opacity: 0;
+  transition: all 0.22s ease;
+}
+
+.dialog-sheet--active {
+  transform: translateY(-50%) scale(1);
+  opacity: 1;
+}
+
+.dialog-card {
+  padding: 32rpx 28rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: 0 24rpx 60rpx rgba(15, 23, 42, 0.18);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.dialog-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dialog-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.dialog-close {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.form-card {
+  margin-top: 28rpx;
+}
+
+.form-item + .form-item {
+  margin-top: 24rpx;
+}
+
+.label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-main;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1rpx solid $border;
+  border-radius: 20rpx;
+  background: #f8fffd;
+  font-size: 28rpx;
+  color: $text-main;
+}
+
+.input {
+  height: 80rpx;
+  padding: 0 24rpx;
+  line-height: 80rpx;
+}
+
+.textarea {
+  min-height: 180rpx;
+  padding: 22rpx 24rpx;
+}
+
+.submit-btn {
+  margin-top: 32rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 600;
 }

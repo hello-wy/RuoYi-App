@@ -59,11 +59,11 @@
 
     <view class="role-dock">
       <button
-        v-for="role in roles"
+        v-for="(role, index) in roles"
         :key="role.value"
         class="role-btn"
         :class="[
-          { active: selectedRole === role.value, 'role-btn-last': role.value === 3 },
+          { active: selectedRole === role.value, 'role-btn-last': shouldCenterRoleButton(index) },
           role.theme
         ]"
         :disabled="submitting || loadingRoles"
@@ -178,6 +178,10 @@ function resolveTarget(userType) {
 
 function selectRole(role) {
   selectedRole.value = role
+}
+
+function shouldCenterRoleButton(index) {
+  return roles.value.length % 3 === 1 && index === roles.value.length - 1
 }
 
 async function handleContinue() {

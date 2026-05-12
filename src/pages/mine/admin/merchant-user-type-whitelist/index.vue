@@ -5,20 +5,8 @@
       <view class="header-subtitle">录入实名与身份证一致的用户，允许其切换商家身份</view>
     </view>
 
-    <view class="form-card">
-      <view class="form-item">
-        <text class="label">真实姓名</text>
-        <input v-model="form.realName" class="input" placeholder="请输入真实姓名" />
-      </view>
-      <view class="form-item">
-        <text class="label">身份证号</text>
-        <input v-model="form.idCard" class="input" placeholder="请输入18位身份证号" maxlength="18" />
-      </view>
-      <view class="form-item">
-        <text class="label">备注</text>
-        <textarea v-model="form.remark" class="textarea" placeholder="选填" maxlength="100" />
-      </view>
-      <button class="submit-btn" :loading="submitting" @click="handleSubmit">新增白名单</button>
+    <view class="action-card">
+      <button class="open-popup-btn" @click="openFormPopup">新增白名单</button>
     </view>
 
     <view class="list-card">
@@ -57,6 +45,39 @@
       </view>
     </view>
   </scroll-view>
+
+  <view v-if="showFormPopup" class="dialog-overlay" @touchmove.stop.prevent>
+    <view class="dialog-mask" :class="{ 'dialog-mask--active': formPopupVisible }" @click="closeFormPopup"></view>
+    <view class="dialog-sheet" :class="{ 'dialog-sheet--active': formPopupVisible }">
+      <view class="dialog-card">
+        <view class="dialog-header">
+          <view>
+            <text class="dialog-title">新增商家白名单</text>
+            <text class="dialog-subtitle">请填写实名和身份证信息后提交</text>
+          </view>
+          <view class="dialog-close" @click="closeFormPopup">
+            <uni-icons type="closeempty" size="18" color="#64748B" />
+          </view>
+        </view>
+
+        <view class="form-card">
+          <view class="form-item">
+            <text class="label">真实姓名</text>
+            <input v-model="form.realName" class="input" placeholder="请输入真实姓名" />
+          </view>
+          <view class="form-item">
+            <text class="label">身份证号</text>
+            <input v-model="form.idCard" class="input" placeholder="请输入18位身份证号" maxlength="18" />
+          </view>
+          <view class="form-item">
+            <text class="label">备注</text>
+            <textarea v-model="form.remark" class="textarea" placeholder="选填" maxlength="100" />
+          </view>
+          <button class="submit-btn" :loading="submitting" @click="handleSubmit">确认新增</button>
+        </view>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script setup>
@@ -79,6 +100,8 @@ const loading = ref(false)
 const total = ref(0)
 const list = ref([])
 const deletingId = ref('')
+const showFormPopup = ref(false)
+const formPopupVisible = ref(false)
 const form = reactive({
   realName: '',
   idCard: '',
@@ -96,6 +119,21 @@ function resetForm() {
   form.realName = ''
   form.idCard = ''
   form.remark = ''
+}
+
+function openFormPopup() {
+  showFormPopup.value = true
+  setTimeout(() => {
+    formPopupVisible.value = true
+  }, 16)
+}
+
+function closeFormPopup() {
+  formPopupVisible.value = false
+  setTimeout(() => {
+    showFormPopup.value = false
+    resetForm()
+  }, 220)
 }
 
 async function loadList() {
@@ -122,8 +160,8 @@ async function handleSubmit() {
   try {
     await addMerchantUserTypeWhitelist(buildMerchantUserTypeWhitelistPayload(form))
     proxy.$modal.showToast('新增成功')
-    resetForm()
-    loadList()
+    await loadList()
+    closeFormPopup()
   } finally {
     submitting.value = false
   }
