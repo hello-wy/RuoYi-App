@@ -33,8 +33,8 @@
           class="day-cell"
           :class="{
             'day-cell-empty': !day.date,
-            'day-cell-active': day.date === selectedDate,
-            'day-cell-has-dot': day.hasSchedule
+            'day-cell-active': day.date === selectedDate && day.currentMonth,
+            'day-cell-has-dot': day.hasSchedule && day.currentMonth
           }"
           @click="handleSelectDate(day.date)"
         >
@@ -196,12 +196,25 @@ export default {
     },
     handleSelectDate(date) {
       if (!date) return
+      // 如果点击的是非当前月份的补位日期，跳转到对应月份
+      const clicked = new Date(date)
+      if (clicked.getFullYear() !== this.currentYear || clicked.getMonth() !== this.currentMonth) {
+        this.currentYear = clicked.getFullYear()
+        this.currentMonth = clicked.getMonth()
+      }
       this.selectedDate = date
     },
     changeMonth(step) {
       const next = new Date(this.currentYear, this.currentMonth + step, 1)
       this.currentYear = next.getFullYear()
       this.currentMonth = next.getMonth()
+      // 切换月份后，如果当前选中日期不在新月份内，自动选中今天或新月份第一天
+      const today = new Date()
+      if (today.getFullYear() === this.currentYear && today.getMonth() === this.currentMonth) {
+        this.selectedDate = formatDate(today)
+      } else {
+        this.selectedDate = formatDate(next)
+      }
     },
     formatAmount(value) {
       const num = Number(value || 0)
