@@ -56,6 +56,13 @@ const actionItems = [
     onClick: handleParttimeWhitelist
   },
   {
+    key: 'merchant-user-type-whitelist',
+    label: '商家白名单',
+    icon: 'shop',
+    iconColor: '#059669',
+    onClick: handleMerchantUserTypeWhitelist
+  },
+  {
     key: 'student-management',
     label: '学员管理',
     icon: 'person-filled',
@@ -98,6 +105,10 @@ function handleTutorReview() {
 
 function handleParttimeWhitelist() {
   proxy.$tab.navigateTo('/pages/mine/admin/parttime-whitelist/index')
+}
+
+function handleMerchantUserTypeWhitelist() {
+  proxy.$tab.navigateTo('/pages/mine/admin/merchant-user-type-whitelist/index')
 }
 
 function handleStudentManagement() {
