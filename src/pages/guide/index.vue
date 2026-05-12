@@ -66,7 +66,7 @@
           { active: selectedRole === role.value, 'role-btn-last': role.value === 3 },
           role.theme
         ]"
-        :disabled="submitting"
+        :disabled="submitting || loadingRoles"
         @click="selectRole(role.value)"
       >
         <uni-icons :type="role.icon" size="20" :color="selectedRole === role.value ? '#ffffff' : role.color"></uni-icons>
@@ -74,7 +74,7 @@
       </button>
     </view>
 
-    <button class="continue-btn" :class="currentRole.theme" :disabled="submitting" @click="handleContinue">
+    <button class="continue-btn" :class="currentRole.theme" :disabled="submitting || loadingRoles" @click="handleContinue">
       <text>{{ submitting ? '处理中' : '继续' }}</text>
       <uni-icons type="right" size="18" color="#ffffff"></uni-icons>
     </button>
@@ -83,15 +83,17 @@
 
 <script setup>
 import { computed, ref, getCurrentInstance } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store'
-import { switchWxUserType } from '@/api/wxmini/profile'
+import { getWxUserProfileDetail, switchWxUserType } from '@/api/wxmini/profile'
+import { resolveGuideRoleState } from './guide-user-type.helpers'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
-const selectedRole = ref(0)
 const submitting = ref(false)
+const loadingRoles = ref(false)
 
-const roles = [
+const allRoles = [
   {
     value: 0,
     name: '家长',
@@ -138,7 +140,34 @@ const roles = [
   }
 ]
 
-const currentRole = computed(() => roles.find(item => item.value === selectedRole.value) || roles[0])
+const roles = ref(allRoles)
+const selectedRole = ref(resolveGuideRoleState(allRoles, userStore.userType).selectedRole)
+
+const currentRole = computed(() => roles.value.find(item => item.value === selectedRole.value) || roles.value[0] || allRoles[0])
+
+onLoad(() => {
+  loadSwitchableRoles()
+})
+
+function applyGuideRoleState(profile = {}) {
+  const state = resolveGuideRoleState(allRoles, userStore.userType, profile)
+  roles.value = state.roles
+  selectedRole.value = state.selectedRole
+}
+
+async function loadSwitchableRoles() {
+  loadingRoles.value = true
+  try {
+    const res = await getWxUserProfileDetail()
+    const profile = res?.data || {}
+    userStore.updateWxProfileState(profile)
+    applyGuideRoleState(profile)
+  } catch (error) {
+    applyGuideRoleState()
+  } finally {
+    loadingRoles.value = false
+  }
+}
 
 function resolveTarget(userType) {
   if (userType === 0) return '/pages/tutoring/parent/apply'
@@ -152,7 +181,7 @@ function selectRole(role) {
 }
 
 async function handleContinue() {
-  if (submitting.value) return
+  if (submitting.value || loadingRoles.value) return
 
   submitting.value = true
   try {

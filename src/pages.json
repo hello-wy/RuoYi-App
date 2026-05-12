@@ -208,6 +208,12 @@
       }
     },
     {
+      "path": "pages/mine/admin/merchant-user-type-whitelist/index",
+      "style": {
+        "navigationBarTitleText": "商家身份白名单"
+      }
+    },
+    {
       "path": "pages/mine/admin/student/index",
       "style": {
         "navigationBarTitleText": "学员管理",
