@@ -46,7 +46,7 @@
         "appid" : "wx0ac1366c34e4ce68",
         "setting" : {
             "urlCheck" : false,
-            "es6" : false,
+            "es6" : true,
             "minified" : true,
             "postcss" : true
         },

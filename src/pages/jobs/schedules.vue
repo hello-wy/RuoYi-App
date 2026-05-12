@@ -22,26 +22,16 @@
         </view>
       </view>
 
-      <view class="week-row">
-        <text v-for="week in weekDays" :key="week" class="week-text">{{ week }}</text>
-      </view>
-
-      <view class="day-grid">
-        <view
-          v-for="day in calendarDays"
-          :key="day.key"
-          class="day-cell"
-          :class="{
-            'day-cell-empty': !day.date,
-            'day-cell-active': day.date === selectedDate && day.currentMonth,
-            'day-cell-has-dot': day.hasSchedule && day.currentMonth
-          }"
-          @click="handleSelectDate(day.date)"
-        >
-          <text class="day-num" :class="{ muted: !day.currentMonth }">{{ day.label }}</text>
-          <view v-if="day.hasSchedule" class="day-dot"></view>
-        </view>
-      </view>
+      <uni-calendar
+        ref="scheduleCalendar"
+        :insert="true"
+        :lunar="false"
+        :show-month="false"
+        :date="selectedDate"
+        :selected="calendarSelected"
+        @change="handleCalendarChange"
+        @monthSwitch="handleMonthSwitch"
+      />
     </view>
 
     <view class="list-card">
@@ -86,9 +76,8 @@
 </template>
 
 <script>
+import UniCalendar from '@/uni_modules/uni-calendar/components/uni-calendar/uni-calendar.vue'
 import { getMyJobSchedules } from '@/api/wxmini/jobs'
-
-const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
 function pad(num) {
   return String(num).padStart(2, '0')
@@ -98,15 +87,24 @@ function formatDate(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
+function parseDate(date) {
+  if (!date) return null
+  const parsed = new Date(String(date).replace(/-/g, '/'))
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
 export default {
+  components: {
+    UniCalendar
+  },
   data() {
+    const today = new Date()
     return {
       loading: false,
       scheduleList: [],
-      selectedDate: '',
-      currentYear: new Date().getFullYear(),
-      currentMonth: new Date().getMonth(),
-      weekDays
+      selectedDate: formatDate(today),
+      currentYear: today.getFullYear(),
+      currentMonth: today.getMonth()
     }
   },
   computed: {
@@ -124,52 +122,37 @@ export default {
     selectedList() {
       return this.scheduleDateMap[this.selectedDate] || []
     },
-    calendarDays() {
-      const firstDay = new Date(this.currentYear, this.currentMonth, 1)
-      const startWeek = firstDay.getDay()
-      const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate()
-      const prevMonthDays = new Date(this.currentYear, this.currentMonth, 0).getDate()
-      const cells = []
-
-      for (let i = 0; i < startWeek; i++) {
-        const day = prevMonthDays - startWeek + i + 1
-        const date = new Date(this.currentYear, this.currentMonth - 1, day)
-        const value = formatDate(date)
-        cells.push(this.createDayCell(value, day, false))
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const value = formatDate(new Date(this.currentYear, this.currentMonth, day))
-        cells.push(this.createDayCell(value, day, true))
-      }
-
-      const rest = cells.length % 7
-      if (rest) {
-        const count = 7 - rest
-        for (let i = 1; i <= count; i++) {
-          const date = new Date(this.currentYear, this.currentMonth + 1, i)
-          const value = formatDate(date)
-          cells.push(this.createDayCell(value, i, false))
-        }
-      }
-
-      return cells
+    calendarSelected() {
+      const added = new Set()
+      return this.scheduleList.reduce((list, item) => {
+        const date = item.workDate || ''
+        if (!date || added.has(date)) return list
+        added.add(date)
+        list.push({
+          date,
+          info: '',
+          data: item
+        })
+        return list
+      }, [])
     }
   },
   onLoad() {
-    const today = formatDate(new Date())
-    this.selectedDate = today
     this.loadData()
   },
   methods: {
-    createDayCell(date, label, currentMonth) {
-      return {
-        key: `${date}-${label}`,
-        date,
-        label,
-        currentMonth,
-        hasSchedule: Boolean(this.scheduleDateMap[date]?.length)
+    syncCurrentMonth(date) {
+      const parsed = parseDate(date)
+      if (!parsed) return
+      this.currentYear = parsed.getFullYear()
+      this.currentMonth = parsed.getMonth()
+    },
+    resolveMonthSelectedDate(year, monthIndex) {
+      const today = new Date()
+      if (today.getFullYear() === year && today.getMonth() === monthIndex) {
+        return formatDate(today)
       }
+      return formatDate(new Date(year, monthIndex, 1))
     },
     async loadData() {
       this.loading = true
@@ -180,11 +163,7 @@ export default {
           const firstDate = this.scheduleList[0]?.workDate
           if (firstDate) {
             this.selectedDate = firstDate
-            const date = new Date(firstDate)
-            if (!Number.isNaN(date.getTime())) {
-              this.currentYear = date.getFullYear()
-              this.currentMonth = date.getMonth()
-            }
+            this.syncCurrentMonth(firstDate)
           }
         }
       } catch (e) {
@@ -194,27 +173,34 @@ export default {
         this.loading = false
       }
     },
-    handleSelectDate(date) {
+    handleCalendarChange(event) {
+      const date = event?.fulldate || ''
       if (!date) return
-      // 如果点击的是非当前月份的补位日期，跳转到对应月份
-      const clicked = new Date(date)
-      if (clicked.getFullYear() !== this.currentYear || clicked.getMonth() !== this.currentMonth) {
-        this.currentYear = clicked.getFullYear()
-        this.currentMonth = clicked.getMonth()
-      }
       this.selectedDate = date
+      this.syncCurrentMonth(date)
+    },
+    handleMonthSwitch({ year, month }) {
+      const nextYear = Number(year)
+      const nextMonth = Number(month) - 1
+      if (Number.isNaN(nextYear) || Number.isNaN(nextMonth)) return
+      this.currentYear = nextYear
+      this.currentMonth = nextMonth
+      this.selectedDate = this.resolveMonthSelectedDate(nextYear, nextMonth)
     },
     changeMonth(step) {
+      const calendar = this.$refs.scheduleCalendar
+      if (calendar && typeof calendar.pre === 'function' && typeof calendar.next === 'function') {
+        if (step < 0) {
+          calendar.pre()
+        } else {
+          calendar.next()
+        }
+        return
+      }
       const next = new Date(this.currentYear, this.currentMonth + step, 1)
       this.currentYear = next.getFullYear()
       this.currentMonth = next.getMonth()
-      // 切换月份后，如果当前选中日期不在新月份内，自动选中今天或新月份第一天
-      const today = new Date()
-      if (today.getFullYear() === this.currentYear && today.getMonth() === this.currentMonth) {
-        this.selectedDate = formatDate(today)
-      } else {
-        this.selectedDate = formatDate(next)
-      }
+      this.selectedDate = this.resolveMonthSelectedDate(this.currentYear, this.currentMonth)
     },
     formatAmount(value) {
       const num = Number(value || 0)
@@ -291,7 +277,6 @@ page {
 }
 
 .calendar-head,
-.week-row,
 .item-top,
 .item-bottom,
 .list-head {
@@ -316,56 +301,106 @@ page {
   justify-content: center;
 }
 
-.week-row {
+:deep(.uni-calendar) {
   margin-top: 24rpx;
 }
 
-.week-text {
-  width: calc(100% / 7);
-  text-align: center;
+:deep(.uni-calendar__header) {
+  display: none !important;
+}
+
+:deep(.uni-calendar__box) {
+  border: none;
+}
+
+:deep(.uni-calendar__weeks-day) {
+  height: auto;
+  padding: 0 0 12rpx;
+  border-bottom: none;
+}
+
+:deep(.uni-calendar__weeks-day-text) {
   font-size: 24rpx;
   color: #94a3b8;
 }
 
-.day-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 12rpx;
-  margin-top: 18rpx;
+:deep(.uni-calendar__weeks) {
+  margin-top: 6rpx;
+  overflow: hidden;
 }
 
-.day-cell {
-  position: relative;
-  min-height: 84rpx;
-  border-radius: 18rpx;
+:deep(.uni-calendar__weeks:first-child) {
+  margin-top: 0;
+}
+
+:deep(.uni-calendar__weeks-item) {
+  min-width: 0;
+  padding: 2rpx 2rpx;
+  box-sizing: border-box;
+}
+
+:deep(.uni-calendar-item__weeks-box) {
+  min-height: 60rpx;
+}
+
+:deep(.uni-calendar-item__weeks-box-item) {
+  width: auto;
+  max-width: 100%;
+  min-height: 60rpx;
+  height: 60rpx;
+  border-radius: 14rpx;
   background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.day-cell-active {
-  background: #dbeafe;
-}
-
-.day-num {
-  font-size: 26rpx;
+:deep(.uni-calendar-item__weeks-box-text) {
+  font-size: 24rpx;
   color: #1e293b;
 }
 
-.day-num.muted {
+:deep(.uni-calendar-item__weeks-lunar-text) {
+  display: none;
+}
+
+:deep(.uni-calendar-item__weeks-box-circle) {
+  top: auto;
+  right: auto;
+  bottom: 8rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+:deep(.uni-calendar-item--disable) {
+  background: transparent;
+}
+
+:deep(.uni-calendar-item--disable .uni-calendar-item__weeks-box-item) {
+  background: #f8fafc;
+}
+
+:deep(.uni-calendar-item--disable .uni-calendar-item__weeks-box-text) {
   color: #cbd5e1;
 }
 
-.day-dot {
-  position: absolute;
-  bottom: 10rpx;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12rpx;
-  height: 12rpx;
-  border-radius: 50%;
-  background: #10b981;
+:deep(.uni-calendar-item--checked),
+:deep(.uni-calendar-item--isDay) {
+  background: transparent !important;
+  opacity: 1;
+  color: inherit;
+}
+
+:deep(.uni-calendar-item--checked .uni-calendar-item__weeks-box-item),
+:deep(.uni-calendar-item--isDay .uni-calendar-item__weeks-box-item) {
+  background: #dbeafe;
+}
+
+:deep(.uni-calendar-item--checked .uni-calendar-item__weeks-box-text),
+:deep(.uni-calendar-item--isDay .uni-calendar-item__weeks-box-text),
+:deep(.uni-calendar-item--isDay-text) {
+  color: #2563eb !important;
 }
 
 .list-title {
