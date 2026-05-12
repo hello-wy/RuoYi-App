@@ -12,6 +12,18 @@ function joinRequestUrl(base = '', path = '') {
   return normalizedPath ? `${normalizedBase}/${normalizedPath}` : normalizedBase
 }
 
+function rejectWithMessage(reject, payload, fallback) {
+  const message = typeof payload === 'string'
+    ? payload
+    : payload?.msg || payload?.message || payload?.errMsg || fallback
+
+  reject({
+    ...(typeof payload === 'object' && payload ? payload : {}),
+    msg: message,
+    errMsg: message
+  })
+}
+
 const request = config => {
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
@@ -44,6 +56,7 @@ const request = config => {
       const res = response
       const code = res.data.code || 200
       const msg = errorCode[code] || res.data.msg || errorCode['default']
+      const shouldToastError = config.showError !== false
       if (code === 401) {
         showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(async res => {
           if (res.confirm) {
@@ -53,13 +66,17 @@ const request = config => {
             })
           }
         })
-        reject('无效的会话，或者会话已过期，请重新登录。')
+        rejectWithMessage(reject, { code, msg, data: res.data }, '无效的会话，或者会话已过期，请重新登录。')
       } else if (code === 500) {
-        toast(msg)
-        reject('500')
+        if (shouldToastError) {
+          toast(msg)
+        }
+        rejectWithMessage(reject, { code, msg, data: res.data }, errorCode['default'])
       } else if (code !== 200) {
-        toast(msg)
-        reject(code)
+        if (shouldToastError) {
+          toast(msg)
+        }
+        rejectWithMessage(reject, { code, msg, data: res.data }, errorCode['default'])
       }
       resolve(res.data)
     })
@@ -73,7 +90,7 @@ const request = config => {
           message = '系统接口' + message.slice(-3) + '异常'
         }
         toast(message)
-        reject(error)
+        rejectWithMessage(reject, error, message)
       })
   })
 }

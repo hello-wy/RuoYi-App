@@ -46,7 +46,10 @@ export default {
       this.paying = true
       const orderStore = useJobSignupOrderStore()
       try {
-        const res = await createJobSignupOrder({ jobId: Number(this.jobId) })
+        const res = await createJobSignupOrder(
+          { jobId: Number(this.jobId) },
+          { showError: false }
+        )
         const payload = res.data || res
         const payParam = payload.payParam || {}
         await uni.requestPayment({
@@ -60,7 +63,17 @@ export default {
         await this.pollOrder(payload.orderNo)
         await orderStore.refresh().catch(() => {})
       } catch (e) {
-        uni.showToast({ title: e?.msg || '支付未完成', icon: 'none' })
+        const rawMessage = e?.msg || e?.errMsg || ''
+        const isPaymentCancelled = /cancel/i.test(rawMessage)
+        const title = isPaymentCancelled ? '支付已取消' : '支付未完成'
+        const message = isPaymentCancelled
+          ? '您已取消支付，可稍后重新发起报名支付。'
+          : rawMessage || '支付未完成'
+        uni.showModal({
+          title,
+          content: message,
+          showCancel: false
+        })
       } finally {
         this.paying = false
       }

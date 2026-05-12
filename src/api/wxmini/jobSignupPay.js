@@ -7,11 +7,12 @@ export function listMyJobSignupOrders() {
   })
 }
 
-export function createJobSignupOrder(data) {
+export function createJobSignupOrder(data, options = {}) {
   return request({
     url: '/wxmini/pay/jobs/orders/create',
     method: 'post',
-    data
+    data,
+    ...options
   })
 }
 

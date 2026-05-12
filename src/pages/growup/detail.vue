@@ -624,18 +624,19 @@ page {
 
 .teacher-grid {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 10px;
 }
 
 .teacher-card {
 	position: relative;
-	width: calc((100% - 12px) / 2);
+	max-width: 100%;
 	background: #fff;
-	border-radius: 14px;
-	padding: 14px 14px 12px;
+	border-radius: 12px;
+	padding: 8px 12px;
 	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
-	display: flex;
+	display: inline-flex;
 	flex-direction: row;
 	align-items: center;
 	gap: 10px;
@@ -644,26 +645,26 @@ page {
 
 .teacher-avatar-wrap {
 	flex-shrink: 0;
-	width: 66px;
-	height: 66px;
-	border-radius: 16px;
-	border: 3px solid #f1f5f9;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	border: 2px solid #f1f5f9;
 	background: #e2e8f0;
 	overflow: hidden;
 }
 
 .teacher-avatar {
 	width: 100%;
+	height: 100%;
 	display: block;
 	object-fit: cover;
-	object-position: 50% 20%;
-	transform: scale(0.92);
-	transform-origin: 50% -90%;
+	object-position: 50% 15%;
 }
 
 .teacher-name {
-	flex: 1;
-	font-size: 14px;
+	min-width: 0;
+	max-width: calc(100vw - 164px);
+	font-size: 15px;
 	font-weight: 500;
 	color: #1e293b;
 	overflow: hidden;
