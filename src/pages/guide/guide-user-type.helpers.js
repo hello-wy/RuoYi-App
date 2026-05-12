@@ -1,8 +1,16 @@
+const ROLE_ORDER = [0, 1, 2, 3]
+
+function sortGuideRoles(roles = []) {
+  return [...roles].sort((left, right) => {
+    return ROLE_ORDER.indexOf(left.value) - ROLE_ORDER.indexOf(right.value)
+  })
+}
+
 export function filterGuideRoles(allRoles = [], switchableUserTypes) {
   if (!Array.isArray(switchableUserTypes) || switchableUserTypes.length === 0) {
-    return allRoles
+    return sortGuideRoles(allRoles)
   }
-  return allRoles.filter(role => switchableUserTypes.includes(role.value))
+  return sortGuideRoles(allRoles.filter(role => switchableUserTypes.includes(role.value)))
 }
 
 export function resolveGuideSelectedRole(selectedRole, roles = []) {
