@@ -49,6 +49,13 @@ const actionItems = [
     onClick: handleTutorReview
   },
   {
+    key: 'job-sign-audit',
+    label: '签到审核',
+    icon: 'checkmarkempty',
+    iconColor: '#0d9488',
+    onClick: handleJobSignAudit
+  },
+  {
     key: 'parttime-whitelist',
     label: '兼职白名单',
     icon: 'personadd-filled',
@@ -101,6 +108,10 @@ const actionItems = [
 
 function handleTutorReview() {
   proxy.$tab.navigateTo('/pages/mine/admin/tutor-review')
+}
+
+function handleJobSignAudit() {
+  proxy.$tab.navigateTo('/pages/mine/admin/job-sign-audit/index')
 }
 
 function handleParttimeWhitelist() {

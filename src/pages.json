@@ -48,6 +48,12 @@
       }
     },
     {
+      "path": "pages/jobs/sign-upload",
+      "style": {
+        "navigationBarTitleText": "上传签到图"
+      }
+    },
+    {
       "path": "pages/jobs/payroll",
       "style": {
         "navigationBarTitleText": "岗位工资台"
@@ -199,6 +205,12 @@
       "style": {
         "navigationBarTitleText": "教员审核",
         "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/mine/admin/job-sign-audit/index",
+      "style": {
+        "navigationBarTitleText": "签到审核"
       }
     },
     {

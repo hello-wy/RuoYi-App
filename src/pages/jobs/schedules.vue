@@ -3,7 +3,7 @@
     <view class="hero-card">
       <view>
         <text class="hero-title">兼职安排日历</text>
-        <text class="hero-desc">按日期查看已支付报名岗位的工作安排</text>
+        <text class="hero-desc">按日期查看已支付报名岗位的工作安排与签到状态</text>
       </view>
       <view class="hero-count">
         <text class="hero-count-num">{{ scheduleList.length }}</text>
@@ -53,7 +53,7 @@
         <view v-for="item in selectedList" :key="item.orderNo || item.jobId" class="schedule-item">
           <view class="item-top">
             <text class="item-title">{{ item.title || '岗位安排' }}</text>
-            <text class="item-status">{{ item.status || '已报名' }}</text>
+            <text class="audit-tag" :class="getAuditStatus(item).type">{{ getAuditStatus(item).label }}</text>
           </view>
           <view class="item-row">
             <uni-icons type="time" size="14" color="#64748b" />
@@ -63,10 +63,22 @@
             <uni-icons type="location-filled" size="14" color="#64748b" />
             <text class="item-text">{{ item.location || '地点待定' }}</text>
           </view>
-          <view class="item-bottom">
+          <view class="item-row">
+            <uni-icons type="checkbox-filled" size="14" color="#64748b" />
+            <text class="item-text">签到状态：{{ item.attendanceStatusLabel || '未签到' }}</text>
+          </view>
+          <view v-if="getRejectReason(item)" class="reject-reason">
+            驳回原因：{{ getRejectReason(item) }}
+          </view>
+          <view class="item-bottom item-actions">
             <text class="salary-text">¥{{ formatAmount(item.salaryDay) }}/天</text>
-            <view v-if="item.jobId" class="detail-btn" @click.stop="goJobDetail(item.jobId)">
-              <text class="detail-btn-text">查看岗位</text>
+            <view class="action-buttons">
+              <view v-if="item.jobId" class="ghost-btn" @click.stop="goJobDetail(item.jobId)">
+                <text class="ghost-btn-text">查看岗位</text>
+              </view>
+              <view v-if="canUpload(item)" class="detail-btn" @click.stop="goSignUpload(item)">
+                <text class="detail-btn-text">{{ item.auditStatus === 3 ? '重新上传' : '上传签到图' }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -78,6 +90,7 @@
 <script>
 import UniCalendar from '@/uni_modules/uni-calendar/components/uni-calendar/uni-calendar.vue'
 import { getMyJobSchedules } from '@/api/wxmini/jobs'
+import { buildAttendanceAuditStatus, canUploadAttendanceImage, getAttendanceRejectReason } from './schedules.helpers'
 
 function pad(num) {
   return String(num).padStart(2, '0')
@@ -138,6 +151,9 @@ export default {
     }
   },
   onLoad() {
+    this.loadData()
+  },
+  onShow() {
     this.loadData()
   },
   methods: {
@@ -206,8 +222,24 @@ export default {
       const num = Number(value || 0)
       return Number.isNaN(num) ? '0.00' : num.toFixed(2)
     },
+    getAuditStatus(item) {
+      return buildAttendanceAuditStatus(item)
+    },
+    canUpload(item) {
+      return canUploadAttendanceImage(item)
+    },
+    getRejectReason(item) {
+      return getAttendanceRejectReason(item)
+    },
     goJobDetail(jobId) {
       uni.navigateTo({ url: `/pages/jobs/detail?id=${jobId}` })
+    },
+    goSignUpload(item) {
+      const title = encodeURIComponent(item.title || '')
+      const workDate = encodeURIComponent(item.workDate || '')
+      uni.navigateTo({
+        url: `/pages/jobs/sign-upload?jobId=${item.jobId}&title=${title}&workDate=${workDate}`
+      })
     }
   }
 }
@@ -422,46 +454,63 @@ page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14rpx;
+  gap: 12rpx;
 }
 
 .empty-text {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #94a3b8;
 }
 
 .schedule-list {
-  margin-top: 20rpx;
+  margin-top: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
 }
 
 .schedule-item {
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #eef2f7;
-}
-
-.schedule-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  border-radius: 22rpx;
+  background: #f8fafc;
+  padding: 24rpx;
 }
 
 .item-title {
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 700;
   color: #0f172a;
 }
 
-.item-status {
+.audit-tag {
   font-size: 22rpx;
-  color: #2563eb;
-  background: #eff6ff;
-  padding: 6rpx 14rpx;
+  padding: 8rpx 18rpx;
   border-radius: 999rpx;
+}
+
+.audit-tag.empty {
+  color: #94a3b8;
+  background: #e2e8f0;
+}
+
+.audit-tag.pending {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.audit-tag.approved {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.audit-tag.rejected {
+  color: #dc2626;
+  background: #fee2e2;
 }
 
 .item-row {
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  gap: 12rpx;
   margin-top: 14rpx;
 }
 
@@ -470,24 +519,56 @@ page {
   color: #475569;
 }
 
-.item-bottom {
-  margin-top: 18rpx;
+.reject-reason {
+  margin-top: 16rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 16rpx;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 24rpx;
+}
+
+.item-actions {
+  margin-top: 20rpx;
 }
 
 .salary-text {
   font-size: 28rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #0f766e;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16rpx;
+}
+
+.ghost-btn,
+.detail-btn {
+  min-width: 136rpx;
+  height: 60rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ghost-btn {
+  background: #e2e8f0;
+}
+
+.ghost-btn-text {
+  font-size: 24rpx;
+  color: #475569;
 }
 
 .detail-btn {
-  padding: 10rpx 20rpx;
-  border-radius: 999rpx;
-  background: #0f172a;
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
 }
 
 .detail-btn-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: #fff;
+  font-weight: 600;
 }
 </style>

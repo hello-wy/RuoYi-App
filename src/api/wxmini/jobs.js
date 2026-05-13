@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import upload from '@/utils/upload'
 
 export function listWxJobs(query) {
   return request({
@@ -27,6 +28,24 @@ export function getMyJobSchedules() {
   return request({
     url: '/wxmini/jobs/schedules/my',
     method: 'get'
+  })
+}
+
+export function uploadJobAttendanceImage(jobId, filePath) {
+  return upload({
+    url: '/wxmini/common/uploadJobSignImage',
+    filePath,
+    name: 'file',
+    formData: { jobId },
+    showError: false
+  })
+}
+
+export function submitJobAttendanceImage(jobId, signImageUrl) {
+  return request({
+    url: `/wxmini/jobs/${jobId}/sign-in`,
+    method: 'post',
+    data: { signImageUrl }
   })
 }
 

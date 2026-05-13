@@ -22,7 +22,6 @@
       </view>
     </view>
 
-    <!-- 兼职日结 Tab -->
     <view v-if="activeTab === 'job'">
       <view class="filter-bar">
         <view class="search-bar-inline">
@@ -74,19 +73,8 @@
           <view v-for="item in jobOrders" :key="item.orderNo" class="order-card">
             <view class="card-top">
               <text class="user-name">{{ item.userName || '未知用户' }}</text>
-              <text
-                v-if="item.status === 3"
-                class="status-tag refunded"
-              >
-                已退款
-              </text>
-              <text
-                v-else-if="item.signedIn"
-                class="status-tag signed"
-              >
-                已签到
-              </text>
-              <text v-else class="status-tag unsigned">未签到</text>
+              <text v-if="item.status === 3" class="status-tag refunded">已退款</text>
+              <text v-else class="status-tag" :class="getJobAuditStatus(item).type">{{ getJobAuditStatus(item).label }}</text>
             </view>
 
             <view class="info-list">
@@ -98,6 +86,10 @@
                 <text class="info-label">支付时间</text>
                 <text class="info-value">{{ item.payTime || '-' }}</text>
               </view>
+              <view v-if="item.auditRemark" class="info-row">
+                <text class="info-label">审核说明</text>
+                <text class="info-value">{{ item.auditRemark }}</text>
+              </view>
               <view v-if="item.refundTime" class="info-row">
                 <text class="info-label">退款时间</text>
                 <text class="info-value">{{ item.refundTime }}</text>
@@ -106,7 +98,7 @@
 
             <view class="card-bottom">
               <button
-                v-if="item.status === 1 && item.signedIn"
+                v-if="item.status === 1 && canRefundJobOrder(item)"
                 class="refund-btn"
                 @click="handleJobRefund(item)"
               >
@@ -120,7 +112,6 @@
       </scroll-view>
     </view>
 
-    <!-- 沙龙活动 Tab -->
     <view v-if="activeTab === 'salon'">
       <view class="search-bar">
         <input
@@ -203,11 +194,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getCurrentInstance } from 'vue'
+import { getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { listJobRefundOrders, refundJobOrder, listSalonRefundOrders, refundSalonOrder } from '@/api/system/refund'
 import { listJobs } from '@/api/system/jobs'
+import { listJobRefundOrders, listSalonRefundOrders, refundJobOrder, refundSalonOrder } from '@/api/system/refund'
+import { buildAttendanceAuditStatus, canRefundJobOrder } from '@/pages/jobs/schedules.helpers'
 import { requireAdminAccess } from '../access'
 
 const { proxy } = getCurrentInstance()
@@ -215,7 +206,6 @@ const { proxy } = getCurrentInstance()
 const activeTab = ref('job')
 const keyword = ref('')
 
-// === 兼职日结 ===
 const jobOptions = ref([])
 const jobSearchKeyword = ref('')
 const selectedJobId = ref(null)
@@ -229,7 +219,6 @@ const jobDropdownVisible = ref(false)
 const jobActiveIndex = ref(-1)
 let searchTimer = null
 
-// === 沙龙活动 ===
 const salonOrders = ref([])
 const salonLoading = ref(false)
 const salonPageNum = ref(1)
@@ -248,6 +237,10 @@ onLoad(() => {
   }
   loadSalonOrders(true)
 })
+
+function getJobAuditStatus(item) {
+  return buildAttendanceAuditStatus(item)
+}
 
 async function fetchJobOptions(keyword) {
   try {
