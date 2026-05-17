@@ -237,8 +237,9 @@ export default {
     goSignUpload(item) {
       const title = encodeURIComponent(item.title || '')
       const workDate = encodeURIComponent(item.workDate || '')
+      const orderNo = encodeURIComponent(item.orderNo || '')
       uni.navigateTo({
-        url: `/pages/jobs/sign-upload?jobId=${item.jobId}&title=${title}&workDate=${workDate}`
+        url: `/pages/jobs/sign-upload?jobId=${item.jobId}&orderNo=${orderNo}&title=${title}&workDate=${workDate}`
       })
     }
   }
@@ -484,7 +485,7 @@ page {
 .audit-tag {
   font-size: 22rpx;
   padding: 8rpx 18rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
 }
 
 .audit-tag.empty {
@@ -535,7 +536,7 @@ page {
 .salary-text {
   font-size: 28rpx;
   font-weight: 700;
-  color: #0f766e;
+  color: #dc2626;
 }
 
 .action-buttons {
@@ -547,7 +548,7 @@ page {
 .detail-btn {
   min-width: 136rpx;
   height: 60rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -563,7 +564,7 @@ page {
 }
 
 .detail-btn {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: #0f172a;
 }
 
 .detail-btn-text {

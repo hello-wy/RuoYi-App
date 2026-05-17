@@ -31,24 +31,6 @@ export function getMyJobSchedules() {
   })
 }
 
-export function uploadJobAttendanceImage(jobId, filePath) {
-  return upload({
-    url: '/wxmini/common/uploadJobSignImage',
-    filePath,
-    name: 'file',
-    formData: { jobId },
-    showError: false
-  })
-}
-
-export function submitJobAttendanceImage(jobId, signImageUrl) {
-  return request({
-    url: `/wxmini/jobs/${jobId}/sign-in`,
-    method: 'post',
-    data: { signImageUrl }
-  })
-}
-
 export function getMyPublishedJobs() {
   return request({
     url: '/wxmini/jobs/mine/published',
@@ -61,6 +43,23 @@ export function getJobSignupUsers(jobId, query = {}) {
     url: `/wxmini/jobs/${jobId}/signup-users`,
     method: 'get',
     params: query
+  })
+}
+
+export function uploadJobAttendanceImage(filePath) {
+  return upload({
+    url: '/wxmini/common/uploadJobSignImage',
+    filePath,
+    name: 'file',
+    showError: false
+  })
+}
+
+export function submitJobAttendanceImage(orderNo, signImageUrl) {
+  return request({
+    url: `/wxmini/jobs/orders/${orderNo}/sign-image`,
+    method: 'post',
+    data: { signImageUrl }
   })
 }
 

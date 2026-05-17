@@ -5,11 +5,12 @@ export function getJobSignAuditMaterialUrls(item = {}) {
 }
 
 export function canAuditJobSignRecord(item = {}) {
-  return getJobSignAuditMaterialUrls(item).length > 0 && Number(item.auditStatus || 0) === 1
+  const submitted = Boolean(item.submitted) || getJobSignAuditMaterialUrls(item).length > 0
+  return submitted && Number(item.auditStatus || 0) === 1
 }
 
 export function buildJobSignAuditStatus(item = {}) {
-  const submitted = getJobSignAuditMaterialUrls(item).length > 0
+  const submitted = Boolean(item.submitted) || getJobSignAuditMaterialUrls(item).length > 0
   if (!submitted) {
     return { label: '未提交', type: 'empty' }
   }

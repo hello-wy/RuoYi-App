@@ -65,6 +65,7 @@ import config from '@/config'
 
 const { proxy } = getCurrentInstance()
 
+const orderNo = ref('')
 const jobId = ref('')
 const pageTitle = ref('')
 const workDate = ref('')
@@ -77,6 +78,7 @@ const status = computed(() => buildAttendanceAuditStatus(scheduleItem.value || {
 const rejectReason = computed(() => getAttendanceRejectReason(scheduleItem.value || {}))
 
 onLoad(async (options = {}) => {
+  orderNo.value = String(options.orderNo || '')
   jobId.value = String(options.jobId || '')
   pageTitle.value = decodeURIComponent(options.title || '')
   workDate.value = String(options.workDate || '')
@@ -133,8 +135,8 @@ function previewImage() {
 }
 
 async function submitImage() {
-  if (!jobId.value) {
-    proxy.$modal.showToast('岗位不能为空')
+  if (!orderNo.value) {
+    proxy.$modal.showToast('订单不能为空')
     return
   }
   if (!localFilePath.value) {
@@ -143,12 +145,12 @@ async function submitImage() {
   }
   submitting.value = true
   try {
-    const uploadRes = await uploadJobAttendanceImage(jobId.value, localFilePath.value)
+    const uploadRes = await uploadJobAttendanceImage(localFilePath.value)
     const signImageUrl = buildUploadedCertificateUrl(uploadRes)
     if (!signImageUrl) {
       throw new Error('上传结果无效')
     }
-    await submitJobAttendanceImage(jobId.value, signImageUrl)
+    await submitJobAttendanceImage(orderNo.value, signImageUrl)
     proxy.$modal.showToast('提交成功')
     localFilePath.value = ''
     await loadSchedule()
@@ -312,7 +314,7 @@ page {
 .secondary-btn,
 .primary-btn {
   flex: 1;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
   font-size: 28rpx;
 }
 
@@ -323,6 +325,6 @@ page {
 
 .primary-btn {
   color: #fff;
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: #0f172a;
 }
 </style>

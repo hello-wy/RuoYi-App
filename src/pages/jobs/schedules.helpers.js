@@ -29,6 +29,15 @@ export function buildAttendanceAuditStatus(item = {}) {
   return matched
 }
 
+export function buildAttendanceStatus(item = {}) {
+  const explicitLabel = normalizeText(item.attendanceStatusLabel)
+  if (explicitLabel && !getAttendanceImageUrl(item)) {
+    const type = Number(item.attendanceStatus) === 1 ? 'approved' : 'empty'
+    return { label: explicitLabel, type }
+  }
+  return buildAttendanceAuditStatus(item)
+}
+
 export function canUploadAttendanceImage(item = {}) {
   const auditStatus = Number(item.auditStatus || 0)
   return auditStatus === 0 || auditStatus === 3
