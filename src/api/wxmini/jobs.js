@@ -55,9 +55,9 @@ export function uploadJobAttendanceImage(filePath) {
   })
 }
 
-export function submitJobAttendanceImage(jobId, signImageUrl) {
+export function submitJobAttendanceImage(orderNo, signImageUrl) {
   return request({
-    url: `/wxmini/jobs/${jobId}/sign-in`,
+    url: `/wxmini/jobs/orders/${orderNo}/sign-image`,
     method: 'post',
     data: { signImageUrl }
   })

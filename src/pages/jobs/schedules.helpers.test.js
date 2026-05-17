@@ -14,7 +14,8 @@ describe('job schedules attendance helpers', () => {
     expect(buildAttendanceStatus({ auditStatus: 2, signImageUrl: '/profile/job-sign/a.jpg' })).toEqual({ label: '已驳回', type: 'rejected' })
   })
 
-  test('keeps backend attendance status labels when present', () => {
+  test('keeps backend attendance status labels while allowing unsubmitted records to upload', () => {
+    expect(buildAttendanceStatus({ attendanceStatusLabel: '未签到', attendanceStatus: 0 })).toEqual({ label: '未签到', type: 'empty' })
     expect(buildAttendanceStatus({ attendanceStatusLabel: '已签到', attendanceStatus: 1 })).toEqual({ label: '已签到', type: 'approved' })
   })
 

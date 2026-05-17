@@ -72,7 +72,7 @@ export default {
         if (Number(order.status) === 1) {
           uni.showToast({ title: '报名成功', icon: 'success' })
           setTimeout(() => {
-            uni.redirectTo({ url: `/pages/jobs/detail?id=${this.jobId}` })
+            uni.redirectTo({ url: '/pages/jobs/schedules' })
           }, 600)
           return
         }

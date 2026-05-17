@@ -75,7 +75,7 @@
               :class="{ disabled: uploadingJobId === item.jobId }"
               @click.stop="chooseAttendanceImage(item)"
             >
-              <text class="upload-btn-text">{{ uploadingJobId === item.jobId ? '上传中...' : (getAttendanceImage(item) ? '重新上传' : '上传签到图') }}</text>
+              <text class="upload-btn-text">{{ uploadingJobId === item.jobId ? '上传中...' : (getAttendanceImage(item) ? '重新上传' : '上传签到图片') }}</text>
             </view>
           </view>
           <view v-if="getAttendanceRejectText(item)" class="reject-row">
@@ -246,7 +246,7 @@ export default {
       return buildAttendanceStatus(item)
     },
     canUploadSignImage(item) {
-      return Boolean(item?.jobId) && canUploadAttendanceImage(item)
+      return Boolean(item?.orderNo) && canUploadAttendanceImage(item)
     },
     getAttendanceImage(item) {
       return getAttendanceImageUrl(item)
@@ -283,7 +283,7 @@ export default {
         if (!signImageUrl) {
           throw new Error('上传成功，但服务端没有返回签到图片地址，请稍后重试')
         }
-        await submitJobAttendanceImage(item.jobId, signImageUrl)
+        await submitJobAttendanceImage(item.orderNo, signImageUrl)
         uni.showToast({ title: '已提交审核', icon: 'success' })
         await this.loadData()
       } catch (error) {
@@ -498,7 +498,7 @@ page {
   color: #2563eb;
   background: #eff6ff;
   padding: 6rpx 14rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
 }
 
 .item-row {
@@ -518,7 +518,7 @@ page {
 
 .attendance-status {
   padding: 8rpx 16rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
   background: #f1f5f9;
 }
 
@@ -553,7 +553,7 @@ page {
 
 .upload-btn {
   padding: 10rpx 18rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
   background: #dbeafe;
 }
 
@@ -609,12 +609,12 @@ page {
 .salary-text {
   font-size: 28rpx;
   font-weight: 700;
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .detail-btn {
   padding: 10rpx 20rpx;
-  border-radius: 999rpx;
+  border-radius: 15rpx;
   background: #0f172a;
 }
 

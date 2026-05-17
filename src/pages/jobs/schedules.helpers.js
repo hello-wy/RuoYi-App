@@ -19,17 +19,23 @@ export function getAttendanceImageUrl(item = {}) {
 }
 
 export function buildAttendanceStatus(item = {}) {
+  const imageUrl = getAttendanceImageUrl(item)
+  const auditStatus = Number(item.auditStatus)
+  if (imageUrl && Number.isFinite(auditStatus)) {
+    return SUBMITTED_AUDIT_STATUS[auditStatus] || SUBMITTED_AUDIT_STATUS[0]
+  }
+
   const explicitLabel = normalizeText(item.attendanceStatusLabel)
   if (explicitLabel) {
-    const type = Number(item.attendanceStatus) === 1 ? 'approved' : 'pending'
+    const type = Number(item.attendanceStatus) === 1 ? 'approved' : 'empty'
     return { label: explicitLabel, type }
   }
 
-  if (!getAttendanceImageUrl(item)) {
+  if (!imageUrl) {
     return { label: '未提交', type: 'empty' }
   }
 
-  return SUBMITTED_AUDIT_STATUS[Number(item.auditStatus || 0)] || SUBMITTED_AUDIT_STATUS[0]
+  return SUBMITTED_AUDIT_STATUS[0]
 }
 
 export function canUploadAttendanceImage(item = {}) {

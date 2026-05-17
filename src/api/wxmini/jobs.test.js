@@ -20,11 +20,11 @@ describe('wxmini jobs api', () => {
     })
   })
 
-  test('submits uploaded attendance image for a job schedule', async () => {
+  test('submits uploaded attendance image for a paid order', async () => {
     const { submitJobAttendanceImage } = await import('./jobs')
 
-    expect(submitJobAttendanceImage(18, '/profile/job-sign/321/18.jpg')).toEqual({
-      url: '/wxmini/jobs/18/sign-in',
+    expect(submitJobAttendanceImage('J202605170001', '/profile/job-sign/321/18.jpg')).toEqual({
+      url: '/wxmini/jobs/orders/J202605170001/sign-image',
       method: 'post',
       data: { signImageUrl: '/profile/job-sign/321/18.jpg' }
     })
