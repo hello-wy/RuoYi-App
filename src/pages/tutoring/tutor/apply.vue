@@ -40,22 +40,12 @@
 
 				<view class="form-item">
 					<text class="form-label">头像</text>
-					<view v-if="avatarPreviewUrl" class="cert-upload-preview" @click="previewAvatarImage">
-						<image :src="avatarPreviewUrl" class="cert-upload-image" mode="aspectFill"></image>
-						<view class="cert-upload-actions">
-							<view class="cert-upload-action" @click.stop="chooseAvatarImage">
-								<text class="cert-upload-action-text">重新上传</text>
-							</view>
-							<view v-if="avatarUploading" class="upload-status">
-								<text class="upload-status-text">上传中<text class="dots">...</text></text>
-							</view>
-						</view>
-					</view>
-					<view v-else class="cert-upload-trigger" @click="chooseAvatarImage">
-						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
-						<text class="cert-upload-trigger-text">{{ avatarUploading ? '上传中...' : '上传头像' }}</text>
-						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 3MB</text>
-					</view>
+					<ImageUploader
+						:model-value="form.avatar"
+						:uploading="avatarUploading"
+						trigger-text="上传头像"
+						@upload="uploadAvatarImage"
+					/>
 				</view>
 			</view>
 
@@ -194,25 +184,14 @@
 
 				<view class="form-item">
 					<text class="form-label">证书图片</text>
-					<view v-if="certificatePreviewUrl" class="cert-upload-preview" @click="previewCertificateImage">
-						<image :src="certificatePreviewUrl" class="cert-upload-image" mode="aspectFill"></image>
-						<view class="cert-upload-actions">
-							<view class="cert-upload-action" @click.stop="chooseCertificateImage">
-								<text class="cert-upload-action-text">重新上传</text>
-							</view>
-							<view class="cert-upload-action danger" @click.stop="removeCertificateImage">
-								<text class="cert-upload-action-text danger">删除</text>
-							</view>
-							<view v-if="certificateUploading" class="upload-status">
-								<text class="upload-status-text">上传中<text class="dots">...</text></text>
-							</view>
-						</view>
-					</view>
-					<view v-else class="cert-upload-trigger" @click="chooseCertificateImage">
-						<uni-icons type="plusempty" size="24" color="#94A3B8"></uni-icons>
-						<text class="cert-upload-trigger-text">{{ certificateUploading ? '上传中...' : '上传证书图片' }}</text>
-						<text class="cert-upload-trigger-hint">仅支持 JPG、JPEG、PNG，大小不超过 3MB</text>
-					</view>
+					<ImageUploader
+						:model-value="form.certificates"
+						:uploading="certificateUploading"
+						trigger-text="上传证书图片"
+						:removable="true"
+						@upload="uploadCertificateImage"
+						@remove="removeCertificateImage"
+					/>
 				</view>
 
 				<view class="form-item">
@@ -310,22 +289,17 @@ import { useLocationStore, useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
+import ImageUploader from '@/components/ImageUploader/ImageUploader.vue'
 import {
-	appendPreviewCacheBuster,
 	buildUploadedCertificateUrl,
-	chooseWechatAlbumImage,
-	getImageValidationError,
-	isChooseImageCanceled,
-	isChooseImagePermissionDenied,
 	removeAreaCodeAtIndex,
-	requestWechatImagePrivacyAuthorization
 } from './apply.helpers'
 import { buildApplyFormStateFromTutor, buildApplyPageMode } from './apply.mode'
 import { tutorAgreementRoute } from './agreement.content'
 import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.helpers'
 
 export default {
-	components: { RealVerify, UserTypeGuardModal },
+	components: { RealVerify, UserTypeGuardModal, ImageUploader },
 	dicts: ['sys_subject', 'sys_degree', 'sys_methods'],
 	data() {
 		return {
@@ -382,12 +356,6 @@ export default {
 	computed: {
 		districtOptions() {
 			return useLocationStore().districts
-		},
-		avatarPreviewUrl() {
-			return appendPreviewCacheBuster(this.form.avatar)
-		},
-		certificatePreviewUrl() {
-			return appendPreviewCacheBuster(this.form.certificates)
 		}
 	},
 	onLoad(query) {
@@ -559,28 +527,6 @@ export default {
 			openAgreement() {
 			uni.navigateTo({ url: tutorAgreementRoute })
 		},
-		async chooseAvatarImage() {
-			if (this.avatarUploading) return
-			try {
-				await requestWechatImagePrivacyAuthorization(typeof wx !== 'undefined' ? wx : undefined)
-				const file = await chooseWechatAlbumImage(typeof uni !== 'undefined' ? uni : undefined)
-				const error = getImageValidationError(file)
-				if (error) {
-					uni.showToast({ title: error, icon: 'none' })
-					return
-				}
-				await this.uploadAvatarImage(file)
-			} catch (error) {
-				if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
-					return
-				}
-				if (isChooseImagePermissionDenied(error)) {
-					uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
-					return
-				}
-				uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
-			}
-		},
 		async uploadAvatarImage(file) {
 			this.avatarUploading = true
 			try {
@@ -600,35 +546,6 @@ export default {
 				this.avatarUploading = false
 			}
 		},
-previewAvatarImage() {
-			if (!this.avatarPreviewUrl) return
-			uni.previewImage({
-				urls: [this.avatarPreviewUrl],
-				current: this.avatarPreviewUrl
-			})
-		},
-		async chooseCertificateImage() {
-			if (this.certificateUploading) return
-			try {
-				await requestWechatImagePrivacyAuthorization(typeof wx !== 'undefined' ? wx : undefined)
-				const file = await chooseWechatAlbumImage(typeof uni !== 'undefined' ? uni : undefined)
-				const error = getImageValidationError(file)
-				if (error) {
-					uni.showToast({ title: error, icon: 'none' })
-					return
-				}
-				await this.uploadCertificateImage(file)
-			} catch (error) {
-				if (isChooseImageCanceled(error?.errMsg || error?.message || '')) {
-					return
-				}
-				if (isChooseImagePermissionDenied(error)) {
-					uni.showToast({ title: '请允许访问相册后重试', icon: 'none' })
-					return
-				}
-				uni.showToast({ title: '选择图片失败，请重试', icon: 'none' })
-			}
-		},
 		async uploadCertificateImage(file) {
 			this.certificateUploading = true
 			try {
@@ -645,13 +562,6 @@ previewAvatarImage() {
 			} finally {
 				this.certificateUploading = false
 			}
-		},
-		previewCertificateImage() {
-			if (!this.certificatePreviewUrl) return
-			uni.previewImage({
-				urls: [this.certificatePreviewUrl],
-				current: this.certificatePreviewUrl
-			})
 		},
 		removeCertificateImage() {
 			this.form.certificates = ''
@@ -681,7 +591,7 @@ previewAvatarImage() {
 				uni.showToast({ title: '城市不能超过15个字', icon: 'none' })
 				return false
 			}
-			if (!this.avatarPreviewUrl) {
+			if (!this.form.avatar) {
 				uni.showToast({ title: '请上传头像', icon: 'none' })
 				return false
 			}
@@ -957,98 +867,6 @@ page {
 .subject-empty-text {
 	font-size: 13px;
 	color: #94A3B8;
-}
-
-.cert-upload-trigger,
-.cert-upload-preview {
-	width: 100%;
-	background: #F8FAFC;
-	border: 1px dashed #CBD5E1;
-	border-radius: 12px;
-	padding: 16px;
-	box-sizing: border-box;
-}
-
-.cert-upload-trigger {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-}
-
-.cert-upload-trigger-text {
-	font-size: 14px;
-	color: #334155;
-}
-
-.cert-upload-trigger-hint {
-	font-size: 12px;
-	color: #94A3B8;
-}
-
-.cert-upload-image {
-	width: 100%;
-	height: 180px;
-	border-radius: 10px;
-	background: #E2E8F0;
-}
-
-.cert-upload-actions {
-	margin-top: 12px;
-	display: flex;
-	gap: 12px;
-	align-items: center;
-}
-
-.upload-status {
-	display: inline-flex;
-	align-items: center;
-}
-
-.upload-status-text {
-	font-size: 12px;
-	color: #3B82F6;
-	font-weight: 500;
-	display: flex;
-	align-items: center;
-}
-
-.dots {
-	display: inline-block;
-	letter-spacing: 2px;
-	animation: dots-animation 1.4s infinite;
-}
-
-@keyframes dots-animation {
-	0% {
-		opacity: 0.4;
-	}
-	50% {
-		opacity: 1;
-	}
-	100% {
-		opacity: 0.4;
-	}
-}
-
-.cert-upload-action {
-	padding: 8px 14px;
-	border-radius: 999px;
-	background: #DBEAFE;
-}
-
-.cert-upload-action.danger {
-	background: #FEE2E2;
-}
-
-.cert-upload-action-text {
-	font-size: 12px;
-	color: #1D4ED8;
-}
-
-.cert-upload-action-text.danger {
-	color: #DC2626;
 }
 
 .agree-row {

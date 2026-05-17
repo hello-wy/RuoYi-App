@@ -30,17 +30,15 @@
         <text class="section-subtitle">支持 JPG、JPEG、PNG，大小不超过 3MB</text>
       </view>
 
-      <view v-if="previewUrl" class="preview-wrap">
-        <image class="preview-image" :src="previewUrl" mode="aspectFill" @click="previewImage" />
-      </view>
-      <view v-else class="empty-wrap">
-        <uni-icons type="image" size="36" color="#94a3b8" />
-        <text class="empty-text">尚未选择签到图片</text>
-      </view>
+      <ImageUploader
+        v-model="imageUrl"
+        :uploading="uploading"
+        trigger-text="上传签到图片"
+        @upload="handleUpload"
+      />
 
       <view class="action-row">
-        <button class="secondary-btn" @click="chooseImage" :disabled="submitting">重新选择</button>
-        <button class="primary-btn" @click="submitImage" :loading="submitting" :disabled="submitting || !localFilePath">提交审核</button>
+        <button class="primary-btn" @click="submitImage" :loading="submitting" :disabled="submitting || !imageUrl">提交审核</button>
       </view>
     </view>
   </scroll-view>
@@ -51,16 +49,11 @@ import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getMyJobSchedules, submitJobAttendanceImage, uploadJobAttendanceImage } from '@/api/wxmini/jobs'
 import {
-  appendPreviewCacheBuster,
   buildUploadedCertificateUrl,
   buildUploadedPreviewUrl,
-  chooseWechatAlbumImage,
-  getImageValidationError,
-  isChooseImageCanceled,
-  isChooseImagePermissionDenied,
-  requestWechatImagePrivacyAuthorization
 } from '@/pages/tutoring/tutor/apply.helpers'
 import { buildAttendanceAuditStatus, getAttendanceRejectReason } from './schedules.helpers'
+import ImageUploader from '@/components/ImageUploader/ImageUploader.vue'
 import config from '@/config'
 
 const { proxy } = getCurrentInstance()
@@ -70,8 +63,8 @@ const jobId = ref('')
 const pageTitle = ref('')
 const workDate = ref('')
 const scheduleItem = ref({})
-const localFilePath = ref('')
-const previewUrl = ref('')
+const imageUrl = ref('')
+const uploading = ref(false)
 const submitting = ref(false)
 
 const status = computed(() => buildAttendanceAuditStatus(scheduleItem.value || {}))
@@ -99,39 +92,33 @@ async function loadSchedule() {
       workDate.value = matched.workDate || ''
     }
     if (matched.signImageUrl) {
-      previewUrl.value = appendPreviewCacheBuster(buildUploadedPreviewUrl(config.baseUrl, { fileName: matched.signImageUrl }))
+      const fullUrl = buildUploadedPreviewUrl(config.baseUrl, { fileName: matched.signImageUrl })
+      imageUrl.value = fullUrl
     }
   } catch (error) {
     uni.showToast({ title: '加载签到信息失败', icon: 'none' })
   }
 }
 
-async function chooseImage() {
+async function handleUpload(file) {
+  uploading.value = true
   try {
-    await requestWechatImagePrivacyAuthorization()
-    const file = await chooseWechatAlbumImage()
-    const error = getImageValidationError(file)
-    if (error) {
-      proxy.$modal.showToast(error)
-      return
+    const uploadRes = await uploadJobAttendanceImage(file.tempFilePath || file.path)
+    const signImageUrl = buildUploadedCertificateUrl(uploadRes)
+    if (!signImageUrl) {
+      throw new Error('上传成功，但服务端没有返回图片地址，请稍后重试')
     }
-    localFilePath.value = file.tempFilePath || file.path || ''
-    previewUrl.value = localFilePath.value
+    imageUrl.value = signImageUrl.startsWith('https') ? signImageUrl : config.baseUrl + signImageUrl
+    uni.showToast({ title: '上传成功', icon: 'success' })
   } catch (error) {
-    if (isChooseImageCanceled(error?.errMsg || error?.message || error)) {
-      return
-    }
-    if (isChooseImagePermissionDenied(error)) {
-      proxy.$modal.showToast('请在微信设置中开启相册权限')
-      return
-    }
-    proxy.$modal.showToast('选择图片失败')
+    uni.showModal({
+      title: '上传失败',
+      content: error?.message || error || '上传失败，请重试',
+      showCancel: false
+    })
+  } finally {
+    uploading.value = false
   }
-}
-
-function previewImage() {
-  if (!previewUrl.value) return
-  uni.previewImage({ current: previewUrl.value, urls: [previewUrl.value] })
 }
 
 async function submitImage() {
@@ -139,20 +126,15 @@ async function submitImage() {
     proxy.$modal.showToast('订单不能为空')
     return
   }
-  if (!localFilePath.value) {
-    proxy.$modal.showToast('请先选择签到图片')
+  if (!imageUrl.value) {
+    proxy.$modal.showToast('请先上传签到图片')
     return
   }
   submitting.value = true
   try {
-    const uploadRes = await uploadJobAttendanceImage(localFilePath.value)
-    const signImageUrl = buildUploadedCertificateUrl(uploadRes)
-    if (!signImageUrl) {
-      throw new Error('上传结果无效')
-    }
+    const signImageUrl = imageUrl.value.replace(config.baseUrl, '')
     await submitJobAttendanceImage(orderNo.value, signImageUrl)
     proxy.$modal.showToast('提交成功')
-    localFilePath.value = ''
     await loadSchedule()
     setTimeout(() => {
       uni.navigateBack({ delta: 1 })
@@ -278,52 +260,16 @@ page {
   color: #64748b;
 }
 
-.preview-wrap,
-.empty-wrap {
-  width: 100%;
-  height: 420rpx;
-  border-radius: 20rpx;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.preview-image {
-  width: 100%;
-  height: 100%;
-}
-
-.empty-wrap {
-  flex-direction: column;
-}
-
-.empty-text {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: #94a3b8;
-}
-
 .action-row {
   display: flex;
   gap: 20rpx;
   margin-top: 28rpx;
 }
 
-.secondary-btn,
 .primary-btn {
   flex: 1;
   border-radius: 15rpx;
   font-size: 28rpx;
-}
-
-.secondary-btn {
-  color: #0f766e;
-  background: #ecfdf5;
-}
-
-.primary-btn {
   color: #fff;
   background: #0f172a;
 }
