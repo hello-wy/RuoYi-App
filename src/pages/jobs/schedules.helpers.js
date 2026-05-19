@@ -53,3 +53,20 @@ export function getAttendanceRejectReason(item = {}) {
 export function canRefundJobOrder(item = {}) {
   return Boolean(item.canRefund)
 }
+
+export function buildTutoringScheduleStatus(item = {}) {
+  const explicitLabel = normalizeText(item.statusLabel || item.scheduleStatusLabel || item.orderStatusLabel)
+  const status = Number(item.status ?? item.scheduleStatus ?? item.orderStatus ?? 0)
+  const map = {
+    0: { label: '待上课', type: 'pending' },
+    1: { label: '待确认', type: 'warning' },
+    2: { label: '待审稿', type: 'approved' },
+    3: { label: '已完成', type: 'approved' },
+    4: { label: '已取消', type: 'rejected' }
+  }
+  const matched = map[status] || map[0]
+  if (explicitLabel) {
+    return { label: explicitLabel, type: matched.type }
+  }
+  return matched
+}

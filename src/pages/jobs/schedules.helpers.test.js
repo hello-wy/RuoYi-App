@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   buildAttendanceStatus,
+  buildTutoringScheduleStatus,
   canUploadAttendanceImage,
   getAttendanceRejectReason,
   getAttendanceImageUrl,
@@ -36,5 +37,11 @@ describe('job schedules attendance helpers', () => {
     expect(getAttendanceRejectReason({ auditStatus: 3, auditRemark: '图片不清晰' })).toBe('图片不清晰')
     expect(getAttendanceRejectReason({ auditStatus: 3, rejectReason: '缺少现场信息' })).toBe('缺少现场信息')
     expect(getAttendanceRejectReason({ auditStatus: 1, auditRemark: '等待审核' })).toBe('')
+  })
+
+  test('builds tutoring schedule status for default and explicit backend labels', () => {
+    expect(buildTutoringScheduleStatus({ status: 0 })).toEqual({ label: '待上课', type: 'pending' })
+    expect(buildTutoringScheduleStatus({ status: 1 })).toEqual({ label: '待确认', type: 'warning' })
+    expect(buildTutoringScheduleStatus({ status: 2, statusLabel: '管理员审稿中' })).toEqual({ label: '管理员审稿中', type: 'approved' })
   })
 })

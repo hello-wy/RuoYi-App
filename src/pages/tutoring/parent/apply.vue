@@ -252,6 +252,30 @@
 
 			<view class="form-section-card">
 				<view class="section-header">
+					<view class="section-icon blue">
+						<uni-icons type="staff-filled" size="16" color="#2563EB"></uni-icons>
+					</view>
+					<text class="section-title">选择陪伴官</text>
+				</view>
+
+				<view class="form-item no-margin">
+					<text class="form-label">陪伴官 <text class="form-label-required">*</text></text>
+					<view class="selector-box selector-box-address" @click="openTutorSheet">
+						<view class="selector-main selector-main-address">
+							<text class="selector-text selector-text-ellipsis" :class="{ placeholder: !form.tutorName }">
+								{{ form.tutorName || '请选择陪伴官' }}
+							</text>
+							<text v-if="form.tutorMeta || form.tutorPrice" class="selector-meta">
+								{{ buildTutorMetaText({ school: form.tutorMeta, quotePrice: form.tutorPrice }) }}
+							</text>
+						</view>
+						<uni-icons type="right" size="14" color="#94a3b8"></uni-icons>
+					</view>
+				</view>
+			</view>
+
+			<view class="form-section-card">
+				<view class="section-header">
 					<view class="section-icon green">
 						<uni-icons type="heart-filled" size="16" color="#55B938"></uni-icons>
 					</view>
@@ -350,13 +374,47 @@
 				</scroll-view>
 			</view>
 		</view>
+
+		<view v-if="tutorSheetVisible" class="sheet-overlay" @touchmove.stop.prevent>
+			<view class="sheet-mask" @click="closeTutorSheet"></view>
+			<view class="sheet-panel">
+				<view class="sheet-handle"></view>
+				<view class="sheet-header">
+					<text class="sheet-title">选择陪伴官</text>
+					<uni-icons type="closeempty" size="20" color="#64748b" @click="closeTutorSheet"></uni-icons>
+				</view>
+				<scroll-view scroll-y class="sheet-scroll">
+					<view v-if="tutorLoading" class="sheet-empty">陪伴官列表加载中...</view>
+					<view v-else-if="!tutorList.length" class="sheet-empty">暂无可选陪伴官，请稍后重试</view>
+					<view v-else class="address-option-list">
+						<view
+							v-for="item in tutorList"
+							:key="item.id || item.tutorId"
+							class="address-option tutor-option"
+							:class="{ active: String(form.tutorId) === String(item.tutorId || item.id) }"
+							@click="selectTutor(item)"
+						>
+							<view class="address-option-main">
+								<view class="address-option-top">
+									<text class="address-option-title">{{ item.realName || '未命名陪伴官' }}</text>
+									<text v-if="item.recommended" class="default-badge">推荐</text>
+								</view>
+								<text class="address-option-meta">{{ buildTutorMetaText(item) || '资料待完善' }}</text>
+							</view>
+						</view>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script>
 import {
 	addParents,
+	createTutoringOrder,
 	deleteServiceAddress,
+	getBindableTutors,
 	getMyParentDemandDetail,
 	getParents,
 	listServiceAddresses,
@@ -387,6 +445,20 @@ function createDefaultForm() {
 	return buildParentApplyDefaultForm()
 }
 
+function formatAmount(value) {
+	const num = Number(value || 0)
+	return Number.isNaN(num) ? '0.00' : num.toFixed(2)
+}
+
+function buildTutorMetaText(item = {}) {
+	const school = String(item.school || item.tutorMeta || '').trim()
+	const price = String(item.quotePrice || item.tutorPrice || '').trim()
+	const parts = []
+	if (school) parts.push(school)
+	if (price) parts.push(`¥${formatAmount(price)}/小时`)
+	return parts.join(' · ')
+}
+
 export default {
 	components: { LoginPopup, UserTypeGuardModal, UniCalendar },
 	dicts: ['sys_methods', 'sys_class', 'sys_subject', 'sys_tutoring_demand_items'],
@@ -404,6 +476,9 @@ export default {
 			addressLoading: false,
 			addressSheetVisible: false,
 			addressList: [],
+			tutorLoading: false,
+			tutorSheetVisible: false,
+			tutorList: [],
 			activeTimeSlotIndex: -1,
 			demandId: '',
 			fromMine: false,
@@ -446,7 +521,7 @@ export default {
 		},
 		submitButtonText() {
 			if (this.submitting) return this.isEditMode ? '保存中...' : '提交中...'
-			return this.isEditMode ? '保存需求' : '立即发布'
+			return this.isEditMode ? '保存需求' : '立即发布并支付'
 		}
 	},
 	onLoad(options) {
@@ -459,12 +534,17 @@ export default {
 		if (this.isEditMode) {
 			uni.setNavigationBarTitle({ title: '编辑需求' })
 			this.loadDetail()
+		} else {
+			this.loadTutorList()
 		}
 	},
 	onShow() {
 		this.checkUserType()
 		this.loadBabyList()
 		this.loadAddressList()
+		if (!this.isEditMode) {
+			this.loadTutorList()
+		}
 	},
 	methods: {
 		checkUserType() {
@@ -522,21 +602,34 @@ export default {
 		callService() {
 			uni.makePhoneCall({ phoneNumber: '17327736231' })
 		},
+		buildTutorMetaText,
 		getLabel(options, value) {
 			const item = (options || []).find(option => String(option.value) === String(value))
 			return item ? item.label : value
 		},
 		onGradeChange(e) {
 			this.form.grade = (this.gradeOptions[e.detail.value] && this.gradeOptions[e.detail.value].value) || ''
+			if (!this.isEditMode) {
+				this.loadTutorList()
+			}
 		},
 		onSubjectChange(e) {
 			this.form.subject = (this.subjectOptions[e.detail.value] && this.subjectOptions[e.detail.value].value) || ''
+			if (!this.isEditMode) {
+				this.loadTutorList()
+			}
 		},
 		selectCompanionGender(value) {
 			this.form.genderRequirement = String(value)
+			if (!this.isEditMode) {
+				this.loadTutorList()
+			}
 		},
 		toggleMethod(value) {
 			this.form.methods = String(this.form.methods) === String(value) ? '' : value
+			if (!this.isEditMode) {
+				this.loadTutorList()
+			}
 		},
 		isDemandItemSelected(value) {
 			return this.form.demandItems.some(item => String(item) === String(value))
@@ -651,6 +744,44 @@ export default {
 			if (!selected) return
 			this.selectAddress(selected, false)
 		},
+		openTutorSheet() {
+			const userStore = useUserStore()
+			if (!userStore.token) {
+				this.shouldAutoOpenLogin = true
+				return
+			}
+			this.tutorSheetVisible = true
+			if (!this.tutorList.length && !this.tutorLoading) {
+				this.loadTutorList()
+			}
+		},
+		closeTutorSheet() {
+			this.tutorSheetVisible = false
+		},
+		selectTutor(item) {
+			this.form.tutorId = item.tutorId || item.id || ''
+			this.form.tutorName = item.realName || ''
+			this.form.tutorMeta = item.school || ''
+			this.form.tutorPrice = item.quotePrice || ''
+			this.closeTutorSheet()
+		},
+		async loadTutorList() {
+			this.tutorLoading = true
+			try {
+				const res = await getBindableTutors({ demandId: this.demandId || undefined })
+				this.tutorList = Array.isArray(res?.data) ? res.data : []
+				if (!this.form.tutorId && this.tutorList.length) {
+					const selected = this.tutorList.find(item => item.selected || item.recommended) || this.tutorList[0]
+					if (selected) {
+						this.selectTutor(selected)
+					}
+				}
+			} catch (e) {
+				this.tutorList = []
+			} finally {
+				this.tutorLoading = false
+			}
+		},
 		async loadBabyList() {
 			if (!canUseBabyPicker(this.userType)) {
 				this.babyList = []
@@ -665,6 +796,9 @@ export default {
 				const res = await listBaby()
 				this.babyList = normalizeBabyList(res?.data)
 				this.syncSelectedBabyInfo()
+				if (!this.isEditMode) {
+					this.loadTutorList()
+				}
 			} catch (e) {
 				this.babyList = []
 			} finally {
@@ -695,6 +829,13 @@ export default {
 				this.form.phone = this.form.phone || useUserStore().phone || ''
 				this.syncSelectedBabyInfo()
 				this.syncSelectedAddressInfo()
+				await this.loadTutorList()
+				if (this.form.tutorId && this.tutorList.length) {
+					const matchedTutor = this.tutorList.find(item => String(item.tutorId || item.id) === String(this.form.tutorId))
+					if (matchedTutor) {
+						this.selectTutor(matchedTutor)
+					}
+				}
 			} catch (e) {
 				uni.showToast({ title: '加载需求失败，请重试', icon: 'none' })
 				setTimeout(() => {
@@ -803,16 +944,15 @@ export default {
 			this.shouldAutoOpenLogin = false
 		},
 		handleSubmitSuccess(targetId) {
-			const successTitle = this.isEditMode ? '保存成功' : '发布成功，等待审核'
+			const successTitle = this.isEditMode ? '保存成功' : '发布成功'
 			uni.showToast({ title: successTitle, icon: 'success' })
 			setTimeout(() => {
 				if (this.isEditMode) {
 					uni.redirectTo({ url: `/pages/tutoring/parent/detail?id=${this.demandId}&scene=mine` })
 					return
 				}
-				const scene = this.fromMine ? '&scene=mine' : ''
-				uni.redirectTo({ url: `/pages/tutoring/parent/detail?id=${targetId}${scene}` })
-			}, 1000)
+				uni.redirectTo({ url: '/pages/jobs/schedules' })
+			}, 800)
 		},
 		async handleSubmit() {
 			const userStore = useUserStore()
@@ -829,10 +969,30 @@ export default {
 					this.handleSubmitSuccess(this.demandId)
 					return
 				}
-				const res = await addParents(payload)
-				this.handleSubmitSuccess(res.data)
+				const demandRes = await addParents(payload)
+				const demandId = demandRes?.data
+				const orderRes = await createTutoringOrder({
+					demandId,
+					tutorId: Number(this.form.tutorId)
+				}, { showError: false })
+				const orderData = orderRes?.data || {}
+				const payParam = orderData.payParam || {}
+				await uni.requestPayment({
+					provider: 'wxpay',
+					timeStamp: payParam.timeStamp,
+					nonceStr: payParam.nonceStr,
+					package: payParam.packageValue || payParam.package,
+					signType: payParam.signType || 'RSA',
+					paySign: payParam.paySign
+				})
+				this.handleSubmitSuccess(demandId)
 			} catch (e) {
-				uni.showToast({ title: this.isEditMode ? '保存失败，请重试' : '发布失败，请重试', icon: 'none' })
+				const message = e?.errMsg || e?.msg || ''
+				if (/cancel/i.test(message)) {
+					uni.showToast({ title: '支付已取消，可稍后在安排页查看', icon: 'none' })
+					return
+				}
+				uni.showToast({ title: this.isEditMode ? '保存失败，请重试' : (message || '发布失败，请重试'), icon: 'none' })
 			} finally {
 				this.submitting = false
 			}
