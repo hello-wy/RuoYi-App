@@ -51,7 +51,7 @@
               <text class="panel-title">已支付报名人员</text>
               <view class="panel-actions">
                 <view v-if="job.canCancel" class="ghost-btn danger" @click.stop="changeJobStatus(job, 3)">
-                  <text class="ghost-btn-text">取消招聘</text>
+                  <text class="ghost-btn-text">下架岗位</text>
                 </view>
                 <view v-if="job.canResumeRecruiting" class="ghost-btn" @click.stop="changeJobStatus(job, 0)">
                   <text class="ghost-btn-text">恢复招聘</text>
@@ -66,18 +66,28 @@
               <uni-load-more status="loading"></uni-load-more>
             </view>
             <view v-else-if="signupUsers.length === 0" class="inner-state">
-              <text class="empty-text">暂无已支付报名人员</text>
+              <text class="empty-text">该岗位尚无已支付订单，可在订单列表查看其他状态</text>
             </view>
             <view v-else class="user-list">
               <view v-for="user in signupUsers" :key="user.userInfoId" class="user-item">
                 <view class="avatar"><text>{{ avatarText(user.displayName) }}</text></view>
                 <view class="user-info">
-                  <text class="user-name">{{ user.displayName || '未命名用户' }}</text>
-                  <text class="user-phone">{{ user.phoneMasked || '未提供手机号' }}</text>
+                  <view class="user-info-row">
+                    <text class="user-name">{{ user.displayName || '未命名用户' }}</text>
+                    <text class="user-phone">{{ user.phoneMasked || '未提供手机号' }}</text>
+                  </view>
+                  <view class="user-meta">
+                    <text class="status-tag" :class="getAttendanceClass(user.attendanceStatus)">{{ user.attendanceStatusLabel }}</text>
+                    <text v-if="user.auditStatus !== 0" class="status-tag" :class="getAuditClass(user.auditStatus)">{{ user.auditStatusLabel }}</text>
+                    <text v-if="user.signTime" class="user-phone">签到 {{ user.signTime }}</text>
+                  </view>
                 </view>
                 <view class="user-right">
                   <text v-if="user.payrollPaid" class="paid-tag">已支付</text>
                   <text v-else class="amount-text">¥{{ formatAmount(job.salaryDay) }}</text>
+                  <view v-if="user.signImageUrl" class="ghost-btn" @click.stop="previewSignImage(user)">
+                    <text class="ghost-btn-text">查看签到</text>
+                  </view>
                 </view>
               </view>
             </view>
@@ -97,6 +107,8 @@
 import { getJobSignupUsers, getMyPublishedJobs, updateMerchantJobStatus } from '@/api/wxmini/jobs'
 import { useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
+import config from '@/config'
+import { getAttendanceClass, getAuditClass, resolveSignImage } from './signup-users.helpers'
 
 const JOB_STATUS_LABELS = {
   0: '招聘中',
@@ -112,6 +124,8 @@ const JOB_STATUS_CLASSES = {
   3: 'status-cancelled'
 }
 
+
+
 export default {
   data() {
     return {
@@ -123,9 +137,15 @@ export default {
       activeJobId: ''
     }
   },
-  onLoad() {
+  onLoad(options) {
     this.blocked = useUserStore().userType !== USER_TYPES.MERCHANT
-    if (!this.blocked) this.loadJobs()
+    if (!this.blocked) {
+      this.loadJobs()
+      if (options && options.jobId) {
+        this.activeJobId = Number(options.jobId)
+        this.toggleJob({ id: Number(options.jobId) })
+      }
+    }
   },
   onPullDownRefresh() {
     if (this.blocked) {
@@ -168,7 +188,7 @@ export default {
     async changeJobStatus(job, status) {
       try {
         await updateMerchantJobStatus(job.id, { status })
-        uni.showToast({ title: status === 3 ? '已取消招聘' : '已恢复招聘', icon: 'success' })
+        uni.showToast({ title: status === 3 ? '已下架岗位' : '已恢复招聘', icon: 'success' })
         if (this.activeJobId === job.id) {
           this.activeJobId = ''
           this.signupUsers = []
@@ -197,6 +217,20 @@ export default {
     },
     getJobStatusClass(status) {
       return JOB_STATUS_CLASSES[Number(status)] || 'status-default'
+    },
+    getAttendanceClass(status) {
+      return getAttendanceClass(status)
+    },
+    getAuditClass(status) {
+      return getAuditClass(status)
+    },
+    resolveSignImage(url) {
+      return resolveSignImage(url, config.baseUrl)
+    },
+    previewSignImage(user) {
+      const url = this.resolveSignImage(user?.signImageUrl)
+      if (!url) return
+      uni.previewImage({ urls: [url], current: url })
     },
     formatAmount(value) {
       const num = Number(value || 0)
@@ -310,7 +344,11 @@ page { background: #f5f7fb; }
 }
 .user-name { display: block; font-size: 28rpx; font-weight: 600; color: #0f172a; }
 .user-phone { display: block; margin-top: 4rpx; }
-.user-right { margin-left: 16rpx; }
+.user-info-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12rpx; }
+.user-info-row .user-phone { margin-top: 0; }
+.user-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8rpx; margin-top: 6rpx; }
+.user-meta .user-phone { margin-top: 0; }
+.user-right { margin-left: 16rpx; display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
 .amount-text, .bill-amount { font-size: 28rpx; font-weight: 800; color: #ef4444; }
 .paid-tag { background: #dcfce7; color: #15803d; }
 .bill-row { margin-top: 18rpx; padding: 20rpx; border-radius: 18rpx; background: #f8fafc; }

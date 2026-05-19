@@ -327,18 +327,69 @@ export default {
 
       try {
         const res = await applyWithdraw(amount.toFixed(2))
-
-        const msg = res.msg || res.data || '微信提现已发起'
-        this.closeSheet()
-        uni.showToast({ title: msg, icon: 'success', duration: 2500 })
-        setTimeout(() => {
-          this.refreshAll()
-        }, 500)
+        if (res.code === 200) {
+          const data = res.data || {}
+          if (data.status === 1) {
+            // SUCCESS — close sheet, toast, refresh
+            this.closeSheet()
+            uni.showToast({ title: '提现成功', icon: 'success' })
+            this.refreshAll()
+          } else if (data.status === 0) {
+            // PROCESSING — close sheet, hint, start polling
+            this.closeSheet()
+            uni.showToast({ title: '提现处理中，请稍候', icon: 'none', duration: 2000 })
+            this.startWithdrawPolling(data.withdrawId)
+          } else {
+            // Unexpected status — treat as processing
+            this.closeSheet()
+            uni.showToast({ title: res.msg || '提现已提交', icon: 'none' })
+            this.refreshAll()
+          }
+        } else {
+          // FAILURE — keep sheet open, show error
+          const data = res.data || {}
+          this.withdrawError = data.userMessage || res.msg || '提交失败，请重试'
+        }
       } catch (e) {
-        this.withdrawError = '提交失败，请重试'
+        this.withdrawError = e.message || '网络异常，请重试'
       } finally {
         this.withdrawLoading = false
       }
+    },
+
+    startWithdrawPolling(withdrawId) {
+      let attempts = 0
+      const maxAttempts = 6
+      const interval = 5000
+
+      const pollTimer = setInterval(async () => {
+        attempts++
+        try {
+          await this.loadWithdrawRecords()
+          const target = this.withdrawList.find(item => item.id === withdrawId)
+          if (target) {
+            if (target.status === 1) {
+              clearInterval(pollTimer)
+              uni.showToast({ title: '提现成功', icon: 'success' })
+              this.refreshAll()
+              return
+            }
+            if (target.status === 2) {
+              clearInterval(pollTimer)
+              uni.showToast({ title: target.userMessage || target.remark || '提现失败', icon: 'none' })
+              this.refreshAll()
+              return
+            }
+          }
+        } catch (e) {
+          // ignore polling errors
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(pollTimer)
+          uni.showToast({ title: '请稍后手动刷新查看结果', icon: 'none' })
+          this.refreshAll()
+        }
+      }, interval)
     },
 
     formatAmount(val) {
