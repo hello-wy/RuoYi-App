@@ -2,8 +2,8 @@
   <scroll-view class="schedule-page" scroll-y>
     <view class="hero-card">
       <view>
-        <text class="hero-title">兼职安排日历</text>
-        <text class="hero-desc">按日期查看已支付报名岗位的工作安排与签到状态</text>
+        <text class="hero-title">我的安排日历</text>
+        <text class="hero-desc">同时查看兼职安排与家教安排，按日期处理签到和完课动作</text>
       </view>
       <view class="hero-count">
         <text class="hero-count-num">{{ scheduleList.length }}</text>
@@ -50,10 +50,13 @@
       </view>
 
       <view v-else class="schedule-list">
-        <view v-for="item in selectedList" :key="item.orderNo || item.jobId" class="schedule-item">
+        <view v-for="item in selectedList" :key="item.uniqueKey" class="schedule-item" :class="`schedule-item-${item.type}`">
           <view class="item-top">
-            <text class="item-title">{{ item.title || '岗位安排' }}</text>
-            <text class="audit-tag" :class="getAuditStatus(item).type">{{ getAuditStatus(item).label }}</text>
+            <view class="item-title-group">
+              <text class="item-title">{{ item.title || (item.type === 'tutoring' ? '家教安排' : '岗位安排') }}</text>
+              <text class="type-tag" :class="item.type">{{ item.typeLabel }}</text>
+            </view>
+            <text class="audit-tag" :class="getStatusTag(item).type">{{ getStatusTag(item).label }}</text>
           </view>
           <view class="item-row">
             <uni-icons type="time" size="14" color="#64748b" />
@@ -63,21 +66,31 @@
             <uni-icons type="location-filled" size="14" color="#64748b" />
             <text class="item-text">{{ item.location || '地点待定' }}</text>
           </view>
-          <view class="item-row">
+          <view class="item-row" v-if="item.type === 'job'">
             <uni-icons type="checkbox-filled" size="14" color="#64748b" />
             <text class="item-text">签到状态：{{ item.attendanceStatusLabel || '未签到' }}</text>
+          </view>
+          <view class="item-row" v-else>
+            <uni-icons type="person-filled" size="14" color="#64748b" />
+            <text class="item-text">陪伴官：{{ item.tutorName || '待分配' }}</text>
           </view>
           <view v-if="getRejectReason(item)" class="reject-reason">
             驳回原因：{{ getRejectReason(item) }}
           </view>
           <view class="item-bottom item-actions">
-            <text class="salary-text">¥{{ formatAmount(item.salaryDay) }}/天</text>
+            <text class="salary-text">{{ getAmountText(item) }}</text>
             <view class="action-buttons">
-              <view v-if="item.jobId" class="ghost-btn" @click.stop="goJobDetail(item.jobId)">
+              <view v-if="item.type === 'job' && item.jobId" class="ghost-btn" @click.stop="goJobDetail(item.jobId)">
                 <text class="ghost-btn-text">查看岗位</text>
               </view>
-              <view v-if="canUpload(item)" class="detail-btn" @click.stop="goSignUpload(item)">
+              <view v-if="item.type === 'job' && canUpload(item)" class="detail-btn" @click.stop="goSignUpload(item)">
                 <text class="detail-btn-text">{{ item.auditStatus === 3 ? '重新上传' : '上传签到图' }}</text>
+              </view>
+              <view v-if="item.type === 'tutoring' && canStudentComplete(item)" class="detail-btn" @click.stop="handleStudentComplete(item)">
+                <text class="detail-btn-text">上课完成</text>
+              </view>
+              <view v-if="item.type === 'tutoring' && canParentConfirm(item)" class="detail-btn warning-btn" @click.stop="handleParentConfirm(item)">
+                <text class="detail-btn-text">确认完成</text>
               </view>
             </view>
           </view>
@@ -90,7 +103,17 @@
 <script>
 import UniCalendar from '@/uni_modules/uni-calendar/components/uni-calendar/uni-calendar.vue'
 import { getMyJobSchedules } from '@/api/wxmini/jobs'
-import { buildAttendanceAuditStatus, canUploadAttendanceImage, getAttendanceRejectReason } from './schedules.helpers'
+import {
+  confirmParentLessonComplete,
+  getMyTutoringSchedules,
+  markStudentLessonComplete,
+} from '@/api/wxmini/tutoring'
+import {
+  buildAttendanceAuditStatus,
+  buildTutoringScheduleStatus,
+  canUploadAttendanceImage,
+  getAttendanceRejectReason
+} from './schedules.helpers'
 
 function pad(num) {
   return String(num).padStart(2, '0')
@@ -102,8 +125,38 @@ function formatDate(date) {
 
 function parseDate(date) {
   if (!date) return null
-  const parsed = new Date(String(date).replace(/-/g, '/'))
+  const normalized = String(date).slice(0, 10)
+  const parsed = new Date(normalized.replace(/-/g, '/'))
   return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function normalizeScheduleDate(date) {
+  return String(date || '').slice(0, 10)
+}
+
+function formatAmount(value) {
+  const num = Number(value || 0)
+  return Number.isNaN(num) ? '0.00' : num.toFixed(2)
+}
+
+function normalizeJobSchedule(item = {}) {
+  return {
+    ...item,
+    uniqueKey: `job-${item.orderNo || item.jobId || item.workDate || Math.random()}`,
+    type: 'job',
+    typeLabel: '兼职',
+    workDate: normalizeScheduleDate(item.workDate),
+  }
+}
+
+function normalizeTutoringSchedule(item = {}) {
+  return {
+    ...item,
+    uniqueKey: `tutoring-${item.orderNo || item.id || item.workDate || Math.random()}`,
+    type: 'tutoring',
+    typeLabel: '家教',
+    workDate: normalizeScheduleDate(item.workDate),
+  }
 }
 
 export default {
@@ -114,6 +167,7 @@ export default {
     const today = new Date()
     return {
       loading: false,
+      actionLoading: false,
       scheduleList: [],
       selectedDate: formatDate(today),
       currentYear: today.getFullYear(),
@@ -173,8 +227,17 @@ export default {
     async loadData() {
       this.loading = true
       try {
-        const res = await getMyJobSchedules()
-        this.scheduleList = Array.isArray(res?.data) ? res.data : []
+        const [jobRes, tutoringRes] = await Promise.all([
+          getMyJobSchedules(),
+          getMyTutoringSchedules().catch(() => ({ data: [] }))
+        ])
+        const jobList = Array.isArray(jobRes?.data) ? jobRes.data.map(normalizeJobSchedule) : []
+        const tutoringList = Array.isArray(tutoringRes?.data) ? tutoringRes.data.map(normalizeTutoringSchedule) : []
+        this.scheduleList = [...jobList, ...tutoringList].sort((a, b) => {
+          const dateCompare = String(a.workDate || '').localeCompare(String(b.workDate || ''))
+          if (dateCompare !== 0) return dateCompare
+          return String(a.workTime || '').localeCompare(String(b.workTime || ''))
+        })
         if (!this.scheduleDateMap[this.selectedDate]) {
           const firstDate = this.scheduleList[0]?.workDate
           if (firstDate) {
@@ -218,18 +281,30 @@ export default {
       this.currentMonth = next.getMonth()
       this.selectedDate = this.resolveMonthSelectedDate(this.currentYear, this.currentMonth)
     },
-    formatAmount(value) {
-      const num = Number(value || 0)
-      return Number.isNaN(num) ? '0.00' : num.toFixed(2)
-    },
-    getAuditStatus(item) {
-      return buildAttendanceAuditStatus(item)
+    getStatusTag(item) {
+      return item.type === 'tutoring' ? buildTutoringScheduleStatus(item) : buildAttendanceAuditStatus(item)
     },
     canUpload(item) {
-      return canUploadAttendanceImage(item)
+      return item.type === 'job' && canUploadAttendanceImage(item)
     },
     getRejectReason(item) {
-      return getAttendanceRejectReason(item)
+      return item.type === 'job' ? getAttendanceRejectReason(item) : ''
+    },
+    getAmountText(item) {
+      if (item.type === 'job') {
+        return `¥${formatAmount(item.salaryDay)}/天`
+      }
+      return `¥${formatAmount(item.amount)}`
+    },
+    canStudentComplete(item) {
+      if (item.type !== 'tutoring') return false
+      if (item.canStudentComplete !== undefined) return Boolean(item.canStudentComplete)
+      return Number(item.status) === 0
+    },
+    canParentConfirm(item) {
+      if (item.type !== 'tutoring') return false
+      if (item.canParentConfirm !== undefined) return Boolean(item.canParentConfirm)
+      return Number(item.status) === 1
     },
     goJobDetail(jobId) {
       uni.navigateTo({ url: `/pages/jobs/detail?id=${jobId}` })
@@ -240,6 +315,39 @@ export default {
       const orderNo = encodeURIComponent(item.orderNo || '')
       uni.navigateTo({
         url: `/pages/jobs/sign-upload?jobId=${item.jobId}&orderNo=${orderNo}&title=${title}&workDate=${workDate}`
+      })
+    },
+    async handleStudentComplete(item) {
+      if (this.actionLoading || !item.id) return
+      this.actionLoading = true
+      try {
+        await markStudentLessonComplete(item.id)
+        uni.showToast({ title: '已标记上课完成', icon: 'success' })
+        await this.loadData()
+      } catch (e) {
+        uni.showToast({ title: e?.msg || '操作失败，请重试', icon: 'none' })
+      } finally {
+        this.actionLoading = false
+      }
+    },
+    handleParentConfirm(item) {
+      if (this.actionLoading || !item.id) return
+      uni.showModal({
+        title: '确认完成',
+        content: '确认之后，管理员需要进行审稿。确定现在确认完成吗？',
+        success: async ({ confirm }) => {
+          if (!confirm) return
+          this.actionLoading = true
+          try {
+            await confirmParentLessonComplete(item.id)
+            uni.showToast({ title: '已提交确认完成', icon: 'success' })
+            await this.loadData()
+          } catch (e) {
+            uni.showToast({ title: e?.msg || '操作失败，请重试', icon: 'none' })
+          } finally {
+            this.actionLoading = false
+          }
+        }
       })
     }
   }
@@ -476,16 +584,37 @@ page {
   padding: 24rpx;
 }
 
+.schedule-item-tutoring {
+  border: 1px solid #dbeafe;
+}
+
+.item-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .item-title {
   font-size: 30rpx;
   font-weight: 700;
   color: #0f172a;
 }
 
+.type-tag,
 .audit-tag {
   font-size: 22rpx;
   padding: 8rpx 18rpx;
   border-radius: 15rpx;
+}
+
+.type-tag.job {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.type-tag.tutoring {
+  color: #7c3aed;
+  background: #ede9fe;
 }
 
 .audit-tag.empty {
@@ -506,6 +635,11 @@ page {
 .audit-tag.rejected {
   color: #dc2626;
   background: #fee2e2;
+}
+
+.audit-tag.warning {
+  color: #b45309;
+  background: #fde68a;
 }
 
 .item-row {
@@ -542,6 +676,8 @@ page {
 .action-buttons {
   display: flex;
   gap: 16rpx;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .ghost-btn,
@@ -565,6 +701,10 @@ page {
 
 .detail-btn {
   background: #0f172a;
+}
+
+.warning-btn {
+  background: #b45309;
 }
 
 .detail-btn-text {
