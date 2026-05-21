@@ -318,10 +318,10 @@ export default {
       })
     },
     async handleStudentComplete(item) {
-      if (this.actionLoading || !item.orderNo) return
+      if (this.actionLoading || !item.id) return
       this.actionLoading = true
       try {
-        await markStudentLessonComplete(item.orderNo)
+        await markStudentLessonComplete(item.id)
         uni.showToast({ title: '已标记上课完成', icon: 'success' })
         await this.loadData()
       } catch (e) {
@@ -331,7 +331,7 @@ export default {
       }
     },
     handleParentConfirm(item) {
-      if (this.actionLoading || !item.orderNo) return
+      if (this.actionLoading || !item.id) return
       uni.showModal({
         title: '确认完成',
         content: '确认之后，管理员需要进行审稿。确定现在确认完成吗？',
@@ -339,7 +339,7 @@ export default {
           if (!confirm) return
           this.actionLoading = true
           try {
-            await confirmParentLessonComplete(item.orderNo)
+            await confirmParentLessonComplete(item.id)
             uni.showToast({ title: '已提交确认完成', icon: 'success' })
             await this.loadData()
           } catch (e) {

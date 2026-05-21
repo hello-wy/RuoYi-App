@@ -59,10 +59,9 @@ export function buildTutoringScheduleStatus(item = {}) {
   const status = Number(item.status ?? item.scheduleStatus ?? item.orderStatus ?? 0)
   const map = {
     0: { label: '待上课', type: 'pending' },
-    1: { label: '待确认', type: 'warning' },
-    2: { label: '待审稿', type: 'approved' },
-    3: { label: '已完成', type: 'approved' },
-    4: { label: '已取消', type: 'rejected' }
+    1: { label: '待家长确认', type: 'warning' },
+    2: { label: '待结算', type: 'approved' },
+    3: { label: '已结算', type: 'approved' }
   }
   const matched = map[status] || map[0]
   if (explicitLabel) {

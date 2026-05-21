@@ -29,13 +29,14 @@ function normalizePayParam(payParam = {}) {
 function normalizeTutorCandidate(item = {}) {
     return {
         ...item,
-        id: item.id ?? item.tutorId ?? item.bindTutorId ?? '',
-        tutorId: item.tutorId ?? item.id ?? item.bindTutorId ?? '',
+        id: item.id ?? item.bindingId ?? '',
+        bindingId: item.bindingId ?? item.id ?? '',
+        tutorId: item.tutorId ?? item.bindTutorId ?? '',
         realName: pickFirst([item.realName, item.tutorName, item.name]),
-        school: pickFirst([item.school, item.college]),
+        school: pickFirst([item.school, item.tutorSchool, item.college]),
         major: pickFirst([item.major]),
-        currentGrade: pickFirst([item.currentGrade, item.gradeLabel, item.degreeLabel]),
-        subjects: item.subjects || item.subjectIds || '',
+        currentGrade: pickFirst([item.currentGrade, item.tutorCurrentGrade, item.gradeLabel, item.degreeLabel]),
+        subjects: item.subjects || item.subjectIds || item.parentSubject || '',
         methods: item.methods ?? item.method ?? '',
         avatar: pickFirst([item.avatar, item.avatarUrl]),
         identity: item.identity ?? item.tutorIdentity ?? 0,
@@ -75,9 +76,11 @@ function normalizeTutoringOrder(item = {}) {
 function normalizeTutoringSchedule(item = {}) {
     return {
         ...item,
-        id: item.id ?? item.scheduleId ?? item.orderId ?? '',
+        id: item.id ?? item.scheduleId ?? '',
+        scheduleId: item.scheduleId ?? item.id ?? '',
         orderNo: pickFirst([item.orderNo, item.outTradeNo]),
         demandId: item.demandId ?? item.parentId ?? item.parentsId ?? '',
+        bindingId: item.bindingId ?? '',
         tutorId: item.tutorId ?? item.bindTutorId ?? '',
         tutorName: pickFirst([item.tutorName, item.realName, item.bindTutorName]),
         title: pickFirst([item.title, item.demandName, item.parentName, item.name]),
@@ -95,7 +98,9 @@ function normalizeTutoringSchedule(item = {}) {
         canParentConfirm: item.canParentConfirm,
         auditStatus: item.auditStatus,
         auditStatusLabel: pickFirst([item.auditStatusLabel]),
-        amount: item.amount ?? item.totalAmount ?? item.orderAmount ?? item.hourlyBudget ?? 0
+        grossAmount: item.grossAmount ?? item.amount ?? item.totalAmount ?? item.orderAmount ?? 0,
+        netAmount: item.netAmount ?? item.amount ?? item.totalAmount ?? item.orderAmount ?? 0,
+        amount: item.grossAmount ?? item.amount ?? item.totalAmount ?? item.orderAmount ?? item.hourlyBudget ?? 0
     }
 }
 
@@ -195,7 +200,7 @@ export function deleteMyParentDemand(id) {
 
 export function getBindableTutors(query = {}) {
     return request({
-        url: '/wxmini/tutoring/orders/bindable-tutors',
+        url: '/wxmini/tutoring/bindings/mine/available',
         method: 'get',
         params: query
     }).then(res => ({
@@ -206,7 +211,7 @@ export function getBindableTutors(query = {}) {
 
 export function createTutoringOrder(data, options = {}) {
     return request({
-        url: '/wxmini/tutoring/orders',
+        url: '/wxmini/tutoring/orders/create',
         method: 'post',
         data,
         ...options
@@ -238,17 +243,17 @@ export function getMyTutoringSchedules(query = {}) {
     }))
 }
 
-export function markStudentLessonComplete(orderNo, data = {}) {
+export function markStudentLessonComplete(scheduleId, data = {}) {
     return request({
-        url: `/wxmini/tutoring/orders/${orderNo}/student-complete`,
+        url: `/wxmini/tutoring/schedules/${scheduleId}/finish`,
         method: 'post',
         data
     })
 }
 
-export function confirmParentLessonComplete(orderNo, data = {}) {
+export function confirmParentLessonComplete(scheduleId, data = {}) {
     return request({
-        url: `/wxmini/tutoring/orders/${orderNo}/parent-confirm`,
+        url: `/wxmini/tutoring/schedules/${scheduleId}/confirm`,
         method: 'post',
         data
     })

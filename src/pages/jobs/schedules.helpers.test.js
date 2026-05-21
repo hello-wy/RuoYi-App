@@ -41,7 +41,9 @@ describe('job schedules attendance helpers', () => {
 
   test('builds tutoring schedule status for default and explicit backend labels', () => {
     expect(buildTutoringScheduleStatus({ status: 0 })).toEqual({ label: '待上课', type: 'pending' })
-    expect(buildTutoringScheduleStatus({ status: 1 })).toEqual({ label: '待确认', type: 'warning' })
+    expect(buildTutoringScheduleStatus({ status: 1 })).toEqual({ label: '待家长确认', type: 'warning' })
+    expect(buildTutoringScheduleStatus({ status: 2 })).toEqual({ label: '待结算', type: 'approved' })
     expect(buildTutoringScheduleStatus({ status: 2, statusLabel: '管理员审稿中' })).toEqual({ label: '管理员审稿中', type: 'approved' })
+    expect(buildTutoringScheduleStatus({ status: 3 })).toEqual({ label: '已结算', type: 'approved' })
   })
 })

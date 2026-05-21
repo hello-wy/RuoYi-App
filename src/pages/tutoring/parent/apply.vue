@@ -391,7 +391,7 @@
 							v-for="item in tutorList"
 							:key="item.id || item.tutorId"
 							class="address-option tutor-option"
-							:class="{ active: String(form.tutorId) === String(item.tutorId || item.id) }"
+							:class="{ active: String(form.bindingId) === String(item.bindingId || item.id) }"
 							@click="selectTutor(item)"
 						>
 							<view class="address-option-main">
@@ -759,7 +759,8 @@ export default {
 			this.tutorSheetVisible = false
 		},
 		selectTutor(item) {
-			this.form.tutorId = item.tutorId || item.id || ''
+			this.form.bindingId = item.bindingId || item.id || ''
+			this.form.tutorId = item.tutorId || ''
 			this.form.tutorName = item.realName || ''
 			this.form.tutorMeta = item.school || ''
 			this.form.tutorPrice = item.quotePrice || ''
@@ -768,9 +769,9 @@ export default {
 		async loadTutorList() {
 			this.tutorLoading = true
 			try {
-				const res = await getBindableTutors({ demandId: this.demandId || undefined })
+				const res = await getBindableTutors()
 				this.tutorList = Array.isArray(res?.data) ? res.data : []
-				if (!this.form.tutorId && this.tutorList.length) {
+				if (!this.form.bindingId && this.tutorList.length) {
 					const selected = this.tutorList.find(item => item.selected || item.recommended) || this.tutorList[0]
 					if (selected) {
 						this.selectTutor(selected)
@@ -831,7 +832,7 @@ export default {
 				this.syncSelectedAddressInfo()
 				await this.loadTutorList()
 				if (this.form.tutorId && this.tutorList.length) {
-					const matchedTutor = this.tutorList.find(item => String(item.tutorId || item.id) === String(this.form.tutorId))
+					const matchedTutor = this.tutorList.find(item => String(item.bindingId || item.id) === String(this.form.bindingId))
 					if (matchedTutor) {
 						this.selectTutor(matchedTutor)
 					}
@@ -972,8 +973,7 @@ export default {
 				const demandRes = await addParents(payload)
 				const demandId = demandRes?.data
 				const orderRes = await createTutoringOrder({
-					demandId,
-					tutorId: Number(this.form.tutorId)
+					bindingId: Number(this.form.bindingId)
 				}, { showError: false })
 				const orderData = orderRes?.data || {}
 				const payParam = orderData.payParam || {}

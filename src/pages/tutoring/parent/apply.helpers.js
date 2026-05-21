@@ -174,6 +174,7 @@ export function buildParentApplyDefaultForm() {
     genderRequirement: '0',
     hourlyBudget: '60',
     tutorId: '',
+    bindingId: '',
     tutorName: '',
     tutorMeta: '',
     tutorPrice: ''
@@ -200,7 +201,7 @@ export function validateParentApplyForm(form = {}, userType) {
   if (!Array.isArray(form.demandItems) || !form.demandItems.length) return '请选择服务需求项目'
   if (trimText(form.genderRequirement) === '') return '请选择陪伴官性别要求'
   if (!trimText(form.hourlyBudget)) return '请填写时薪预算'
-  if (!trimText(form.tutorId)) return '请选择陪伴官'
+  if (!trimText(form.bindingId)) return '请选择陪伴官'
   return ''
 }
 
@@ -232,8 +233,7 @@ export function buildParentApplyPayload(form = {}) {
     genderRequirement: trimText(form.genderRequirement),
     hourlyBudget: trimText(form.hourlyBudget),
     requirements: trimText(form.requirements),
-    brief: trimText(form.description),
-    tutorId: trimText(form.tutorId)
+    brief: trimText(form.description)
   }
 }
 export function buildParentApplyForm(detail = {}, babyList = [], addressList = []) {
@@ -258,6 +258,7 @@ export function buildParentApplyForm(detail = {}, babyList = [], addressList = [
     genderRequirement: trimText(detail.genderRequirement ?? '0') || '0',
     hourlyBudget: trimText(detail.hourlyBudget ?? '60') || '60',
     tutorId: detail.tutorId || detail.bindTutorId || '',
+    bindingId: detail.bindingId || '',
     tutorName: trimText(detail.tutorName || detail.bindTutorName || ''),
     tutorMeta: trimText(detail.tutorMeta || detail.bindTutorSchool || ''),
     tutorPrice: trimText(detail.tutorPrice || detail.quotePrice || detail.orderAmount || '')
