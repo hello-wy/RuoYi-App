@@ -29,3 +29,18 @@ export function refundSalonOrder(orderNo) {
     method: 'post'
   })
 }
+
+export function listCourseRefundOrders(query) {
+  return request({
+    url: '/system/refund/course/list',
+    method: 'get',
+    params: query
+  })
+}
+
+export function refundCourseOrder(orderNo) {
+  return request({
+    url: '/system/refund/course/' + orderNo,
+    method: 'post'
+  })
+}

@@ -2,7 +2,7 @@
   <view class="refund-page">
     <view class="refund-header">
       <view class="header-title">退款管理</view>
-      <view class="header-subtitle">管理兼职日结定金与沙龙活动退款</view>
+      <view class="header-subtitle">管理兼职日结定金、沙龙活动与课程退款</view>
     </view>
 
     <view class="tab-bar">
@@ -19,6 +19,13 @@
         @click="switchTab('salon')"
       >
         沙龙活动
+      </view>
+      <view
+        class="tab-item"
+        :class="{ active: activeTab === 'course' }"
+        @click="switchTab('course')"
+      >
+        课程订单
       </view>
     </view>
 
@@ -190,6 +197,75 @@
         </view>
       </scroll-view>
     </view>
+
+    <view v-if="activeTab === 'course'">
+      <view class="search-bar">
+        <input
+          class="search-input"
+          v-model="courseKeyword"
+          placeholder="输入课程、订单号或姓名搜索"
+          confirm-type="search"
+          @confirm="onCourseSearch"
+        />
+        <view class="search-btn" @click="onCourseSearch">搜索</view>
+      </view>
+
+      <scroll-view class="scroll-area-with-search" scroll-y @scrolltolower="loadMoreCourseOrders">
+        <view v-if="courseLoading && courseOrders.length === 0" class="state-box">
+          <uni-load-more status="loading" />
+        </view>
+
+        <view v-else-if="courseOrders.length === 0" class="state-box">
+          <text class="state-text">暂无课程订单</text>
+        </view>
+
+        <view v-else class="card-list">
+          <view v-for="item in courseOrders" :key="item.orderNo" class="order-card">
+            <view class="card-top">
+              <text class="user-name">{{ item.userName || item.name || '未知用户' }}</text>
+              <text class="status-tag" :class="getCourseStatus(item.status).type">
+                {{ getCourseStatus(item.status).label }}
+              </text>
+            </view>
+
+            <view class="info-list">
+              <view class="info-row">
+                <text class="info-label">课程</text>
+                <text class="info-value">{{ item.courseName || item.title || '-' }}</text>
+              </view>
+              <view class="info-row">
+                <text class="info-label">订单号</text>
+                <text class="info-value">{{ item.orderNo }}</text>
+              </view>
+              <view class="info-row">
+                <text class="info-label">金额</text>
+                <text class="info-value">{{ item.amount }} 元</text>
+              </view>
+              <view class="info-row">
+                <text class="info-label">签到时间</text>
+                <text class="info-value">{{ item.signTime || '-' }}</text>
+              </view>
+              <view v-if="item.refundTime" class="info-row">
+                <text class="info-label">退款时间</text>
+                <text class="info-value">{{ item.refundTime }}</text>
+              </view>
+            </view>
+
+            <view class="card-bottom">
+              <button
+                v-if="Number(item.status) === 2"
+                class="refund-btn"
+                @click="handleCourseRefund(item)"
+              >
+                退款
+              </button>
+            </view>
+          </view>
+
+          <uni-load-more :status="courseLoadMoreStatus" />
+        </view>
+      </scroll-view>
+    </view>
   </view>
 </template>
 
@@ -197,7 +273,14 @@
 import { getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { listJobs } from '@/api/system/jobs'
-import { listJobRefundOrders, listSalonRefundOrders, refundJobOrder, refundSalonOrder } from '@/api/system/refund'
+import {
+  listCourseRefundOrders,
+  listJobRefundOrders,
+  listSalonRefundOrders,
+  refundCourseOrder,
+  refundJobOrder,
+  refundSalonOrder
+} from '@/api/system/refund'
 import { buildAttendanceAuditStatus, canRefundJobOrder } from '@/pages/jobs/schedules.helpers'
 import { requireAdminAccess } from '../access'
 
@@ -224,6 +307,12 @@ const salonLoading = ref(false)
 const salonPageNum = ref(1)
 const salonTotal = ref(0)
 const salonLoadMoreStatus = ref('more')
+const courseKeyword = ref('')
+const courseOrders = ref([])
+const courseLoading = ref(false)
+const coursePageNum = ref(1)
+const courseTotal = ref(0)
+const courseLoadMoreStatus = ref('more')
 
 const PAGE_SIZE = 20
 
@@ -309,10 +398,17 @@ function switchTab(tab) {
   if (tab === 'salon' && salonOrders.value.length === 0) {
     loadSalonOrders(true)
   }
+  if (tab === 'course' && courseOrders.value.length === 0) {
+    loadCourseOrders(true)
+  }
 }
 
 function onSearch() {
   loadSalonOrders(true)
+}
+
+function onCourseSearch() {
+  loadCourseOrders(true)
 }
 
 async function loadJobOrders(reset) {
@@ -385,6 +481,52 @@ function loadMoreSalonOrders() {
   loadSalonOrders(false)
 }
 
+async function loadCourseOrders(reset) {
+  if (reset) {
+    coursePageNum.value = 1
+    courseOrders.value = []
+  }
+  courseLoading.value = true
+  try {
+    const params = {
+      pageNum: coursePageNum.value,
+      pageSize: PAGE_SIZE
+    }
+    if (courseKeyword.value.trim()) params.keyword = courseKeyword.value.trim()
+    const res = await listCourseRefundOrders(params)
+    const rows = res.rows || []
+    if (reset) {
+      courseOrders.value = rows
+    } else {
+      courseOrders.value.push(...rows)
+    }
+    courseTotal.value = Number(res.total || 0)
+    courseLoadMoreStatus.value = courseOrders.value.length >= courseTotal.value ? 'noMore' : 'more'
+  } catch (e) {
+    console.error('加载课程退款列表失败', e)
+    proxy.$modal.showToast('加载课程退款列表失败')
+  } finally {
+    courseLoading.value = false
+  }
+}
+
+function loadMoreCourseOrders() {
+  if (courseLoadMoreStatus.value === 'noMore') return
+  coursePageNum.value++
+  loadCourseOrders(false)
+}
+
+function getCourseStatus(status) {
+  const map = {
+    0: { label: '待支付', type: 'pending' },
+    1: { label: '已支付待签到', type: 'paid' },
+    2: { label: '已签到', type: 'paid' },
+    3: { label: '已退款', type: 'refunded' },
+    4: { label: '已取消', type: 'refunding' }
+  }
+  return map[Number(status)] || { label: '未知状态', type: 'refunding' }
+}
+
 function handleJobRefund(item) {
   uni.showModal({
     title: '确认退款',
@@ -420,6 +562,24 @@ function handleSalonRefund(item) {
         if (e !== '500') {
           proxy.$modal.showToast('退款失败: ' + (e.message || e || '未知错误'))
         }
+      }
+    }
+  })
+}
+
+function handleCourseRefund(item) {
+  uni.showModal({
+    title: '确认退款',
+    content: `确定为 ${item.userName || item.name || '该用户'} 的课程订单退款 ${item.amount} 元吗？`,
+    confirmColor: '#0f766e',
+    success: async (res) => {
+      if (!res.confirm) return
+      try {
+        await refundCourseOrder(item.orderNo)
+        proxy.$modal.showToast('退款成功')
+        loadCourseOrders(true)
+      } catch (e) {
+        proxy.$modal.showToast('退款失败: ' + (e.message || e.msg || e || '未知错误'))
       }
     }
   })

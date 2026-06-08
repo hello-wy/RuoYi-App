@@ -19,15 +19,15 @@
 				<view class="content-wrap">
 
 					<!-- 支付状态 -->
-					<view class="pay-status-card" v-if="order.status === '1'">
+					<view class="pay-status-card" v-if="isPaidOrder">
 						<uni-icons type="checkmarkempty" size="40" color="#10B981"></uni-icons>
-						<text class="pay-status-title">支付成功</text>
-						<text class="pay-status-desc">押金将在现场签到后退还至您的账户</text>
+						<text class="pay-status-title">{{ statusTitle }}</text>
+						<text class="pay-status-desc">{{ statusDesc }}</text>
 					</view>
 					<view class="pay-status-card pending" v-else>
 						<uni-icons type="clock" size="40" color="#F59E0B"></uni-icons>
-						<text class="pay-status-title">等待支付</text>
-						<text class="pay-status-desc">请在 {{ countdown }} 内完成支付</text>
+						<text class="pay-status-title">{{ statusTitle }}</text>
+						<text class="pay-status-desc">{{ statusDesc }}</text>
 					</view>
 
 					<!-- 订单信息 -->
@@ -67,46 +67,13 @@
 					</view>
 
 					<!-- 支付方式 -->
-					<view class="pay-method-card" v-if="order.status !== '1'">
-						<text class="order-card-title">支付方式</text>
-						<view class="order-divider"></view>
-						<view
-							class="pay-method-item"
-							v-for="method in payMethods"
-							:key="method.value"
-							@click="selectedMethod = method.value"
-						>
-							<view class="pay-method-icon-wrap">
-								<image :src="method.icon" class="pay-method-icon" mode="aspectFit"></image>
-							</view>
-							<text class="pay-method-name">{{ method.label }}</text>
-							<view class="pay-radio" :class="{ 'pay-radio-active': selectedMethod === method.value }">
-								<view v-if="selectedMethod === method.value" class="pay-radio-inner"></view>
-							</view>
-						</view>
-					</view>
-
 					<view style="height: 110px;"></view>
 				</view>
 			</scroll-view>
 
-			<!-- 底部支付栏 -->
-			<view class="bottom-bar" v-if="order.status !== '1'">
-				<view class="pay-total">
-					<text class="pay-total-label">合计：</text>
-					<text class="pay-total-amount">¥{{ order.amount || order.deposit || '0.00' }}</text>
-				</view>
-				<view
-					class="pay-btn"
-					:class="{ 'pay-btn-disabled': paying }"
-					@click="handlePay"
-				>
-					<text class="pay-btn-text">{{ paying ? '支付中...' : '立即支付' }}</text>
-				</view>
-			</view>
-			<view class="bottom-bar" v-else>
+			<view class="bottom-bar">
 				<view class="done-btn" @click="goHome">
-					<text class="done-btn-text">返回首页</text>
+					<text class="done-btn-text">返回课程首页</text>
 				</view>
 			</view>
 		</block>
@@ -114,109 +81,61 @@
 </template>
 
 <script>
-import { getOrder, addOrder } from '@/api/system/order'
-import request from '@/utils/request'
+import { queryCoursePayOrder } from '@/api/wxmini/coursePay'
 
 export default {
 	data() {
 		return {
 			statusBarHeight: 0,
 			navHeight: 44,
-			orderId: '',
+			orderNo: '',
 			courseId: '',
 			loading: true,
-			paying: false,
 			order: null,
-			countdown: '30:00',
-			selectedMethod: 'wxpay',
-			payMethods: [
-				{ label: '微信支付', value: 'wxpay', icon: '/static/images/wxpay.png' },
-				{ label: '余额支付', value: 'balance', icon: '/static/images/balance.png' },
-			],
-			_timer: null,
+		}
+	},
+	computed: {
+		isPaidOrder() {
+			return [1, 2].includes(Number(this.order && this.order.status))
+		},
+		statusTitle() {
+			const map = { 0: '等待支付', 1: '支付成功', 2: '已签到', 3: '已退款', 4: '已取消' }
+			return map[Number(this.order && this.order.status)] || '订单状态'
+		},
+		statusDesc() {
+			const map = {
+				0: '订单待支付，请回到报名页重新发起支付。',
+				1: '报名已支付，现场签到后进入已签到状态。',
+				2: '课程已完成签到，退款状态以订单中心为准。',
+				3: '该课程订单已退款。',
+				4: '该课程订单已取消。'
+			}
+			return map[Number(this.order && this.order.status)] || '请稍后刷新查看订单状态。'
 		}
 	},
 	onLoad(options) {
 		const sys = uni.getSystemInfoSync()
 		this.statusBarHeight = sys.statusBarHeight || 0
 		this.navHeight = (sys.statusBarHeight || 0) + 44
-		this.orderId = options.orderId || ''
+		this.orderNo = options.orderNo || options.orderId || ''
 		this.courseId = options.courseId || ''
 		this.loadOrder()
-	},
-	onUnload() {
-		if (this._timer) clearInterval(this._timer)
 	},
 	methods: {
 		goBack() {
 			uni.navigateBack()
 		},
 		goHome() {
-			uni.switchTab({ url: '/pages/index' })
+			uni.switchTab({ url: '/pages/growup/index' })
 		},
 		async loadOrder() {
 			this.loading = true
 			try {
-				if (this.orderId) {
-					const res = await getOrder(this.orderId)
-					this.order = res.data || res
-				}
-				if (this.order && this.order.status !== '1') {
-					this.startCountdown()
-				}
+				this.order = await queryCoursePayOrder(this.orderNo)
 			} catch (e) {
 				uni.showToast({ title: '订单加载失败', icon: 'none' })
 			} finally {
 				this.loading = false
-			}
-		},
-		startCountdown() {
-			let seconds = 30 * 60
-			this._timer = setInterval(() => {
-				if (seconds <= 0) {
-					clearInterval(this._timer)
-					this.countdown = '已超时'
-					return
-				}
-				seconds--
-				const m = Math.floor(seconds / 60)
-				const s = seconds % 60
-				this.countdown = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-			}, 1000)
-		},
-		async handlePay() {
-			if (this.paying) return
-			this.paying = true
-			try {
-				// 调用支付接口
-				const res = await request({
-					url: `/system/order/${this.orderId}/pay`,
-					method: 'post',
-					data: { payMethod: this.selectedMethod }
-				})
-				const payData = res.data || res
-
-				// #ifdef MP-WEIXIN
-				if (this.selectedMethod === 'wxpay' && payData.timeStamp) {
-					await new Promise((resolve, reject) => {
-						wx.requestPayment({
-							...payData,
-							success: resolve,
-							fail: reject,
-						})
-					})
-				}
-				// #endif
-
-				// 支付成功，刷新订单
-				await this.loadOrder()
-				if (this._timer) clearInterval(this._timer)
-				uni.showToast({ title: '支付成功', icon: 'success' })
-			} catch (e) {
-				const msg = (e && e.msg) || (e && e.errMsg) || '支付失败，请重试'
-				uni.showToast({ title: msg, icon: 'none' })
-			} finally {
-				this.paying = false
 			}
 		}
 	}

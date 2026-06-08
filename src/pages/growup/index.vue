@@ -82,7 +82,7 @@
 						<view class="lecture-detail-btn" @click="navTo('/pages/growup/detail?id=' + featuredCourse.id + '&type=lecture')">
 							<text class="lecture-detail-btn-text">查看详情</text>
 						</view>
-						<view class="lecture-signin-btn" @click="navTo('/pages/growup/qrcode/index?id=' + featuredCourse.id + '&type=lecture&action=signin')">
+						<view class="lecture-signin-btn" @click="handleSignIn(featuredCourse)">
 							<uni-icons type="checkbox" size="15" color="#fff"></uni-icons>
 							<text class="lecture-signin-btn-text">去签到</text>
 						</view>
@@ -252,6 +252,7 @@
 				</view>
 			</view>
 		</scroll-view>
+		<LoginPopup v-if="shouldAutoOpenLogin" :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
 	</view>
 </template>
 
@@ -260,6 +261,11 @@ import config from '@/config'
 import {
 	listCourse
 } from '@/api/wxmini/growup'
+import { getPaidCourseOrder, scanCourseSignIn } from '@/api/wxmini/coursePay'
+import { useUserStore } from '@/store'
+import { isAdminUser } from '@/utils/admin'
+import { getToken } from '@/utils/auth'
+import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import {
 	getLectureImageSrc,
 	prefetchLectureCovers,
@@ -277,6 +283,7 @@ const DEFAULT_BANNER_TITLE = '育见成长·讲座活动'
 const DEFAULT_BANNER_SUBTITLE = '名师专家 · 精品公益讲座'
 
 export default {
+	components: { LoginPopup },
 	data() {
 		return {
 			refreshing: false,
@@ -288,7 +295,8 @@ export default {
 			surveys: [],
 			coverLoadFailed: {},
 			locationMultilineMap: {},
-			banners: []
+			banners: [],
+			shouldAutoOpenLogin: false
 		}
 	},
 	onLoad() {
@@ -445,20 +453,67 @@ export default {
 			if (item.url) uni.navigateTo({ url: item.url })
 		},
 		handleScan() {
+			if (!this.isCurrentUserAdmin()) {
+				uni.showToast({ title: '无扫码签到权限', icon: 'none' })
+				return
+			}
+			if (!this.featuredCourse || !this.featuredCourse.id) {
+				uni.showToast({ title: '暂无可签到课程', icon: 'none' })
+				return
+			}
 			uni.scanCode({
 				onlyFromCamera: false,
-				success: (res) => {
-					const result = res.result
-					if (result && result.startsWith('http')) {
-						uni.navigateTo({ url: '/pages/common/webview/index?url=' + encodeURIComponent(result) })
-					} else if (result) {
-						uni.showModal({ title: '扫码结果', content: result, showCancel: false })
-					}
+				success: async (res) => {
+					await this.submitScanSignIn(res.result)
 				},
 				fail: () => {
 					uni.showToast({ title: '扫码失败，请重试', icon: 'none' })
 				}
 			})
+		},
+		isCurrentUserAdmin() {
+			return isAdminUser(getToken(), useUserStore().roles)
+		},
+		async submitScanSignIn(result) {
+			const userId = this.parseScannedUserId(result)
+			if (!userId) {
+				uni.showModal({ title: '签到失败', content: '二维码内容不是有效用户 ID', showCancel: false })
+				return
+			}
+			try {
+				const res = await scanCourseSignIn(this.featuredCourse.id, userId)
+				const message = res.msg || res.message || '签到成功'
+				uni.showModal({ title: '签到结果', content: message, showCancel: false })
+			} catch (e) {
+				const message = e?.msg || e?.message || '签到失败'
+				uni.showModal({ title: '签到失败', content: message, showCancel: false })
+			}
+		},
+		parseScannedUserId(result) {
+			const text = String(result || '').trim()
+			if (!text || text.length > 64) return ''
+			return /^[A-Za-z0-9_-]+$/.test(text) ? text : ''
+		},
+		async handleSignIn(course) {
+			const userStore = useUserStore()
+			if (!userStore.token) {
+				this.shouldAutoOpenLogin = true
+				return
+			}
+			try {
+				const order = await getPaidCourseOrder(course.id)
+				if (![1, 2].includes(Number(order.status))) {
+					uni.showToast({ title: '请先购买该课程', icon: 'none' })
+					return
+				}
+				uni.navigateTo({ url: `/pages/growup/qrcode/index?id=${course.id}&type=lecture&action=signin` })
+			} catch (e) {
+				const message = e?.msg || e?.message || '请先购买该课程'
+				uni.showToast({ title: message, icon: 'none' })
+			}
+		},
+		handleLoginPopupClose() {
+			this.shouldAutoOpenLogin = false
 		},
 		getSalonStatusText(status) {
 			const map = { '0': '报名中', '1': '进行中', '2': '已结束' }

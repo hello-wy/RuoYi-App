@@ -1,6 +1,5 @@
 <template>
 	<view class="page">
-<!-- TODO: 改成支付订单号标注签到状态 -->
 		<view class="body" :style="{ paddingTop: (statusBarHeight + 44) + 'px' }">
 			<!-- 卡片 -->
 			<view class="card">
@@ -29,6 +28,7 @@
 				</view>
 
 				<text class="qr-tip">管理员扫描二维码即可签到</text>
+				<text v-if="courseHint" class="course-hint">{{ courseHint }}</text>
 
 				<!-- 分割线 -->
 				<view class="card-divider"></view>
@@ -50,6 +50,7 @@
 
 <script>
 import { useUserStore } from '@/store'
+import { getPaidCourseOrder } from '@/api/wxmini/coursePay'
 import UQRCode from '@uni/Sansnn-uQRCode/js_sdk/uqrcode/uqrcode.js'
 
 export default {
@@ -60,12 +61,15 @@ export default {
 			qrLoading: true,
 			userId: '',
 			userName: '',
-			avatar: ''
+			avatar: '',
+			courseId: '',
+			courseHint: ''
 		}
 	},
-	onLoad() {
+	onLoad(options = {}) {
 		const sys = uni.getSystemInfoSync()
 		this.statusBarHeight = sys.statusBarHeight || 0
+		this.courseId = options.id || options.courseId || ''
 
 		const store = useUserStore()
 		this.userId = store.id || ''
@@ -75,6 +79,7 @@ export default {
 		this.$nextTick(() => {
 			this.drawQRCode(String(this.userId))
 		})
+		this.loadCourseOrderHint()
 	},
 	methods: {
 		goBack() {
@@ -99,6 +104,16 @@ export default {
 				console.error('[QRCode]', e);
 				this.qrLoading = false;
 			});
+		},
+		async loadCourseOrderHint() {
+			if (!this.courseId) return
+			try {
+				const order = await getPaidCourseOrder(this.courseId)
+				const label = Number(order.status) === 2 ? '已签到' : '已支付待签到'
+				this.courseHint = `课程 ${this.courseId}：${label}`
+			} catch (e) {
+				this.courseHint = `课程 ${this.courseId}：未找到可签到订单`
+			}
 		},
 	}
 }
@@ -228,6 +243,13 @@ page {
 	color: #94a3b8;
 	text-align: center;
 	margin-bottom: 20px;
+}
+
+.course-hint {
+	font-size: 12px;
+	color: #3B82F6;
+	text-align: center;
+	margin-bottom: 12px;
 }
 
 /* 分割线 */

@@ -1,17 +1,21 @@
 export const ORDER_TYPE_OPTIONS = [
   { key: 'all', label: '全部订单' },
   { key: 'salon', label: '沙龙订单' },
-  { key: 'job', label: '兼职订单' }
+  { key: 'job', label: '兼职订单' },
+  { key: 'course', label: '课程订单' }
 ]
 
 export const STATUS_FILTER_OPTIONS = [
   { key: 'all', label: '全部' },
   { key: 'paid', label: '已支付' },
+  { key: 'signIn', label: '已签到' },
   { key: 'refunded', label: '已退款' }
 ]
 
 const STATUS_LABEL_MAP = {
+  pending: '待支付',
   paid: '已支付',
+  signIn: '已签到',
   canceled: '已取消',
   refunded: '已退款'
 }
@@ -32,6 +36,15 @@ export function mapJobStatus(status) {
   if (current === 1) return 'paid'
   if (current === 2 || current === 3) return 'refunded'
   if (current === 4) return 'canceled'
+  return 'canceled'
+}
+
+export function mapCourseStatus(status) {
+  const current = Number(status)
+  if (current === 0) return 'pending'
+  if (current === 1) return 'paid'
+  if (current === 2) return 'signIn'
+  if (current === 3) return 'refunded'
   return 'canceled'
 }
 

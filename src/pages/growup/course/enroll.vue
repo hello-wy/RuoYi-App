@@ -148,9 +148,9 @@
 
 			<!-- 底部操作栏 -->
 			<view class="bottom-bar">
-				<view class="deposit-info" v-if="course.deposit">
+				<view class="deposit-info">
 					<text class="deposit-label">席位预定金</text>
-					<text class="deposit-amount">¥{{ course.deposit }}</text>
+					<text class="deposit-amount">¥{{ course.registrationFee || course.deposit || 100 }}</text>
 					<text class="deposit-note">签到自动退还</text>
 				</view>
 				<view
@@ -166,9 +166,13 @@
 </template>
 
 <script>
-import { getCourse, enrollCourse } from '@/api/system/growup'
-import { getUserProfile } from '@/api/system/user'
-import { getMyEnrollment } from '@/api/system/enrollment'
+import { getCourse, getEnrollmentsList } from '@/api/wxmini/growup'
+import { createCoursePayOrder, queryCoursePayOrder } from '@/api/wxmini/coursePay'
+import { useUserStore } from '@/store'
+
+const PAID_STATUSES = [1, 2]
+const POLL_MAX_ATTEMPTS = 6
+const POLL_INTERVAL_MS = 800
 
 export default {
 	data() {
@@ -213,27 +217,26 @@ export default {
 		async loadData() {
 			this.loading = true
 			try {
-				const [courseRes, profileRes, enrollRes] = await Promise.all([
+				const [courseRes, enrollRes] = await Promise.all([
 					getCourse(this.courseId),
-					getUserProfile().catch(() => null),
-					getMyEnrollment().catch(() => null),
+					getEnrollmentsList().catch(() => null),
 				])
 				this.course = courseRes.data || courseRes
-				if (profileRes) {
-					const p = profileRes.data || profileRes
-					this.form.name = p.nickName || p.name || ''
-					this.form.phone = p.phonenumber || p.phone || ''
-					this.form.gender = p.sex || '0'
-				}
+				this.fillUserProfile()
 				if (enrollRes) {
 					const e = enrollRes.data || enrollRes
-					this.myEnrollments = Array.isArray(e) ? e : (e.list || [])
+					this.myEnrollments = Array.isArray(e) ? e : (e.rows || e.list || [])
 				}
 			} catch(e) {
 				uni.showToast({ title: '加载失败', icon: 'none' })
 			} finally {
 				this.loading = false
 			}
+		},
+		fillUserProfile() {
+			const userStore = useUserStore()
+			this.form.name = userStore.name || ''
+			this.form.phone = userStore.phone || ''
 		},
 		selectEnrollment() {
 			if (!this.myEnrollments.length) {
@@ -272,24 +275,47 @@ export default {
 					accommodation: this.form.accommodation,
 					enrollmentId: this.selectedEnrollment ? this.selectedEnrollment.id : undefined,
 				}
-				const res = await enrollCourse(this.courseId, data)
-				const result = res.data || res
-				uni.showToast({ title: '报名成功', icon: 'success' })
-				// 跳转订单支付页
-				setTimeout(() => {
-					const orderId = result.orderId || result.id
-					if (orderId) {
-						uni.navigateTo({ url: `/pages/growup/course/pay?orderId=${orderId}&courseId=${this.courseId}` })
-					} else {
-						uni.navigateBack({ delta: 2 })
-					}
-				}, 1000)
+				const result = await createCoursePayOrder(data)
+				await this.requestWxPayment(result.payParam)
+				await this.confirmPaidAndNavigate(result.orderNo)
 			} catch(e) {
-				const msg = (e && e.msg) || '报名失败，请重试'
-				uni.showToast({ title: msg, icon: 'none' })
+				const msg = (e && (e.msg || e.errMsg || e.message)) || '报名支付未完成'
+				uni.showModal({ title: '报名未完成', content: msg, showCancel: false })
 			} finally {
 				this.submitting = false
 			}
+		},
+		requestWxPayment(payParam = {}) {
+			if (!payParam.timeStamp || !payParam.nonceStr || !payParam.packageValue || !payParam.paySign) {
+				throw new Error('支付参数不完整')
+			}
+			return uni.requestPayment({
+				provider: 'wxpay',
+				timeStamp: payParam.timeStamp,
+				nonceStr: payParam.nonceStr,
+				package: payParam.packageValue,
+				signType: payParam.signType || 'RSA',
+				paySign: payParam.paySign
+			})
+		},
+		async confirmPaidAndNavigate(orderNo) {
+			for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
+				const order = await queryCoursePayOrder(orderNo)
+				if (PAID_STATUSES.includes(Number(order.status))) {
+					uni.showToast({ title: '报名成功', icon: 'success' })
+					setTimeout(() => {
+						uni.redirectTo({ url: '/pages/mine/order-center/index?type=course' })
+					}, 600)
+					return
+				}
+				await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
+			}
+			uni.showModal({
+				title: '支付结果确认中',
+				content: '支付结果尚未确认，请稍后在订单中心查看课程订单。',
+				showCancel: false,
+				success: () => uni.redirectTo({ url: '/pages/mine/order-center/index?type=course' })
+			})
 		}
 	}
 }

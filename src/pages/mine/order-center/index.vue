@@ -4,7 +4,7 @@
       <view class="hero-top">
         <view>
           <text class="hero-title">订单中心</text>
-          <text class="hero-subtitle">统一查看沙龙与兼职订单</text>
+          <text class="hero-subtitle">统一查看沙龙、兼职与课程订单</text>
         </view>
       </view>
       <view class="summary-row">
@@ -102,6 +102,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { listMySalonOrders } from '@/api/wxmini/salonPay'
+import { listMyCourseOrders } from '@/api/wxmini/coursePay'
 import { useJobSignupOrderStore } from '@/store'
 import {
   ORDER_TYPE_OPTIONS,
@@ -111,6 +112,7 @@ import {
   getEmptyText,
   getStatusLabel,
   mapJobStatus,
+  mapCourseStatus,
   mapSalonStatus,
   sortOrders
 } from './orderCenter'
@@ -123,6 +125,7 @@ const loading = ref(false)
 const refreshing = ref(false)
 const jobList = ref([])
 const salonList = ref([])
+const courseList = ref([])
 const allList = ref([])
 
 const typedList = computed(() => filterOrdersByType(allList.value, activeType.value))
@@ -132,12 +135,16 @@ const visibleList = computed(() => filterOrdersByStatus(typedList.value, activeS
 const summaryCountMap = computed(() => ({
   all: allList.value.length,
   salon: salonList.value.length,
-  job: jobList.value.length
+  job: jobList.value.length,
+  course: courseList.value.length
 }))
 
 const emptyText = computed(() => getEmptyText(activeType.value, activeStatus.value))
 
-onLoad(() => {
+onLoad((options = {}) => {
+  if (options.type) {
+    activeType.value = options.type
+  }
   loadOrders()
 })
 
@@ -152,13 +159,15 @@ async function loadOrders() {
       jobOrders = await orderStore.refresh()
     }
 
-    const [salonRes] = await Promise.all([
-      listMySalonOrders()
+    const [salonRes, courseOrders] = await Promise.all([
+      listMySalonOrders(),
+      listMyCourseOrders()
     ])
 
     jobList.value = normalizeJobOrders(jobOrders || []).filter(o => o.statusKey !== 'canceled')
     salonList.value = normalizeSalonOrders(salonRes.data || []).filter(o => o.statusKey !== 'canceled')
-    allList.value = sortOrders([...jobList.value, ...salonList.value])
+    courseList.value = normalizeCourseOrders(courseOrders || []).filter(o => o.statusKey !== 'canceled')
+    allList.value = sortOrders([...jobList.value, ...salonList.value, ...courseList.value])
   } catch (e) {
     uni.showToast({ title: '加载订单失败，请重试', icon: 'none' })
   } finally {
@@ -198,6 +207,25 @@ function normalizeSalonOrders(list) {
   })))
 }
 
+function normalizeCourseOrders(list) {
+  return sortOrders((list || []).map(item => {
+    const statusKey = mapCourseStatus(item.status)
+    return {
+      id: `course-${item.orderNo}`,
+      type: 'course',
+      typeLabel: '课程',
+      orderNo: item.orderNo,
+      title: item.courseName || item.title || item.name,
+      amount: item.amount,
+      statusKey,
+      statusLabel: getStatusLabel(statusKey),
+      payTime: item.payTime,
+      createTime: item.createTime,
+      bizId: item.courseId
+    }
+  }))
+}
+
 function statusClass(statusKey) {
   return `status-${statusKey}`
 }
@@ -224,6 +252,10 @@ async function onRefresh() {
 function openOrder(item) {
   if (item.type === 'salon') {
     uni.navigateTo({ url: `/pages/salon/order-detail?orderNo=${item.orderNo}` })
+    return
+  }
+  if (item.type === 'course') {
+    uni.navigateTo({ url: `/pages/growup/course/pay?orderNo=${item.orderNo}` })
     return
   }
   uni.navigateTo({ url: `/pages/jobs/detail?id=${item.bizId}` })
@@ -457,6 +489,10 @@ page {
   background: rgba(59, 130, 246, 0.12);
 }
 
+.type-course {
+  background: rgba(168, 85, 247, 0.12);
+}
+
 .type-tag-text,
 .status-tag-text {
   font-size: 22rpx;
@@ -471,8 +507,16 @@ page {
   color: #1d4ed8;
 }
 
+.type-course .type-tag-text {
+  color: #7e22ce;
+}
+
 .status-paid {
   background: rgba(34, 197, 94, 0.12);
+}
+
+.status-signIn {
+  background: rgba(14, 165, 233, 0.12);
 }
 
 .status-pending {
@@ -487,6 +531,10 @@ page {
 
 .status-paid .status-tag-text {
   color: #15803d;
+}
+
+.status-signIn .status-tag-text {
+  color: #0369a1;
 }
 
 .status-pending .status-tag-text {
