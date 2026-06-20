@@ -71,7 +71,7 @@
 <script setup>
 import { getCurrentInstance, ref } from 'vue'
 import { onLoad, onReady } from '@dcloudio/uni-app'
-import { addBaby, getBaby, updateBaby } from '@/api/wxmini/baby'
+import { addBaby, getBaby, updateBaby } from '@/pages/mine/baby/_api/wxmini/baby'
 
 const { proxy } = getCurrentInstance()
 const formRef = ref(null)

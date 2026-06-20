@@ -6,6 +6,14 @@ export function buildMerchantUserTypeWhitelistPayload(form = {}) {
   }
 }
 
+export function getMerchantWhitelistStatusLabel(status) {
+  const value = Number(status)
+  if (value === 0) return '待审核'
+  if (value === 1) return '通过'
+  if (value === 2) return '拒绝'
+  return '未知'
+}
+
 export function validateMerchantUserTypeWhitelistForm(form = {}) {
   const realName = String(form.realName || '').trim()
   const idCard = String(form.idCard || '').trim().toUpperCase()

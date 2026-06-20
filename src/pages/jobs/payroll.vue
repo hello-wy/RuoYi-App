@@ -107,8 +107,8 @@
 </template>
 
 <script>
-import { getJobSignupUsers } from '@/api/wxmini/jobs'
-import { createPayrollOrder, getPayrollOrder } from '@/api/wxmini/payroll'
+import { getJobSignupUsers } from '@/pages/jobs/_api/wxmini/jobs'
+import { createPayrollOrder, getPayrollOrder } from '@/pages/jobs/_api/wxmini/payroll'
 import { useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 

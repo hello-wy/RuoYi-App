@@ -31,7 +31,7 @@ import {
   isChooseImageCanceled,
   isChooseImagePermissionDenied,
   requestWechatImagePrivacyAuthorization
-} from '@/pages/tutoring/tutor/apply.helpers'
+} from '@/utils/imageUpload'
 
 const props = defineProps({
   /** 当前图片 URL（完整路径） */

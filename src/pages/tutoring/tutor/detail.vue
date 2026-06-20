@@ -154,10 +154,18 @@
 					{{ action.text }}
 				</button>
 			</view>
-			<button v-else class="contact-btn" open-type="contact">
-				<uni-icons type="chatboxes-filled" size="18" color="#FFFFFF"></uni-icons>
-				<text class="contact-btn-text">立即联系</text>
-			</button>
+			<view v-else class="normal-action-row">
+				<button class="share-btn" open-type="share">
+					<view class="share-btn-inner">
+						<uni-icons type="redo" size="24" color="#6B7280"></uni-icons>
+						<text class="share-btn-text">分享</text>
+					</view>
+				</button>
+				<button class="contact-btn" open-type="contact">
+					<uni-icons type="chatboxes-filled" size="18" color="#FFFFFF"></uni-icons>
+					<text class="contact-btn-text">立即联系</text>
+				</button>
+			</view>
 		</view>
 	</view>
 </template>
@@ -165,7 +173,7 @@
 <script>
 import config from '@/config'
 import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
-import { getTutorById, reviewTutors } from '@/api/system/tutors'
+import { getTutorById, reviewTutors } from '@/pages/tutoring/_api/system/tutors'
 import request from '@/utils/request'
 import { useLocationStore } from '@/store'
 import { appendPreviewCacheBuster } from '@/pages/tutoring/tutor/apply.helpers'
@@ -177,7 +185,7 @@ import {
 	buildTutorDetailBottomActions,
 	getReviewResultToast,
 	isTutorAuditMode
-} from '@/pages/mine/admin/tutor-review.helpers'
+} from '@/pages/tutoring/_utils/tutorReview'
 
 export default {
 	dicts: ['sys_degree', 'sys_subject', 'sys_methods'],
@@ -199,6 +207,17 @@ export default {
 		this.avatarSrcFromRoute = decodeURIComponent(options.avatarSrc || '')
 		this.auditMode = isTutorAuditMode(options)
 		this.loadDetail()
+	},
+	onShareAppMessage() {
+		const title = (this.detail?.realName || '教员') + ' - 家教教员详情'
+		const imageUrl = this.avatarSrc || ''
+		const path = `/pages/tutoring/tutor/detail?id=${this.tutorId}`
+		return { title, imageUrl, path }
+	},
+	onShareTimeline() {
+		const title = (this.detail?.realName || '教员') + ' - 家教教员详情'
+		const imageUrl = this.avatarSrc || ''
+		return { title, imageUrl }
 	},
 	computed: {
 		avatarSrc() {
@@ -607,6 +626,7 @@ export default {
 }
 
 .contact-btn {
+	flex: 1;
 	height: 96rpx;
 	border: none;
 	border-radius: 999rpx;
@@ -622,6 +642,48 @@ export default {
 	font-size: 30rpx;
 	font-weight: 600;
 	color: #ffffff;
+}
+
+.normal-action-row {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+}
+
+.share-btn {
+	margin: 0;
+	padding: 0;
+	width: 80rpx;
+	height: 96rpx;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	line-height: 1 !important;
+	font-size: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.share-btn::after {
+	display: none !important;
+	border: none !important;
+}
+
+.share-btn-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6rpx;
+}
+
+.share-btn-text {
+	font-size: 20rpx;
+	color: #6B7280;
+	font-weight: 400;
+	line-height: 1;
 }
 
 .loading-wrap,

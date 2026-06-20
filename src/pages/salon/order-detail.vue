@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import { querySalonPayOrder } from '@/api/wxmini/salonPay'
+import { querySalonPayOrder } from '@/pages/salon/_api/wxmini/salonPay'
 
 export default {
   data() {

@@ -39,17 +39,17 @@
           <text class="panel-title">手机号快捷登录</text>
           <!-- #ifdef MP-WEIXIN -->
           <button
-            v-if="realtimePhoneSupported"
+            v-if="shouldRequestPhoneCode"
             class="primary-btn realtime-btn"
             open-type="getRealtimePhoneNumber"
-            @getrealtimephonenumber="handleRealtimePhoneLogin"
+            @getrealtimephonenumber="handleRealtimePhoneAuthorize"
           >
-            手机号快捷登录
+            继续验证手机号
           </button>
           <button
             v-else
             class="primary-btn realtime-btn"
-            @click="handleRealtimePhoneUnsupported"
+            @click="handleRealtimePhoneLogin"
           >
             手机号快捷登录
           </button>
@@ -135,11 +135,13 @@
 </template>
 
 <script setup>
-import { getCurrentInstance, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, getCurrentInstance, nextTick, onMounted, ref, watch } from 'vue'
 import { getCodeImg } from '@/api/login'
 import { useConfigStore, useUserStore } from '@/store'
+import { createLoginForm, resolveLoginSuccessUrl, shouldRequestPhoneCode as resolveShouldRequestPhoneCode } from './LoginPopup.helpers'
 
 const isProd = import.meta.env.PROD
+const isDev = import.meta.env.DEV
 
 const modeOptions = [
   { label: '手机号快捷登录', value: 'realtimePhone', icon: 'phone' },{ label: '账号登录', value: 'account', icon: 'person' },
@@ -148,12 +150,6 @@ const modeOptions = [
 
 const DEFAULT_MODE = 'realtimePhone'
 const ACCOUNT_MODE = 'account'
-const DEFAULT_LOGIN_FORM = Object.freeze({
-  username: '',
-  password: '',
-  code: '',
-  uuid: ''
-})
 
 const props = defineProps({
   register: {
@@ -174,11 +170,11 @@ const props = defineProps({
   },
   wechatSuccessUrl: {
     type: String,
-    default: '/pages/guide/index'
+    default: ''
   },
   realtimePhoneSuccessUrl: {
     type: String,
-    default: '/pages/guide/index'
+    default: ''
   },
   initialLoginForm: {
     type: Object,
@@ -199,7 +195,11 @@ const activeMode = ref(props.defaultMode)
 const codeUrl = ref('')
 const captchaEnabled = ref(true)
 const realtimePhoneSupported = ref(false)
-const loginForm = ref(createLoginForm(props.initialLoginForm))
+const phoneAuthorizationPending = ref(false)
+const loginForm = ref(createLoginForm({
+  isDev,
+  initialLoginForm: props.initialLoginForm
+}))
 const agreedToTerms = ref(false)
 const isShaking = ref(false)
 const agreementTitlesText = agreements.map(item => item.title).join('和')
@@ -221,7 +221,7 @@ watch(() => props.autoOpen, (value) => {
 })
 
 watch(() => props.initialLoginForm, (value) => {
-  loginForm.value = createLoginForm(value)
+  loginForm.value = createLoginForm({ isDev, initialLoginForm: value })
 })
 
 function updateLoginField(field, value) {
@@ -233,6 +233,7 @@ function updateLoginField(field, value) {
 
 function setMode(mode) {
   activeMode.value = mode
+  phoneAuthorizationPending.value = false
   if (mode === ACCOUNT_MODE && !codeUrl.value) {
     getCode()
   }
@@ -251,6 +252,7 @@ function open(mode = activeMode.value) {
 
 function close() {
   showContent.value = false
+  phoneAuthorizationPending.value = false
   // 等关闭动画结束后再移除 DOM
   setTimeout(() => {
     isVisible.value = false
@@ -276,13 +278,6 @@ function checkAgreement() {
     return false
   }
   return true
-}
-
-function createLoginForm(initialLoginForm = {}) {
-  return {
-    ...DEFAULT_LOGIN_FORM,
-    ...initialLoginForm
-  }
 }
 
 function openAgreement(index) {
@@ -353,6 +348,27 @@ function handleRealtimePhoneLogin(event) {
   return
   // #endif
 
+  if (phoneAuthorizationPending.value) {
+    return
+  }
+  withLoading('微信登录中，请稍候...', async () => {
+    const appid = resolveRequiredWxAppId()
+    const code = await requestWxLoginCode()
+    const profile = await userStore.resolveWxLogin(appid, code)
+    finishLogin('realtimePhone', profile)
+  }).catch(handleRealtimePhoneLoginError)
+}
+
+function handleRealtimePhoneAuthorize(event) {
+  if (!checkAgreement()) {
+    return
+  }
+
+  // #ifndef MP-WEIXIN
+  handleRealtimePhoneUnsupported()
+  return
+  // #endif
+
   const phoneCode = event && event.detail ? event.detail.code : undefined
   if (!phoneCode) {
     proxy.$modal.msgError(resolvePhoneDeniedMessage(event && event.detail ? event.detail.errMsg : undefined))
@@ -364,6 +380,18 @@ function handleRealtimePhoneLogin(event) {
     const profile = await userStore.resolveWxPhoneLogin({ appid, code, phoneCode })
     finishLogin('realtimePhone', profile)
   }).catch(showRuntimeMessage)
+}
+
+function handleRealtimePhoneLoginError(error) {
+  if (error && error.needPhoneCode) {
+    if (!realtimePhoneSupported.value) {
+      handleRealtimePhoneUnsupported()
+      return
+    }
+    phoneAuthorizationPending.value = true
+    return
+  }
+  showRuntimeMessage(error)
 }
 
 function handleWechatLogin() {
@@ -387,7 +415,14 @@ function handleWechatLogin() {
 function finishLogin(mode, payload = null) {
   close()
   emit('success', { mode, payload })
-  const targetUrl = resolveSuccessUrl(mode)
+  const targetUrl = resolveLoginSuccessUrl({
+    mode,
+    payload,
+    token: userStore.token,
+    roles: userStore.roles,
+    userType: userStore.userType,
+    fallbackUrl: resolveSuccessUrl(mode)
+  })
   if (targetUrl) {
     proxy.$tab.reLaunch(targetUrl)
   }
@@ -465,6 +500,11 @@ function detectRealtimePhoneSupport() {
   // #endif
   return false
 }
+
+const shouldRequestPhoneCode = computed(() => resolveShouldRequestPhoneCode({
+  phoneAuthorizationPending: phoneAuthorizationPending.value,
+  realtimePhoneSupported: realtimePhoneSupported.value
+}))
 
 onMounted(() => {
   realtimePhoneSupported.value = detectRealtimePhoneSupport()

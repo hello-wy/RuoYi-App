@@ -48,7 +48,7 @@
 <script setup>
 import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
-import { deleteBaby, listBaby } from '@/api/wxmini/baby'
+import { deleteBaby, listBaby } from '@/pages/mine/baby/_api/wxmini/baby'
 
 const loading = ref(false)
 const list = ref([])

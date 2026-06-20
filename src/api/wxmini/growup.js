@@ -26,6 +26,20 @@ export function getCourse(id) {
     })
 }
 
+export function getCourseEnrollment(id) {
+    return request({
+        url: `/wxmini/growup/courses/${id}/enrollment`,
+        method: 'get'
+    })
+}
+
+export function enrollCourse(id, data) {
+    return request({
+        url: `/wxmini/growup/courses/${id}/enroll`,
+        method: 'post',
+        data
+    })
+}
 
 export function getEnrollmentsList() {
     return request({
@@ -41,4 +55,3 @@ export function getTotalEnrollments() {
         method: 'get'
     })
 }
-

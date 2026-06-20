@@ -51,7 +51,7 @@
 
 <script>
 import { deleteMyParentDemand, getMyParentDemandDetail } from '@/api/wxmini/tutoring'
-import { getParentServiceDateText, getParentServiceTimeText } from '@/pages/tutoring/parent/detail.helpers'
+import { getParentServiceDateText, getParentServiceTimeText } from '@/pages/mine/parent-demand/_utils/parentDetail'
 
 export default {
   dicts: ['sys_methods'],

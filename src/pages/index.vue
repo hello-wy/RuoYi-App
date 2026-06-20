@@ -13,18 +13,12 @@
       </uni-data-picker> -->
 		</view>
 
-		<swiper class="swiper" circular :indicator-dots="true" :autoplay="true" :interval="5000"
-			:duration="duration" style="padding: 20rpx;">
-			<swiper-item style="background-color: red;">
-				<view >A</view>
-			</swiper-item>
-			<swiper-item style="background-color: green;">
-				<view >B</view>
-			</swiper-item>
-			<swiper-item style="background-color: blue;">
-				<view>C</view>
-			</swiper-item>
-		</swiper>
+		<image
+			class="banner-image"
+			:src="banners[0].imageSrc"
+			:alt="banners[0].alt"
+			mode="widthFix"
+		></image>
 
 		<!-- 服务项目组件 -->
 		<service-grid></service-grid>
@@ -38,11 +32,12 @@
 </template>
 
 <script>
-import homebottom from '@/pages/common/bottom/bottom'
+import homebottom from '@/components/HomeBottom/HomeBottom.vue'
 // import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
 import { useLocationStore } from '@/store'
 import { findCityNodeByName } from '@/utils/pca'
+import { HOME_BANNER_ITEMS } from './home-banner'
 
 export default {
 	components: {
@@ -52,11 +47,11 @@ export default {
 	},
 	data() {
 		return {
+			banners: HOME_BANNER_ITEMS,
 			cityIndex: 0,
 			range: [{ text: '南京市', value: '3201' }],
 			citys: [],
-			selectedCityText: '南京市',
-			duration: 500
+			selectedCityText: '南京市'
 		}
 	},
 	computed: {
@@ -109,6 +104,10 @@ export default {
 .home-page {
 	min-height: 100vh;
 	background-color: #e2e8f0;
+}
+.banner-image {
+	display: block;
+	width: 100%;
 }
 .city-picker {
 	display: flex;

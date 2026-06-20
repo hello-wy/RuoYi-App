@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import { listInfo } from '@/api/system/info'
+import { listInfo } from '@/pages/salon/_api/system/info'
 
 export default {
 	data() {

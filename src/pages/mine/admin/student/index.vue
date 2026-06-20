@@ -72,7 +72,7 @@
 </template>
 
 <script>
-import { listStudents } from '@/api/system/student'
+import { listStudents } from '@/pages/mine/admin/_api/system/student'
 import { requireAdminAccess } from '../access'
 import { createInitialListState, getUserTypeText } from './helpers'
 

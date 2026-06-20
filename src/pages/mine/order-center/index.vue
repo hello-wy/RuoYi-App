@@ -4,7 +4,7 @@
       <view class="hero-top">
         <view>
           <text class="hero-title">订单中心</text>
-          <text class="hero-subtitle">统一查看沙龙、兼职与课程订单</text>
+          <text class="hero-subtitle">统一查看沙龙、兼职、课程与家教课时包订单</text>
         </view>
       </view>
       <view class="summary-row">
@@ -101,19 +101,24 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { listMySalonOrders } from '@/api/wxmini/salonPay'
+import { listMySalonOrders } from '@/pages/mine/order-center/_api/wxmini/salonPay'
 import { listMyCourseOrders } from '@/api/wxmini/coursePay'
+import { getMyTutoringOrders } from '@/api/wxmini/tutoring'
 import { useJobSignupOrderStore } from '@/store'
 import {
   ORDER_TYPE_OPTIONS,
   STATUS_FILTER_OPTIONS,
   filterOrdersByStatus,
   filterOrdersByType,
+  formatOrderDateTime,
   getEmptyText,
   getStatusLabel,
+  isDisplayableOrderStatus,
   mapJobStatus,
   mapCourseStatus,
   mapSalonStatus,
+  mapTutoringStatus,
+  resolveOrderCenterInitialFilters,
   sortOrders
 } from './orderCenter'
 
@@ -126,6 +131,7 @@ const refreshing = ref(false)
 const jobList = ref([])
 const salonList = ref([])
 const courseList = ref([])
+const tutoringPackageList = ref([])
 const allList = ref([])
 
 const typedList = computed(() => filterOrdersByType(allList.value, activeType.value))
@@ -136,15 +142,16 @@ const summaryCountMap = computed(() => ({
   all: allList.value.length,
   salon: salonList.value.length,
   job: jobList.value.length,
-  course: courseList.value.length
+  course: courseList.value.length,
+  tutoringPackage: tutoringPackageList.value.length
 }))
 
 const emptyText = computed(() => getEmptyText(activeType.value, activeStatus.value))
 
 onLoad((options = {}) => {
-  if (options.type) {
-    activeType.value = options.type
-  }
+  const filters = resolveOrderCenterInitialFilters(options)
+  activeType.value = filters.type
+  activeStatus.value = filters.status
   loadOrders()
 })
 
@@ -159,15 +166,17 @@ async function loadOrders() {
       jobOrders = await orderStore.refresh()
     }
 
-    const [salonRes, courseOrders] = await Promise.all([
+    const [salonRes, courseOrders, tutoringRes] = await Promise.all([
       listMySalonOrders(),
-      listMyCourseOrders()
+      listMyCourseOrders(),
+      getMyTutoringOrders()
     ])
 
-    jobList.value = normalizeJobOrders(jobOrders || []).filter(o => o.statusKey !== 'canceled')
-    salonList.value = normalizeSalonOrders(salonRes.data || []).filter(o => o.statusKey !== 'canceled')
-    courseList.value = normalizeCourseOrders(courseOrders || []).filter(o => o.statusKey !== 'canceled')
-    allList.value = sortOrders([...jobList.value, ...salonList.value, ...courseList.value])
+    jobList.value = normalizeJobOrders(jobOrders || []).filter(hasDisplayableStatus)
+    salonList.value = normalizeSalonOrders(salonRes.data || []).filter(hasDisplayableStatus)
+    courseList.value = normalizeCourseOrders(courseOrders || []).filter(hasDisplayableStatus)
+    tutoringPackageList.value = normalizeTutoringPackageOrders(tutoringRes.data || []).filter(hasDisplayableStatus)
+    allList.value = sortOrders([...jobList.value, ...salonList.value, ...courseList.value, ...tutoringPackageList.value])
   } catch (e) {
     uni.showToast({ title: '加载订单失败，请重试', icon: 'none' })
   } finally {
@@ -226,6 +235,32 @@ function normalizeCourseOrders(list) {
   }))
 }
 
+function normalizeTutoringPackageOrders(list) {
+  return sortOrders((list || []).map(item => ({
+    id: `tutoring-package-${item.orderNo}`,
+    type: 'tutoringPackage',
+    typeLabel: '家教课时包',
+    orderNo: item.orderNo,
+    title: buildTutoringPackageTitle(item),
+    amount: item.amount,
+    statusKey: mapTutoringStatus(item.status),
+    statusLabel: getStatusLabel(mapTutoringStatus(item.status)),
+    payTime: item.payTime,
+    createTime: item.createTime,
+    bizId: item.orderNo
+  })))
+}
+
+function buildTutoringPackageTitle(item) {
+  const parentName = item.parentName || '家教课时包'
+  const tutorName = item.tutorName ? ` · ${item.tutorName}` : ''
+  return `${parentName}${tutorName}`
+}
+
+function hasDisplayableStatus(item) {
+  return isDisplayableOrderStatus(item.statusKey)
+}
+
 function statusClass(statusKey) {
   return `status-${statusKey}`
 }
@@ -258,6 +293,10 @@ function openOrder(item) {
     uni.navigateTo({ url: `/pages/growup/course/pay?orderNo=${item.orderNo}` })
     return
   }
+  if (item.type === 'tutoringPackage') {
+    uni.navigateTo({ url: `/pages/mine/course-package/index?orderNo=${item.orderNo}` })
+    return
+  }
   uni.navigateTo({ url: `/pages/jobs/detail?id=${item.bizId}` })
 }
 
@@ -266,17 +305,7 @@ function formatPrice(val) {
   return Number(val).toFixed(2)
 }
 
-function formatDateTime(val) {
-  if (!val) return '--'
-  const date = new Date(val)
-  if (Number.isNaN(date.getTime())) return val
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const mm = String(date.getMinutes()).padStart(2, '0')
-  return `${y}-${m}-${d} ${h}:${mm}`
-}
+const formatDateTime = formatOrderDateTime
 </script>
 
 <style lang="scss" scoped>
@@ -493,6 +522,10 @@ page {
   background: rgba(168, 85, 247, 0.12);
 }
 
+.type-tutoringPackage {
+  background: rgba(124, 58, 237, 0.12);
+}
+
 .type-tag-text,
 .status-tag-text {
   font-size: 22rpx;
@@ -509,6 +542,10 @@ page {
 
 .type-course .type-tag-text {
   color: #7e22ce;
+}
+
+.type-tutoringPackage .type-tag-text {
+  color: #6d28d9;
 }
 
 .status-paid {

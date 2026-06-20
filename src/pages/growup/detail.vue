@@ -154,6 +154,12 @@
 				<!-- 底部操作栏 -->
 				<view class="bottom-bar">
 					<view class="btn-row">
+						<button class="btn-share" open-type="share">
+							<view class="btn-share-inner">
+								<uni-icons type="redo" size="24" color="#6B7280"></uni-icons>
+								<text class="btn-share-text">分享</text>
+							</view>
+						</button>
 						<view
 							class="btn-enroll"
 							:class="{ 'btn-disabled': detail.enrolled }"
@@ -266,6 +272,17 @@ export default {
 		this.type = options.type || 'course'
 		this.id = options.id || ''
 		this.loadDetail()
+	},
+	onShareAppMessage() {
+		const title = this.detail?.name || '课程详情'
+		const imageUrl = this.topCoverUrl || this.detail?.coverUrl || ''
+		const path = `/pages/growup/detail?id=${this.id}&type=${this.type}`
+		return { title, imageUrl, path }
+	},
+	onShareTimeline() {
+		const title = this.detail?.name || '课程详情'
+		const imageUrl = this.topCoverUrl || this.detail?.coverUrl || ''
+		return { title, imageUrl }
 	},
 	methods: {
 		formatImageVersion(updateDate) {
@@ -774,6 +791,42 @@ page {
 
 .btn-enroll.btn-disabled .btn-enroll-text {
 	color: #94a3b8;
+}
+
+.btn-share {
+	margin: 0;
+	padding: 0;
+	width: 50px;
+	height: 50px;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	line-height: 1 !important;
+	font-size: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.btn-share::after {
+	display: none !important;
+	border: none !important;
+}
+
+.btn-share-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+}
+
+.btn-share-text {
+	font-size: 11px;
+	color: #6B7280;
+	font-weight: 400;
+	line-height: 1;
 }
 </style>
 

@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import { buildPendingTutorReviewQuery, listTutors } from '@/api/system/tutors'
+import { buildPendingTutorReviewQuery, listTutors } from '@/pages/mine/admin/_api/system/tutors'
 import { requireAdminAccess } from './access'
 import {
   buildTutorReviewDetailUrl,

@@ -61,9 +61,15 @@ function normalizeTutoringOrder(item = {}) {
         ...item,
         id: item.id ?? item.orderId ?? '',
         orderNo: pickFirst([item.orderNo, item.outTradeNo]),
+        bindingId: item.bindingId ?? '',
         demandId: item.demandId ?? item.parentId ?? item.parentsId ?? '',
+        parentId: item.parentId ?? item.demandId ?? item.parentsId ?? '',
         tutorId: item.tutorId ?? item.bindTutorId ?? '',
         tutorName: pickFirst([item.tutorName, item.realName, item.bindTutorName]),
+        parentName: pickFirst([item.parentName, item.demandName, item.name]),
+        lessonCount: item.lessonCount ?? item.lessons ?? 0,
+        hourlyPrice: item.hourlyPrice ?? item.quotePrice ?? item.price ?? 0,
+        serviceTimesSnapshot: item.serviceTimesSnapshot || item.serviceTimes || '',
         status: item.status ?? item.orderStatus ?? item.payStatus ?? 0,
         statusLabel: pickFirst([item.statusLabel, item.orderStatusLabel, item.payStatusLabel]),
         payStatus: item.payStatus ?? item.status ?? 0,
@@ -96,6 +102,8 @@ function normalizeTutoringSchedule(item = {}) {
         statusLabel: pickFirst([item.statusLabel, item.scheduleStatusLabel, item.orderStatusLabel]),
         canStudentComplete: item.canStudentComplete,
         canParentConfirm: item.canParentConfirm,
+        finishTime: pickFirst([item.finishTime]),
+        confirmTime: pickFirst([item.confirmTime, item.parentConfirmTime, item.confirmedTime]),
         auditStatus: item.auditStatus,
         auditStatusLabel: pickFirst([item.auditStatusLabel]),
         grossAmount: item.grossAmount ?? item.amount ?? item.totalAmount ?? item.orderAmount ?? 0,
@@ -232,6 +240,17 @@ export function getMyTutoringOrders(query = {}) {
     }))
 }
 
+export function getTutoringOrderDetail(orderNo, options = {}) {
+    return request({
+        url: `/wxmini/tutoring/orders/${orderNo}`,
+        method: 'get',
+        ...options
+    }).then(res => ({
+        ...res,
+        data: normalizeTutoringOrder(res?.data || {})
+    }))
+}
+
 export function getMyTutoringSchedules(query = {}) {
     return request({
         url: '/wxmini/tutoring/schedules/my',
@@ -243,7 +262,7 @@ export function getMyTutoringSchedules(query = {}) {
     }))
 }
 
-export function markStudentLessonComplete(scheduleId, data = {}) {
+export function submitStudentScheduleCheckIn(scheduleId, data = {}) {
     return request({
         url: `/wxmini/tutoring/schedules/${scheduleId}/finish`,
         method: 'post',
@@ -251,7 +270,7 @@ export function markStudentLessonComplete(scheduleId, data = {}) {
     })
 }
 
-export function confirmParentLessonComplete(scheduleId, data = {}) {
+export function submitParentScheduleComplete(scheduleId, data = {}) {
     return request({
         url: `/wxmini/tutoring/schedules/${scheduleId}/confirm`,
         method: 'post',

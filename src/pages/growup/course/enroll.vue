@@ -20,14 +20,9 @@
 
 					<!-- 课程信息卡 -->
 					<view class="course-card">
-						<image
-							:src="course.coverUrl || '/static/images/default_cover.png'"
-							class="course-thumb"
-							mode="aspectFill"
-						></image>
 						<view class="course-card-info">
 							<text class="course-card-name">{{ course.name }}</text>
-							<text class="course-card-time">开课时间：{{ formatMeta(course.startTime) }}-{{ formatMeta(course.endTime) }}</text>
+							<text class="course-card-time">开课时间：{{ courseTimeText }}</text>
 							<text class="course-card-addr" v-if="course.location">{{ course.location }}</text>
 						</view>
 					</view>
@@ -94,27 +89,13 @@
 					</view>
 
 					<!-- 学籍信息 -->
-					<view class="form-section">
+					<view v-if="requiresEnrollment" class="form-section">
 						<text class="section-title">学籍信息</text>
 						<view class="form-divider"></view>
 
-						<view class="enrollment-tip">
-							<text class="tip-desc">请按照您的需求，选择需要消耗学籍的类型。</text>
-							<view class="tip-item">
-								<text class="tip-bold">复训学籍：</text>
-								<text class="tip-text">在复训的有效时长内可重复报名该课程系列下的课程，且不需要再扣学籍；</text>
-							</view>
-							<view class="tip-item">
-								<text class="tip-bold">非复训学籍：</text>
-								<text class="tip-text">下次报名课程仍然需要扣学籍</text>
-							</view>
-						</view>
-
-						<view class="enrollment-select-row" @click="selectEnrollment">
-							<text class="enrollment-select-label">选择学籍复训资格：</text>
-							<text class="enrollment-select-value" v-if="selectedEnrollment">{{ selectedEnrollment.typeName || selectedEnrollment.name }}</text>
-							<text class="enrollment-select-placeholder" v-else>请选择</text>
-							<uni-icons type="right" size="16" color="#94a3b8"></uni-icons>
+						<view class="enrollment-balance-row">
+							<text class="enrollment-balance-label">当前课程余额：</text>
+							<text class="enrollment-balance-value">{{ courseEnrollmentText }}</text>
 						</view>
 					</view>
 
@@ -166,9 +147,15 @@
 </template>
 
 <script>
-import { getCourse, getEnrollmentsList } from '@/api/wxmini/growup'
+import { getCourse, getCourseEnrollment } from '@/api/wxmini/growup'
+import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 import { createCoursePayOrder, queryCoursePayOrder } from '@/api/wxmini/coursePay'
-import { useUserStore } from '@/store'
+import {
+	buildCourseEnrollmentText,
+	buildCourseTimeText,
+	canSubmitCourseEnrollment,
+	courseRequiresEnrollment
+} from './enroll.helpers'
 
 const PAID_STATUSES = [1, 2]
 const POLL_MAX_ATTEMPTS = 6
@@ -183,8 +170,7 @@ export default {
 			loading: true,
 			submitting: false,
 			course: null,
-			myEnrollments: [],
-			selectedEnrollment: null,
+			courseEnrollment: null,
 			form: {
 				name: '',
 				gender: '0',
@@ -199,6 +185,17 @@ export default {
 			],
 		}
 	},
+	computed: {
+		courseEnrollmentText() {
+			return buildCourseEnrollmentText(this.courseEnrollment)
+		},
+		requiresEnrollment() {
+			return courseRequiresEnrollment(this.course || {})
+		},
+		courseTimeText() {
+			return buildCourseTimeText(this.course || {})
+		}
+	},
 	onLoad(options) {
 		const sys = uni.getSystemInfoSync()
 		this.statusBarHeight = sys.statusBarHeight || 0
@@ -210,22 +207,23 @@ export default {
 		goBack() {
 			uni.navigateBack()
 		},
-		formatMeta(dateStr) {
-			if (!dateStr) return ''
-			return String(dateStr).replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1.$2.$3')
-		},
 		async loadData() {
 			this.loading = true
 			try {
-				const [courseRes, enrollRes] = await Promise.all([
+				const [courseRes, profileRes] = await Promise.all([
 					getCourse(this.courseId),
-					getEnrollmentsList().catch(() => null),
+					getWxUserProfileDetail().catch(() => null),
 				])
 				this.course = courseRes.data || courseRes
-				this.fillUserProfile()
-				if (enrollRes) {
-					const e = enrollRes.data || enrollRes
-					this.myEnrollments = Array.isArray(e) ? e : (e.rows || e.list || [])
+				if (this.requiresEnrollment) {
+					await this.loadCourseEnrollment()
+				}
+				if (profileRes) {
+					const p = profileRes.data || profileRes
+					this.form.name = p.realName || p.userName || p.displayName || ''
+					this.form.phone = p.phone || ''
+					this.form.gender = String(p.gender ?? '0')
+					this.form.company = p.companyName || ''
 				}
 			} catch(e) {
 				uni.showToast({ title: '加载失败', icon: 'none' })
@@ -233,22 +231,10 @@ export default {
 				this.loading = false
 			}
 		},
-		fillUserProfile() {
-			const userStore = useUserStore()
-			this.form.name = userStore.name || ''
-			this.form.phone = userStore.phone || ''
-		},
-		selectEnrollment() {
-			if (!this.myEnrollments.length) {
-				return uni.showToast({ title: '暂无可用学籍', icon: 'none' })
-			}
-			const items = this.myEnrollments.map(e => e.typeName || e.name || `学籍${e.id}`)
-			uni.showActionSheet({
-				itemList: items,
-				success: (res) => {
-					this.selectedEnrollment = this.myEnrollments[res.tapIndex]
-				}
-			})
+		async loadCourseEnrollment() {
+			if (!this.courseId) return
+			const res = await getCourseEnrollment(this.courseId).catch(() => null)
+			this.courseEnrollment = res ? (res.data || null) : null
 		},
 		validate() {
 			if (!this.form.name.trim()) {
@@ -257,6 +243,14 @@ export default {
 			}
 			if (!this.form.phone || !/^1\d{10}$/.test(this.form.phone)) {
 				uni.showToast({ title: '请填写正确的手机号', icon: 'none' })
+				return false
+			}
+			const enrollmentResult = canSubmitCourseEnrollment({
+				course: this.course,
+				enrollment: this.courseEnrollment,
+			})
+			if (!enrollmentResult.ok) {
+				uni.showToast({ title: enrollmentResult.message, icon: 'none' })
 				return false
 			}
 			return true
@@ -273,7 +267,7 @@ export default {
 					phone: this.form.phone,
 					company: this.form.company,
 					accommodation: this.form.accommodation,
-					enrollmentId: this.selectedEnrollment ? this.selectedEnrollment.id : undefined,
+					enrollmentId: this.requiresEnrollment && this.courseEnrollment ? this.courseEnrollment.id : undefined,
 				}
 				const result = await createCoursePayOrder(data)
 				await this.requestWxPayment(result.payParam)
@@ -293,7 +287,7 @@ export default {
 				provider: 'wxpay',
 				timeStamp: payParam.timeStamp,
 				nonceStr: payParam.nonceStr,
-				package: payParam.packageValue,
+				package: payParam.packageValue || payParam.package,
 				signType: payParam.signType || 'RSA',
 				paySign: payParam.paySign
 			})
@@ -391,14 +385,6 @@ page {
 	flex-direction: row;
 	gap: 12px;
 	box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-}
-
-.course-thumb {
-	width: 72px;
-	height: 72px;
-	border-radius: 8px;
-	background: #e2e8f0;
-	flex-shrink: 0;
 }
 
 .course-card-info {
@@ -512,66 +498,23 @@ page {
 	color: #3B82F6;
 }
 
-/* 学籍选择提示 */
-.enrollment-tip {
-	background: #f8fafc;
-	border-radius: 8px;
-	padding: 10px 12px;
-	margin-bottom: 12px;
-	gap: 4px;
-	display: flex;
-	flex-direction: column;
-}
-
-.tip-desc {
-	font-size: 12px;
-	color: #64748b;
-	margin-bottom: 6px;
-}
-
-.tip-item {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-}
-
-.tip-bold {
-	font-size: 12px;
-	font-weight: 600;
-	color: #475569;
-}
-
-.tip-text {
-	font-size: 12px;
-	color: #64748b;
-	flex: 1;
-	line-height: 1.6;
-}
-
-.enrollment-select-row {
+.enrollment-balance-row {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	padding: 10px 0;
-	border-top: 1px solid #f1f5f9;
 }
 
-.enrollment-select-label {
+.enrollment-balance-label {
 	font-size: 14px;
 	color: #1e293b;
 	flex: 1;
 }
 
-.enrollment-select-value {
+.enrollment-balance-value {
 	font-size: 14px;
 	color: #3B82F6;
-	margin-right: 4px;
-}
-
-.enrollment-select-placeholder {
-	font-size: 14px;
-	color: #cbd5e1;
-	margin-right: 4px;
+	font-weight: 600;
 }
 
 /* 住宿 */

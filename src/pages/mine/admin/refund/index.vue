@@ -272,7 +272,7 @@
 <script setup>
 import { getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { listJobs } from '@/api/system/jobs'
+import { listJobs } from '@/pages/mine/admin/_api/system/jobs'
 import {
   listCourseRefundOrders,
   listJobRefundOrders,
@@ -280,8 +280,8 @@ import {
   refundCourseOrder,
   refundJobOrder,
   refundSalonOrder
-} from '@/api/system/refund'
-import { buildAttendanceAuditStatus, canRefundJobOrder } from '@/pages/jobs/schedules.helpers'
+} from '@/pages/mine/admin/_api/system/refund'
+import { buildAttendanceAuditStatus, canRefundJobOrder } from '@/pages/mine/admin/_utils/jobSchedule'
 import { requireAdminAccess } from '../access'
 
 const { proxy } = getCurrentInstance()

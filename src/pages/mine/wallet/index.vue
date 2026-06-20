@@ -136,7 +136,7 @@
 
     <view class="footer-tips">
       <text class="tips-text">· 钱包收入包括兼职工资等平台入账</text>
-      <text class="tips-text">· 提现到账后将自动转入微信零钱</text>
+      <text class="tips-text">· 提交成功进入打款中后即冻结提现金额</text>
       <text class="tips-text">· 如有疑问请联系客服</text>
     </view>
 
@@ -175,7 +175,7 @@
         </view>
         <view class="sheet-tips">
           <text class="sheet-tip-item">· 最低提现金额 ¥1.00</text>
-          <text class="sheet-tip-item">· 预计工作日1-3天到账</text>
+          <text class="sheet-tip-item">· 进入打款中后即冻结提现金额</text>
         </view>
         <button
           class="confirm-btn"
@@ -195,7 +195,10 @@
 </template>
 
 <script>
-import { getWalletInfo, applyWithdraw, getWithdrawRecords, getWalletTransactions } from '@/api/wxmini/wallet'
+import { getWalletInfo, applyWithdraw, getWithdrawRecords, getWalletTransactions } from '@/pages/mine/wallet/_api/wxmini/wallet'
+
+const MIN_WITHDRAW_AMOUNT = 1
+const MAX_WITHDRAW_AMOUNT = 2000
 
 export default {
   name: 'WalletPage',
@@ -311,15 +314,19 @@ export default {
       const amount = parseFloat(this.withdrawAmount)
       const balance = parseFloat(this.walletInfo.balance)
       if (!this.withdrawAmount || isNaN(amount)) {
-        this.withdrawError = '请输入提现金额'
+        this.showWithdrawError('请输入提现金额')
         return
       }
-      if (amount < 1) {
-        this.withdrawError = '最低提现金额为 ¥1.00'
+      if (amount < MIN_WITHDRAW_AMOUNT) {
+        this.showWithdrawError('最低提现金额为 ¥1.00')
+        return
+      }
+      if (amount > MAX_WITHDRAW_AMOUNT) {
+        this.showWithdrawError('单次提现金额最高为 ¥2000.00')
         return
       }
       if (amount > balance) {
-        this.withdrawError = '提现金额不能超过可用余额'
+        this.showWithdrawError('提现金额不能超过可用余额')
         return
       }
       this.withdrawError = ''
@@ -330,31 +337,59 @@ export default {
         if (res.code === 200) {
           const data = res.data || {}
           if (data.status === 1) {
-            // SUCCESS — close sheet, toast, refresh
-            this.closeSheet()
-            uni.showToast({ title: '提现成功', icon: 'success' })
-            this.refreshAll()
+            this.handleWithdrawSuccess()
           } else if (data.status === 0) {
-            // PROCESSING — close sheet, hint, start polling
-            this.closeSheet()
-            uni.showToast({ title: '提现处理中，请稍候', icon: 'none', duration: 2000 })
-            this.startWithdrawPolling(data.withdrawId)
+            await this.handleWithdrawProcessing(data)
           } else {
-            // Unexpected status — treat as processing
-            this.closeSheet()
-            uni.showToast({ title: res.msg || '提现已提交', icon: 'none' })
-            this.refreshAll()
+            this.showWithdrawError(res.msg || '提现状态异常，请稍后刷新查看')
           }
         } else {
-          // FAILURE — keep sheet open, show error
           const data = res.data || {}
-          this.withdrawError = data.userMessage || res.msg || '提交失败，请重试'
+          this.showWithdrawError(data.userMessage || res.msg || '提交失败，请重试')
         }
       } catch (e) {
-        this.withdrawError = e.message || '网络异常，请重试'
+        this.showWithdrawError(e.message || '网络异常，请重试')
       } finally {
         this.withdrawLoading = false
       }
+    },
+
+    showWithdrawError(message) {
+      this.withdrawError = message
+      uni.showToast({ title: message, icon: 'none' })
+    },
+
+    handleWithdrawSuccess() {
+      this.closeSheet()
+      uni.showToast({ title: '提现成功', icon: 'success' })
+      this.refreshAll()
+    },
+
+    async handleWithdrawProcessing(data) {
+      await this.confirmMerchantTransfer(data)
+      this.withdrawError = '提现处理中，请稍候刷新查看'
+      uni.showToast({ title: '提现处理中，请稍候', icon: 'none', duration: 2000 })
+      this.refreshAll()
+      this.startWithdrawPolling(data.withdrawId)
+    },
+
+    async confirmMerchantTransfer(data) {
+      if (!data || !data.packageInfo) {
+        return
+      }
+      const requestTransfer = uni.requestMerchantTransfer || (typeof wx !== 'undefined' && wx.requestMerchantTransfer)
+      if (typeof requestTransfer !== 'function') {
+        throw new Error('当前微信版本不支持确认收款，请升级微信后重试')
+      }
+      await new Promise((resolve, reject) => {
+        requestTransfer({
+          mchId: data.mchId,
+          appId: data.appId,
+          package: data.packageInfo,
+          success: resolve,
+          fail: err => reject(new Error((err && err.errMsg) || '确认收款失败'))
+        })
+      })
     },
 
     startWithdrawPolling(withdrawId) {

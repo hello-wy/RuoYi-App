@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import { getMyRecords } from '@/api/wxmini/signin'
+import { getMyRecords } from '@/pages/mine/course/_api/wxmini/signin'
 
 export default {
 	data() {

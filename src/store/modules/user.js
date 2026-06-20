@@ -5,7 +5,7 @@ import config from '@/config'
 import storage from '@/utils/storage'
 import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
-import { bindWxminiPhone, getInfo, login, logout, wxminiLogin } from '@/api/login'
+import { getInfo, login, logout, wxminiLogin } from '@/api/login'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
@@ -14,6 +14,7 @@ import { resolveUserDisplayName } from '@/utils/userDisplay'
 import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
+const PHONE_CODE_REQUIRED_MESSAGE = '需要手机号授权后继续登录'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
@@ -114,8 +115,25 @@ export const useUserStore = defineStore('user', () => {
     realName: phoneData.realName || loginData.realName || '',
     userType: resolveUserTypeValue(phoneData.userType, loginData.userType),
     phone: phoneData.phone || phoneData.phoneNumber || loginData.phone || '',
-    avatarUrl: phoneData.avatarUrl || loginData.avatarUrl || loginData.avatar || ''
+    avatarUrl: phoneData.avatarUrl || loginData.avatarUrl || loginData.avatar || '',
+    needPhoneCode: Boolean(loginData.needPhoneCode)
   })
+
+  const buildPhoneCodeRequiredError = (loginData = {}) => {
+    const error = new Error(PHONE_CODE_REQUIRED_MESSAGE)
+    error.needPhoneCode = true
+    error.loginData = loginData
+    return error
+  }
+
+  const assertWxLoginReady = (loginData = {}) => {
+    if (loginData.needPhoneCode) {
+      throw buildPhoneCodeRequiredError(loginData)
+    }
+    if (!loginData.apiToken) {
+      throw new Error('未获取到微信登录态')
+    }
+  }
 
   const resetProfileState = () => {
     SET_TOKEN('')
@@ -166,7 +184,9 @@ export const useUserStore = defineStore('user', () => {
     return new Promise((resolve, reject) => {
       wxminiLogin(appid, code).then(async res => {
         try {
-          resolve(await applyWxSession(buildWxProfile(res.data)))
+          const loginData = res.data || {}
+          assertWxLoginReady(loginData)
+          resolve(await applyWxSession(buildWxProfile(loginData)))
         } catch (error) {
           reject(error)
         }
@@ -178,23 +198,14 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxPhoneLogin = ({ appid, code, phoneCode }) => {
     return new Promise((resolve, reject) => {
-      wxminiLogin(appid, code).then(loginRes => {
-        const loginData = loginRes.data || {}
-        const temporaryToken = loginData.apiToken
-        if (!temporaryToken) {
-          reject(new Error('未获取到微信临时登录态'))
-          return
-        }
-        bindWxminiPhone(appid, phoneCode, temporaryToken).then(async phoneRes => {
-          try {
-            const profile = buildWxProfile(loginData, phoneRes.data || {})
-            resolve(await applyWxSession(profile))
-          } catch (error) {
-            reject(error)
-          }
-        }).catch(error => {
+      wxminiLogin(appid, code, phoneCode).then(async loginRes => {
+        try {
+          const loginData = loginRes.data || {}
+          assertWxLoginReady(loginData)
+          resolve(await applyWxSession(buildWxProfile(loginData)))
+        } catch (error) {
           reject(error)
-        })
+        }
       }).catch(error => {
         reject(error)
       })

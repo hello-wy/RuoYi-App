@@ -70,18 +70,28 @@
 
 		<!-- ===== 底部操作栏 ===== -->
 		<view class="bottom-bar" v-if="detail">
-			<view class="bottom-price-wrap">
-				<text class="bottom-price">¥{{ formatPrice(detail.currentPrice) }}</text>
-				<text class="bottom-price-original" v-if="detail.originalPrice">¥{{ formatPrice(detail.originalPrice) }}</text>
+			<view class="bottom-left-actions">
+				<view class="bottom-price-wrap">
+					<text class="bottom-price">¥{{ formatPrice(detail.currentPrice) }}</text>
+					<text class="bottom-price-original" v-if="detail.originalPrice">¥{{ formatPrice(detail.originalPrice) }}</text>
+				</view>
 			</view>
-			<button
-				class="join-btn"
-				:class="{ 'join-btn-disabled': detail.status != 1 }"
-				:disabled="detail.status != 1"
-				@click="handleJoin"
-			>
-				{{ detail.status == 1 ? '立即报名' : '已结束' }}
-			</button>
+			<view class="bottom-right-actions">
+				<button class="share-btn" open-type="share">
+					<view class="share-btn-inner">
+						<uni-icons type="redo" size="24" color="#6B7280"></uni-icons>
+						<text class="share-btn-text">分享</text>
+					</view>
+				</button>
+				<button
+					class="join-btn"
+					:class="{ 'join-btn-disabled': detail.status != 1 }"
+					:disabled="detail.status != 1"
+					@click="handleJoin"
+				>
+					{{ detail.status == 1 ? '立即报名' : '已结束' }}
+				</button>
+			</view>
 		</view>
 		<!-- 登录弹窗 -->
 		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose"/>
@@ -89,8 +99,8 @@
 </template>
 
 <script>
-import { getInfo } from '@/api/system/info'
-import { createSalonPayOrder, querySalonPayOrder } from '@/api/wxmini/salonPay'
+import { getInfo } from '@/pages/salon/_api/system/info'
+import { createSalonPayOrder, querySalonPayOrder } from '@/pages/salon/_api/wxmini/salonPay'
 import { useUserStore } from '@/store';
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 
@@ -108,6 +118,17 @@ export default {
 	onLoad(options) {
 		this.salonId = options.id || ''
 		this.loadDetail()
+	},
+	onShareAppMessage() {
+		const title = this.detail?.title || '沙龙活动详情'
+		const imageUrl = this.detail?.coverImg || ''
+		const path = `/pages/salon/detail?id=${this.salonId}`
+		return { title, imageUrl, path }
+	},
+	onShareTimeline() {
+		const title = this.detail?.title || '沙龙活动详情'
+		const imageUrl = this.detail?.coverImg || ''
+		return { title, imageUrl }
 	},
 	methods: {
 		async loadDetail() {
@@ -381,6 +402,17 @@ export default {
 	justify-content: space-between;
 }
 
+.bottom-left-actions {
+	display: flex;
+	align-items: center;
+}
+
+.bottom-right-actions {
+	display: flex;
+	align-items: center;
+	gap: 16rpx;
+}
+
 .bottom-price-wrap {
 	display: flex;
 	align-items: baseline;
@@ -399,9 +431,44 @@ export default {
 	text-decoration: line-through;
 }
 
+.share-btn {
+	margin: 0;
+	padding: 0;
+	width: 80rpx;
+	height: 88rpx;
+	background: transparent !important;
+	border: none !important;
+	box-shadow: none !important;
+	line-height: 1 !important;
+	font-size: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.share-btn::after {
+	display: none !important;
+	border: none !important;
+}
+
+.share-btn-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6rpx;
+}
+
+.share-btn-text {
+	font-size: 20rpx;
+	color: #6B7280;
+	font-weight: 400;
+	line-height: 1;
+}
+
 .join-btn {
 	margin: 0;
-	min-width: 280rpx;
+	min-width: 240rpx;
 	height: 88rpx;
 	line-height: 88rpx;
 	border-radius: 999rpx;

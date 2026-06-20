@@ -67,7 +67,7 @@
 </template>
 
 <script>
-import { deleteParttimeWhitelist, listParttimeWhitelist } from '@/api/system/parttimeWhitelist'
+import { deleteParttimeWhitelist, listParttimeWhitelist } from '@/pages/mine/admin/_api/system/parttimeWhitelist'
 import { requireAdminAccess } from '../access'
 import { buildParttimeWhitelistListQuery, createParttimeWhitelistListState } from '../parttime-whitelist.list.helpers'
 

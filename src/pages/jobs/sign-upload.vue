@@ -47,13 +47,13 @@
 <script setup>
 import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getMyJobSchedules, submitJobAttendanceImage, uploadJobAttendanceImage } from '@/api/wxmini/jobs'
+import { getMyJobSchedules, submitJobAttendanceImage, uploadJobAttendanceImage } from '@/pages/jobs/_api/wxmini/jobs'
 import {
   buildUploadedCertificateUrl,
   buildUploadedPreviewUrl,
-} from '@/pages/tutoring/tutor/apply.helpers'
+} from '@/pages/jobs/_utils/imageUpload'
 import { buildAttendanceAuditStatus, getAttendanceRejectReason } from './schedules.helpers'
-import ImageUploader from '@/components/ImageUploader/ImageUploader.vue'
+import ImageUploader from '@/pages/jobs/_components/ImageUploader/ImageUploader.vue'
 import config from '@/config'
 
 const { proxy } = getCurrentInstance()

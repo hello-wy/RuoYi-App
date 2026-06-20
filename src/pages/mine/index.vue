@@ -204,6 +204,7 @@ import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 import { getParttimeGroupQrcode, getMerchantAgentConfig } from '@/api/wxmini/config'
 import { isAdminUser, shouldEnableRegularMineFeatures } from '@/utils/admin'
 import { isRealnameAuthed, resolveUserDisplayName } from '@/utils/userDisplay'
+import { filterMineMenuItems } from './index.helpers'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
@@ -240,7 +241,6 @@ const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value)
 const isAdmin = computed(() => isAdminUser(token.value, roles.value))
 const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
 const showWalletEntry = computed(() => shouldEnableRegularContent.value && hasLogin.value)
-const showScheduleEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
 const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
 const showMerchantPayrollEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT && shouldEnableRegularContent.value)
 const isProfileVerified = computed(() => isRealnameAuthed(profileDetail.value?.isRealnameAuth))
@@ -287,31 +287,32 @@ const primaryActionDesc = computed(() => {
   return '先选择身份，为您推荐更适合的内容和服务'
 })
 
+const scheduleMenuItem = { key: 'schedule', label: '安排', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '查看近期工作安排', onClick: handleToSchedule }
+const settingMenuItem = { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
+
 const baseMenuItems = [
-  { key: 'wallet', label: '我的钱包', icon: 'wallet-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', description: '收入提现与工资流水', visible: showWalletEntry, onClick: handleToWallet },
-  { key: 'merchantPayroll', label: '兼职日结查询', icon: 'list', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '报名人员与工资结算', visible: showMerchantPayrollEntry, onClick: handleToMerchantPayroll },
-  { key: 'schedule', label: '兼职安排', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '查看近期工作安排', visible: showScheduleEntry, onClick: handleToSchedule },
-  { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: showParttimeGroupEntry, onClick: handleOpenParttimeGroup },
+  { key: 'wallet', label: '我的钱包', icon: 'wallet-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', description: '收入提现与工资流水', visible: () => showWalletEntry.value, onClick: handleToWallet },
+  { key: 'merchantPayroll', label: '兼职日结查询', icon: 'list', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '报名人员与工资结算', visible: () => showMerchantPayrollEntry.value, onClick: handleToMerchantPayroll },
+  scheduleMenuItem,
+  { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: () => showParttimeGroupEntry.value, onClick: handleOpenParttimeGroup },
   { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
+  { key: 'coursePackage', label: '课时包', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '选择陪伴官与课时订单', onClick: handleToCoursePackage },
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
   { key: 'service', label: '客服电话', icon: 'headphones', iconColor: '#059669', iconClass: 'menu-icon-light', description: '周一至周日 09:00-24:00', onClick: handleBuilding },
-  { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
+  settingMenuItem
 ]
 
 const menuItems = computed(() => {
   if (isAdmin.value) {
     return [
       { key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin },
-      { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
+      scheduleMenuItem,
+      settingMenuItem
     ]
   }
 
-  return baseMenuItems.filter(item => {
-    if (item.key === 'baby') return normalizedUserType.value === USER_TYPES.PARENT
-    if (Object.prototype.hasOwnProperty.call(item, 'visible')) return item.visible.value
-    return true
-  })
+  return filterMineMenuItems(baseMenuItems, normalizedUserType.value)
 })
 
 function createPopupState(overrides = {}) {
@@ -419,6 +420,12 @@ function handleToOrderCenter() {
 function handleToBaby() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/baby/index')
+  })
+}
+
+function handleToCoursePackage() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/course-package/index')
   })
 }
 

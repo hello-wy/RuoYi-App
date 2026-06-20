@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import { listMaterials } from '@/api/system/growup'
+import { listMaterials } from '@/pages/growup/_api/system/growup'
 
 export default {
 	data() {

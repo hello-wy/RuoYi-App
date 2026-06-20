@@ -146,18 +146,44 @@ page {
   font-weight: 600;
 }
 
+.status-0 {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.status-1,
 .status-enabled {
   color: #047857;
   background: rgba(16, 185, 129, 0.12);
 }
 
+.status-2,
 .status-disabled {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.14);
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.record-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.audit-btn {
+  border-radius: 999rpx;
+  color: $brand;
+  border: 1rpx solid rgba(15, 118, 110, 0.24);
+  background: #f0fdfa;
+}
+
+.audit-btn.reject {
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.24);
+  background: #fff5f5;
 }
 
 .delete-btn {
-  flex-shrink: 0;
   border-radius: 999rpx;
   color: $danger;
   border: 1rpx solid rgba(220, 38, 38, 0.24);

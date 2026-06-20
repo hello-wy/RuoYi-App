@@ -75,7 +75,7 @@
 </template>
 
 <script>
-import { getProfile } from '@/api/system/profile'
+import { getProfile } from '@/pages/growup/_api/system/profile'
 
 export default {
   data() {

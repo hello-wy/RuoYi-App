@@ -27,7 +27,7 @@
 <script setup>
 import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { getPendingTutorReviewCount } from '@/api/system/tutors'
+import { getPendingTutorReviewCount } from '@/pages/mine/admin/_api/system/tutors'
 import { requireAdminAccess } from './access'
 
 const { proxy } = getCurrentInstance()
@@ -77,6 +77,20 @@ const actionItems = [
     onClick: handleStudentManagement
   },
   {
+    key: 'tutoring-bindings',
+    label: '家教订单',
+    icon: 'person-filled',
+    iconColor: '#0f766e',
+    onClick: handleTutoringBindings
+  },
+  {
+    key: 'tutoring-schedule-audit',
+    label: '家教签到审核',
+    icon: 'compose',
+    iconColor: '#2563eb',
+    onClick: handleTutoringScheduleAudit
+  },
+  {
     key: 'follow-up',
     label: '回访管理',
     icon: 'chatboxes-filled',
@@ -124,6 +138,14 @@ function handleMerchantUserTypeWhitelist() {
 
 function handleStudentManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/student/index')
+}
+
+function handleTutoringBindings() {
+  proxy.$tab.navigateTo('/pages/mine/admin/tutoring-bindings/index')
+}
+
+function handleTutoringScheduleAudit() {
+  proxy.$tab.navigateTo('/pages/mine/admin/tutoring-schedule-audit/index')
 }
 
 function handleRefundManagement() {

@@ -152,7 +152,7 @@
 </template>
 
 <script>
-import { addWxJob, getJobPublishDefaults } from '@/api/wxmini/jobs'
+import { addWxJob, getJobPublishDefaults } from '@/pages/jobs/_api/wxmini/jobs'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 import { useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
@@ -160,7 +160,7 @@ import AreaPicker from '@/components/AreaPicker/AreaPicker.vue'
 import AddressSearch from '@/components/AddressSearch/AddressSearch.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
-import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../tutoring/role-guard.helpers'
+import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '@/pages/jobs/_utils/tutoringRoleGuard'
 import { isRealnameAuthed } from '@/utils/userDisplay'
 
 const CATEGORY_OPTIONS = [

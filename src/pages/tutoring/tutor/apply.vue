@@ -289,7 +289,7 @@ import { useLocationStore, useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
-import ImageUploader from '@/components/ImageUploader/ImageUploader.vue'
+import ImageUploader from '@/pages/tutoring/_components/ImageUploader/ImageUploader.vue'
 import {
 	buildUploadedCertificateUrl,
 	removeAreaCodeAtIndex,

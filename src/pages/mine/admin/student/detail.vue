@@ -38,7 +38,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getStudentDetail } from '@/api/system/student'
+import { getStudentDetail } from '@/pages/mine/admin/_api/system/student'
 import { buildProfileFields, getDisplayName, getUserTypeText } from './helpers'
 
 const detail = ref({})

@@ -113,8 +113,8 @@
 import { getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import config from '@/config'
-import { listJobs } from '@/api/system/jobs'
-import { auditJobSignRecord, listJobSignAuditRecords } from '@/api/system/jobSignAudit'
+import { listJobs } from '@/pages/mine/admin/_api/system/jobs'
+import { auditJobSignRecord, listJobSignAuditRecords } from '@/pages/mine/admin/_api/system/jobSignAudit'
 import {
   buildJobSignAuditActionLabel,
   buildJobSignAuditStatus,

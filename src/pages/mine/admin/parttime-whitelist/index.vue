@@ -33,7 +33,7 @@
 <script setup>
 import { reactive, ref, getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { addParttimeWhitelist } from '@/api/system/parttimeWhitelist'
+import { addParttimeWhitelist } from '@/pages/mine/admin/_api/system/parttimeWhitelist'
 import { requireAdminAccess } from '../access'
 import { buildParttimeWhitelistPayload, validateParttimeWhitelistForm } from '../parttime-whitelist.helpers'
 

@@ -7,10 +7,7 @@ function sortGuideRoles(roles = []) {
 }
 
 export function filterGuideRoles(allRoles = [], switchableUserTypes) {
-  if (!Array.isArray(switchableUserTypes) || switchableUserTypes.length === 0) {
-    return sortGuideRoles(allRoles)
-  }
-  return sortGuideRoles(allRoles.filter(role => switchableUserTypes.includes(role.value)))
+  return sortGuideRoles(allRoles)
 }
 
 export function resolveGuideSelectedRole(selectedRole, roles = []) {

@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { getJobSignupUsers, getMyPublishedJobs, updateMerchantJobStatus } from '@/api/wxmini/jobs'
+import { getJobSignupUsers, getMyPublishedJobs, updateMerchantJobStatus } from '@/pages/jobs/_api/wxmini/jobs'
 import { useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 import config from '@/config'

@@ -3,7 +3,7 @@
     <view class="hero-card">
       <view>
         <text class="hero-title">我的安排日历</text>
-        <text class="hero-desc">同时查看兼职安排与家教安排，按日期处理签到和完课动作</text>
+        <text class="hero-desc">同时查看兼职安排与家教安排，按日期处理签到与确认</text>
       </view>
       <view class="hero-count">
         <text class="hero-count-num">{{ scheduleList.length }}</text>
@@ -86,11 +86,11 @@
               <view v-if="item.type === 'job' && canUpload(item)" class="detail-btn" @click.stop="goSignUpload(item)">
                 <text class="detail-btn-text">{{ item.auditStatus === 3 ? '重新上传' : '上传签到图' }}</text>
               </view>
-              <view v-if="item.type === 'tutoring' && canStudentComplete(item)" class="detail-btn" @click.stop="handleStudentComplete(item)">
-                <text class="detail-btn-text">上课完成</text>
+              <view v-if="item.type === 'tutoring' && canStudentCheckIn(item)" class="detail-btn" @click.stop="handleStudentCheckIn(item)">
+                <text class="detail-btn-text">上课签到</text>
               </view>
               <view v-if="item.type === 'tutoring' && canParentConfirm(item)" class="detail-btn warning-btn" @click.stop="handleParentConfirm(item)">
-                <text class="detail-btn-text">确认完成</text>
+                <text class="detail-btn-text">上课完成</text>
               </view>
             </view>
           </view>
@@ -102,15 +102,18 @@
 
 <script>
 import UniCalendar from '@/uni_modules/uni-calendar/components/uni-calendar/uni-calendar.vue'
-import { getMyJobSchedules } from '@/api/wxmini/jobs'
+import { getMyJobSchedules } from '@/pages/jobs/_api/wxmini/jobs'
 import {
-  confirmParentLessonComplete,
   getMyTutoringSchedules,
-  markStudentLessonComplete,
+  submitParentScheduleComplete,
+  submitStudentScheduleCheckIn,
 } from '@/api/wxmini/tutoring'
+import { useUserStore } from '@/store/modules/user'
 import {
   buildAttendanceAuditStatus,
   buildTutoringScheduleStatus,
+  canParentConfirmTutoringSchedule,
+  canStudentCheckInTutoringSchedule,
   canUploadAttendanceImage,
   getAttendanceRejectReason
 } from './schedules.helpers'
@@ -202,6 +205,9 @@ export default {
         })
         return list
       }, [])
+    },
+    userType() {
+      return useUserStore().userType
     }
   },
   onLoad() {
@@ -296,15 +302,13 @@ export default {
       }
       return `¥${formatAmount(item.amount)}`
     },
-    canStudentComplete(item) {
+    canStudentCheckIn(item) {
       if (item.type !== 'tutoring') return false
-      if (item.canStudentComplete !== undefined) return Boolean(item.canStudentComplete)
-      return Number(item.status) === 0
+      return canStudentCheckInTutoringSchedule(item, this.userType)
     },
     canParentConfirm(item) {
       if (item.type !== 'tutoring') return false
-      if (item.canParentConfirm !== undefined) return Boolean(item.canParentConfirm)
-      return Number(item.status) === 1
+      return canParentConfirmTutoringSchedule(item, this.userType)
     },
     goJobDetail(jobId) {
       uni.navigateTo({ url: `/pages/jobs/detail?id=${jobId}` })
@@ -317,12 +321,12 @@ export default {
         url: `/pages/jobs/sign-upload?jobId=${item.jobId}&orderNo=${orderNo}&title=${title}&workDate=${workDate}`
       })
     },
-    async handleStudentComplete(item) {
+    async handleStudentCheckIn(item) {
       if (this.actionLoading || !item.id) return
       this.actionLoading = true
       try {
-        await markStudentLessonComplete(item.id)
-        uni.showToast({ title: '已标记上课完成', icon: 'success' })
+        await submitStudentScheduleCheckIn(item.id)
+        uni.showToast({ title: '上课签到成功', icon: 'success' })
         await this.loadData()
       } catch (e) {
         uni.showToast({ title: e?.msg || '操作失败，请重试', icon: 'none' })
@@ -333,14 +337,14 @@ export default {
     handleParentConfirm(item) {
       if (this.actionLoading || !item.id) return
       uni.showModal({
-        title: '确认完成',
-        content: '确认之后，管理员需要进行审稿。确定现在确认完成吗？',
+        title: '上课完成',
+        content: '确认上课完成后，管理员需要进行审核。确定现在提交吗？',
         success: async ({ confirm }) => {
           if (!confirm) return
           this.actionLoading = true
           try {
-            await confirmParentLessonComplete(item.id)
-            uni.showToast({ title: '已提交确认完成', icon: 'success' })
+            await submitParentScheduleComplete(item.id)
+            uni.showToast({ title: '已提交上课完成', icon: 'success' })
             await this.loadData()
           } catch (e) {
             uni.showToast({ title: e?.msg || '操作失败，请重试', icon: 'none' })

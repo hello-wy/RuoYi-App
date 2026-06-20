@@ -110,7 +110,7 @@
 </template>
 
 <script>
-import { getJobs } from '@/api/system/jobs'
+import { getJobs } from '@/pages/jobs/_api/system/jobs'
 import { useJobSignupOrderStore, useUserStore, useLocationStore } from '@/store'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { findDistrictNodeByCode } from '@/utils/pca'

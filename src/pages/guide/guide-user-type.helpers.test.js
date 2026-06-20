@@ -13,10 +13,11 @@ const ALL_ROLES = [
 ]
 
 describe('guide user type helpers', () => {
-  test('filters out merchant role when switchable types exclude merchant', () => {
+  test('keeps merchant role visible even when switchable types exclude merchant', () => {
     expect(filterGuideRoles(ALL_ROLES, [0, 1, 3])).toEqual([
       { value: 0, name: '家长' },
       { value: 1, name: '学生' },
+      { value: 2, name: '商家' },
       { value: 3, name: '兼职' },
     ])
   })
@@ -33,19 +34,15 @@ describe('guide user type helpers', () => {
     expect(resolveGuideSelectedRole(2, ALL_ROLES)).toBe(2)
   })
 
-  test('falls back to first allowed role when selected role is hidden', () => {
+  test('keeps selected merchant role visible when whitelist is unavailable', () => {
     const filteredRoles = filterGuideRoles(ALL_ROLES, [0, 1, 3])
-    expect(resolveGuideSelectedRole(2, filteredRoles)).toBe(0)
+    expect(resolveGuideSelectedRole(2, filteredRoles)).toBe(2)
   })
 
-  test('resolves filtered roles and selected role from profile switchable types', () => {
+  test('resolves all roles and selected role from profile switchable types', () => {
     expect(resolveGuideRoleState(ALL_ROLES, 2, { switchableUserTypes: [0, 1, 3] })).toEqual({
-      roles: [
-        { value: 0, name: '家长' },
-        { value: 1, name: '学生' },
-        { value: 3, name: '兼职' },
-      ],
-      selectedRole: 0,
+      roles: ALL_ROLES,
+      selectedRole: 2,
     })
   })
 

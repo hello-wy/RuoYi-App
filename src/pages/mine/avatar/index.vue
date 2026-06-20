@@ -39,7 +39,7 @@
 <script>
   import config from '@/config'
   import { useUserStore } from '@/store'
-  import { uploadAvatar } from "@/api/system/user"
+  import { uploadAvatar } from "@/pages/mine/avatar/_api/system/user"
   
   const baseUrl = config.baseUrl
 	let sysInfo = uni.getSystemInfoSync()

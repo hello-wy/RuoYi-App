@@ -137,7 +137,7 @@
 </template>
 
 <script>
-import { listJobs } from '@/api/system/jobs'
+import { listJobs } from '@/pages/jobs/_api/system/jobs'
 import { useLocationStore, useUserStore } from '@/store'
 import { findDistrictNodeByCode } from '@/utils/pca'
 import { USER_TYPES } from '@/utils/userType'

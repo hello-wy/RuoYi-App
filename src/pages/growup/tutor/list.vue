@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import { listProfile } from '@/api/system/profile'
+import { listProfile } from '@/pages/growup/_api/system/profile'
 
 export default {
 		data() {

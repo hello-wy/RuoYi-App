@@ -1,0 +1,173 @@
+page {
+  background: #f4f6fb;
+}
+
+.binding-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: #f4f6fb;
+}
+
+.summary-wrap,
+.manage-card,
+.binding-card,
+.state-box {
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+}
+
+.summary-wrap {
+  padding: 28rpx 24rpx 24rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-circle {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #14b8a6 0%, #0f766e 100%);
+  box-shadow: 0 16rpx 40rpx rgba(15, 118, 110, 0.26);
+}
+
+.summary-value {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.summary-label {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+.manage-card {
+  padding: 24rpx;
+}
+
+.manage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.manage-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.toolbar-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 20rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+}
+
+.status-tab {
+  flex: 1;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  color: #64748b;
+}
+
+.status-tab.active {
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 10rpx 24rpx rgba(15, 118, 110, 0.2);
+}
+
+.binding-scroll {
+  height: calc(100vh - 520rpx);
+}
+
+.binding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding: 4rpx 0 24rpx;
+}
+
+.binding-card {
+  padding: 24rpx;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.binding-title {
+  display: block;
+  margin-bottom: 18rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #111827;
+}
+
+.binding-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 8rpx 0;
+}
+
+.row-label {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.row-value {
+  flex: 1;
+  text-align: right;
+  font-size: 28rpx;
+  color: #334155;
+  word-break: break-all;
+}
+
+.state-box {
+  padding: 100rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  box-shadow: none;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: #94a3b8;
+}
+
+.retry-btn {
+  margin-top: 20rpx;
+}

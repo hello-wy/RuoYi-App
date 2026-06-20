@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-  import { updateUserPwd } from "@/api/system/user"
+  import { updateUserPwd } from "@/pages/mine/pwd/_api/system/user"
   import { ref, reactive , getCurrentInstance } from "vue"
   import { onReady } from  "@dcloudio/uni-app"
 

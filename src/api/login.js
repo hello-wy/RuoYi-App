@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+function buildWxminiLoginParams(appid, code, phoneCode = '') {
+  const params = { appid, code }
+  if (phoneCode) {
+    return { ...params, phoneCode }
+  }
+  return params
+}
+
 // 登录方法
 export function login(username, password, code, uuid) {
   const data = {
@@ -58,33 +66,14 @@ export function getCodeImg() {
   })
 }
 
-// 微信小程序登录
-export function wxminiLogin(appid, code) {
+// 微信小程序登录，未注册时可携带 phoneCode 完成手机号快捷注册
+export function wxminiLogin(appid, code, phoneCode = '') {
   return request({
     url: '/wxmini/login',
     headers: {
       isToken: false
     },
     method: 'get',
-    params: {
-      appid,
-      code
-    }
-  })
-}
-
-// 微信小程序手机号实时验证绑定
-export function bindWxminiPhone(appid, phoneCode, temporaryToken) {
-  return request({
-    url: '/wxmini/user/phone',
-    headers: {
-      isToken: false,
-      'Wx-Authorization': `Bearer ${temporaryToken}`
-    },
-    method: 'post',
-    data: {
-      appid,
-      phoneCode
-    }
+    params: buildWxminiLoginParams(appid, code, phoneCode)
   })
 }

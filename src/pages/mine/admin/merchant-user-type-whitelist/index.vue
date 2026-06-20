@@ -29,18 +29,35 @@
           <view class="record-main">
             <view class="record-row">
               <text class="record-name">{{ item.realName || '未填写' }}</text>
-              <text class="status-tag" :class="item.status === 1 ? 'status-enabled' : 'status-disabled'">
-                {{ item.status === 1 ? '启用' : '停用' }}
+              <text class="status-tag" :class="`status-${item.status}`">
+                {{ getMerchantWhitelistStatusLabel(item.status) }}
               </text>
             </view>
             <text class="record-meta">身份证：{{ item.idCard || '未填写' }}</text>
+            <text class="record-meta">营业执照：{{ item.businessLicenseUrl || '未上传' }}</text>
             <text class="record-meta">备注：{{ item.remark || '无' }}</text>
             <text class="record-meta">创建人：{{ item.createBy || '未知' }}</text>
             <text class="record-meta">创建时间：{{ item.createTime || '未知' }}</text>
           </view>
-          <button class="delete-btn" size="mini" :disabled="deletingId === item.id" @click="handleDelete(item)">
-            {{ deletingId === item.id ? '删除中' : '删除' }}
-          </button>
+          <view class="record-actions">
+            <button
+              v-if="item.status === 0"
+              class="audit-btn"
+              size="mini"
+              :disabled="auditingId === item.id"
+              @click="handleAudit(item, 1)"
+            >通过</button>
+            <button
+              v-if="item.status === 0"
+              class="audit-btn reject"
+              size="mini"
+              :disabled="auditingId === item.id"
+              @click="handleAudit(item, 2)"
+            >拒绝</button>
+            <button class="delete-btn" size="mini" :disabled="deletingId === item.id" @click="handleDelete(item)">
+              {{ deletingId === item.id ? '删除中' : '删除' }}
+            </button>
+          </view>
         </view>
       </view>
     </view>
@@ -85,12 +102,14 @@ import { reactive, ref, getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import {
   addMerchantUserTypeWhitelist,
+  auditMerchantUserTypeWhitelist,
   deleteMerchantUserTypeWhitelist,
   listMerchantUserTypeWhitelist,
-} from '@/api/system/merchantUserTypeWhitelist'
+} from '@/pages/mine/admin/_api/system/merchantUserTypeWhitelist'
 import { requireAdminAccess } from '../access'
 import {
   buildMerchantUserTypeWhitelistPayload,
+  getMerchantWhitelistStatusLabel,
   validateMerchantUserTypeWhitelistForm,
 } from '../merchant-user-type-whitelist.helpers'
 
@@ -100,6 +119,7 @@ const loading = ref(false)
 const total = ref(0)
 const list = ref([])
 const deletingId = ref('')
+const auditingId = ref('')
 const showFormPopup = ref(false)
 const formPopupVisible = ref(false)
 const form = reactive({
@@ -176,6 +196,20 @@ function handleDelete(item) {
       loadList()
     } finally {
       deletingId.value = ''
+    }
+  }).catch(() => {})
+}
+
+function handleAudit(item, status) {
+  const action = status === 1 ? '通过' : '拒绝'
+  proxy.$modal.confirm(`确定${action}${item.realName || '该用户'}的商家申请吗？`).then(async () => {
+    auditingId.value = item.id
+    try {
+      await auditMerchantUserTypeWhitelist(item.id, { status, remark: item.remark || '' })
+      proxy.$modal.showToast('审核成功')
+      loadList()
+    } finally {
+      auditingId.value = ''
     }
   }).catch(() => {})
 }

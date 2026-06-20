@@ -92,6 +92,7 @@ const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
 const submitting = ref(false)
 const loadingRoles = ref(false)
+const profileState = ref({})
 
 const allRoles = [
   {
@@ -160,9 +161,11 @@ async function loadSwitchableRoles() {
   try {
     const res = await getWxUserProfileDetail()
     const profile = res?.data || {}
+    profileState.value = profile
     userStore.updateWxProfileState(profile)
     applyGuideRoleState(profile)
   } catch (error) {
+    profileState.value = {}
     applyGuideRoleState()
   } finally {
     loadingRoles.value = false
@@ -174,6 +177,11 @@ function resolveTarget(userType) {
   if (userType === 1) return '/pages/tutoring/tutor/apply'
   if (userType === 2) return '/pages/jobs/list'
   return '/pages/jobs/list'
+}
+
+function canSwitchMerchantNow() {
+  const switchableUserTypes = profileState.value?.switchableUserTypes
+  return Array.isArray(switchableUserTypes) && switchableUserTypes.includes(2)
 }
 
 function selectRole(role) {
@@ -189,6 +197,10 @@ async function handleContinue() {
 
   submitting.value = true
   try {
+    if (selectedRole.value === 2 && !canSwitchMerchantNow()) {
+      proxy.$tab.navigateTo('/pages/merchant/license-apply')
+      return
+    }
     await switchWxUserType({ userType: selectedRole.value })
     userStore.updateWxProfileState({ userType: selectedRole.value })
     proxy.$tab.redirectTo(resolveTarget(selectedRole.value))
