@@ -340,6 +340,24 @@ page {
   color: $sub-text;
 }
 
+.logout-section {
+  padding: 32rpx 0 calc(40rpx + env(safe-area-inset-bottom));
+}
+
+.logout-btn {
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 15rpx;
+  background: #ef4444;
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.logout-btn::after {
+  border: none;
+}
+
 .agent-float-btn {
   position: fixed;
   right: 24rpx;

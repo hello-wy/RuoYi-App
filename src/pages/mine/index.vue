@@ -82,6 +82,9 @@
           <view v-if="index < menuItems.length - 1" class="menu-divider"></view>
         </template>
       </view>
+      <view v-if="hasLogin" class="logout-section">
+        <button class="logout-btn" @click="handleLogout">退出登录</button>
+      </view>
     </view>
   <view v-if="showAgentEntry" class="agent-float-btn" @click="handleOpenMerchantAgent">
       <uni-icons type="staff-filled" size="18" color="#ffffff" />
@@ -488,6 +491,14 @@ function handleToMerchantPayroll() {
 function handleToSetting() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/setting/index')
+  })
+}
+
+function handleLogout() {
+  proxy.$modal.confirm('确定注销并退出系统吗？').then(() => {
+    userStore.logOut().then(() => {}).finally(() => {
+      proxy.$tab.reLaunch('/pages/index')
+    })
   })
 }
 

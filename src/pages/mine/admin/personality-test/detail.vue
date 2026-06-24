@@ -8,6 +8,21 @@
       <text class="status-tag" :class="statusClass">{{ detail.statusLabel || getStatusLabel(detail.status) }}</text>
     </view>
 
+    <view class="user-card">
+      <view class="user-row">
+        <text class="user-label">姓名</text>
+        <text class="user-value">{{ displayName }}</text>
+      </view>
+      <view class="user-row">
+        <text class="user-label">手机号码</text>
+        <text class="user-value">{{ formatText(detail.phone) }}</text>
+      </view>
+      <view class="user-row">
+        <text class="user-label">性别</text>
+        <text class="user-value">{{ getGenderText(detail.gender) }}</text>
+      </view>
+    </view>
+
     <view class="overview-card">
       <view class="overview-item">
         <text class="overview-value">{{ detail.answeredCount || 0 }}</text>
@@ -60,6 +75,7 @@
 
 <script>
 import { getPersonalityAttemptDetail } from '@/api/wxmini/personalityTest'
+import { getStudentDetail } from '@/api/system/student'
 import { requireAdminAccess } from '../access'
 
 export default {
@@ -99,16 +115,38 @@ export default {
       this.loading = true
       this.loadError = false
       try {
-        const res = await getPersonalityAttemptDetail(this.attemptId)
-        const data = res.data || {}
-        this.detail = data
-        this.answers = Array.isArray(data.answers) ? data.answers : []
+        const data = await getPersonalityAttemptDetail(this.attemptId)
+        this.detail = data || {}
+        this.answers = Array.isArray(data?.answers) ? data.answers : []
+
+        if (data?.userInfoId) {
+          try {
+            const profileRes = await getStudentDetail(data.userInfoId)
+            const profile = profileRes.data || {}
+            this.detail = {
+              ...this.detail,
+              phone: profile.phone,
+              gender: profile.gender
+            }
+          } catch (error) {
+            console.error('加载用户资料失败', error)
+          }
+        }
       } catch (error) {
         this.loadError = true
         console.error('加载性格测试详情失败', error)
       } finally {
         this.loading = false
       }
+    },
+    getGenderText(value) {
+      if (value === 0 || value === '0') return '男'
+      if (value === 1 || value === '1') return '女'
+      if (value === 2 || value === '2') return '未知'
+      return '--'
+    },
+    formatText(value) {
+      return value === null || value === undefined || value === '' ? '--' : value
     },
     getStatusLabel(status) {
       if (Number(status) === 0) return '进行中'

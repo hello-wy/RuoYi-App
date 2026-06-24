@@ -20,19 +20,11 @@
         </view>
       </view>
     </view>
-    <view class="cu-list menu">
-      <view class="cu-item item-box">
-        <view class="content text-center" @click="handleLogout">
-          <text class="text-black">退出登录</text>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script setup>
-  import { useUserStore } from '@/store'
-  import { ref, computed , getCurrentInstance } from "vue"
+  import { computed , getCurrentInstance } from "vue"
 
   const { proxy } = getCurrentInstance()
   const windowHeight = computed(() => uni.getSystemInfoSync().windowHeight - 50)
@@ -47,14 +39,6 @@
 
   function handleCleanTmp() {
     proxy.$modal.showToast('模块建设中~')
-  }
-
-  function handleLogout() {
-    proxy.$modal.confirm('确定注销并退出系统吗？').then(() => {
-      useUserStore().logOut().then(() => {}).finally(()=>{
-        proxy.$tab.reLaunch('/pages/index')
-      })
-    })
   }
 </script>
 
