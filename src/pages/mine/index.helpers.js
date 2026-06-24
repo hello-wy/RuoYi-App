@@ -2,6 +2,7 @@ import { USER_TYPES } from '@/utils/userType'
 
 const PARENT_ONLY_MENU_KEYS = Object.freeze(['baby', 'coursePackage'])
 const ALWAYS_VISIBLE_MENU_KEYS = Object.freeze(['schedule'])
+const ADMIN_MENU_KEYS = Object.freeze(['admin', 'setting'])
 
 export function shouldShowMineMenuItem(item, normalizedUserType) {
   if (ALWAYS_VISIBLE_MENU_KEYS.includes(item.key)) {
@@ -18,4 +19,26 @@ export function shouldShowMineMenuItem(item, normalizedUserType) {
 
 export function filterMineMenuItems(menuItems, normalizedUserType) {
   return menuItems.filter(item => shouldShowMineMenuItem(item, normalizedUserType))
+}
+
+export function buildMinePageModel({ isAdmin, hasLogin, normalizedUserType, menuItems }) {
+  if (isAdmin) {
+    return {
+      showRegularContent: false,
+      showPrimaryCard: false,
+      showAgentEntry: false,
+      menuItems: menuItems.filter(item => ADMIN_MENU_KEYS.includes(item.key) && isMenuItemVisible(item))
+    }
+  }
+  return {
+    showRegularContent: true,
+    showPrimaryCard: hasLogin,
+    showAgentEntry: true,
+    menuItems: filterMineMenuItems(menuItems, normalizedUserType)
+  }
+}
+
+function isMenuItemVisible(item) {
+  if (!Object.prototype.hasOwnProperty.call(item, 'visible')) return true
+  return typeof item.visible === 'function' ? item.visible() : Boolean(item.visible)
 }

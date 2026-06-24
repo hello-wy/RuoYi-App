@@ -255,6 +255,7 @@ export default {
         const payParam = payload.payParam || {}
         await uni.requestPayment({
           provider: 'wxpay',
+          appId: payParam.appId || payParam.appid,
           timeStamp: payParam.timeStamp,
           nonceStr: payParam.nonceStr,
           package: payParam.packageValue || payParam.package,

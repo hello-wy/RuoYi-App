@@ -23,6 +23,7 @@ export async function getPendingTutorReviewCount() {
 export function listTutors(query) {
   return request({
     url: '/system/tutors/list',
+    adminAuth: true,
     method: 'get',
     params: query
   })
@@ -31,6 +32,7 @@ export function listTutors(query) {
 export function getTutorById(id) {
   return request({
     url: '/system/tutors/' + id,
+    adminAuth: true,
     method: 'get'
   })
 }
@@ -38,6 +40,7 @@ export function getTutorById(id) {
 export function addTutors(data) {
   return request({
     url: '/system/tutors',
+    adminAuth: true,
     method: 'post',
     data: data
   })
@@ -46,6 +49,7 @@ export function addTutors(data) {
 export function updateTutors(data) {
   return request({
     url: '/system/tutors',
+    adminAuth: true,
     method: 'put',
     data: data
   })
@@ -54,6 +58,7 @@ export function updateTutors(data) {
 export function reviewTutors(data) {
   return request({
     url: '/system/tutors/review',
+    adminAuth: true,
     method: 'put',
     data: data
   })
@@ -62,6 +67,7 @@ export function reviewTutors(data) {
 export function delTutors(id) {
   return request({
     url: '/system/tutors/' + id,
+    adminAuth: true,
     method: 'delete'
   })
 }

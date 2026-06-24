@@ -10,7 +10,7 @@ const whiteList = [
   '/pages/lectures/list',
   '/pages/jobs/list',
   '/pages/guide/index',
-  '/pages/price/list',
+  '/pages/personality/start',
   '/pages/mine/index',
 ]
 

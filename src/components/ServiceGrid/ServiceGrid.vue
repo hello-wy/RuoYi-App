@@ -23,51 +23,51 @@ export default {
 			serviceList: [
 				{
 					name: '请家教',
-					icon: 'calendar-filled',
-					color: '#333',
+					icon: 'calendar',
+					color: '#a5673f',
 					path: '/pages/tutoring/parent/apply'
 				},
 				{
 					name: '教员库',
-					icon: 'contact-filled',
-					color: '#333',
+					icon: 'contact',
+					color: '#a5673f',
 					path: '/pages/tutoring/tutor/list'
 				},
 				{
 					name: '学员库',
-					icon: 'person-filled',
-					color: '#333',
+					icon: 'person',
+					color: '#a5673f',
 					path: '/pages/tutoring/parent/list'
 				},
 				{
 					name: '做教员',
-					icon: 'vip-filled',
-					color: '#333',
+					icon: 'vip',
+					color: '#a5673f',
 					path: '/pages/tutoring/tutor/apply'
 				},
 				{
 					name: '兼职/全职',
-					icon: 'wallet-filled',
-					color: '#333',
+					icon: 'wallet',
+					color: '#a5673f',
 					path: '/pages/jobs/list'
 				},
 				{
 					name: '育见成长',
-					icon: 'star-filled',
-					color: '#333',
+					icon: 'star',
+					color: '#a5673f',
 					path: '/pages/growup/index'
 				},
 				{
 					name: '热门沙龙',
-					icon: 'gift-filled',
-					color: '#333',
+					icon: 'gift',
+					color: '#a5673f',
 					path: '/pages/salon/list'
 				},
 				{
-					name: '价格',
-					icon: 'paperplane-filled',
-					color: '#333',
-					path: '/pages/price/list'
+					name: '性格测试',
+					icon: 'heart',
+					color: '#a5673f',
+					path: '/pages/personality/start'
 				}
 			]
 		}
@@ -85,14 +85,14 @@ export default {
 <style scoped>
 .service-grid {
 	background-color: #fff;
-	padding: 15px;
+	padding: 12px 15px 4px 15px;
 	margin-bottom: 10px;
 }
 
 .section-title-wrap {
 	display: flex;
 	align-items: center;
-	margin-bottom: 15px;
+	margin-bottom: 10px;
 }
 
 .section-title-bar {
@@ -120,19 +120,17 @@ export default {
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	padding: 15px 0;
+	padding: 8px 0;
 	box-sizing: border-box;
 }
 
 .icon-wrapper {
-	width: 60px;
-	height: 60px;
-	background-color: #f5f5f5;
-	border-radius: 10rpx;
+	width: 44px;
+	height: 44px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin-bottom: 8px;
+	margin-bottom: 4px;
 }
 
 .item-text {

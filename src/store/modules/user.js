@@ -7,10 +7,11 @@ import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
 import { getInfo, login, logout, wxminiLogin } from '@/api/login'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
-import { getToken, removeToken, setToken } from '@/utils/auth'
+import { getToken, removeAdminRoles, removeAdminToken, removeToken, setAdminRoles, setAdminToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
 import { shouldEnableRegularMineFeatures } from '@/utils/admin'
 import { resolveUserDisplayName } from '@/utils/userDisplay'
+import { createAdminSessionSnapshot } from './user.helpers'
 import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
@@ -163,6 +164,15 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const syncAdminSession = () => {
+    const adminSession = createAdminSessionSnapshot(token.value, roles.value)
+    if (!adminSession) {
+      return
+    }
+    setAdminToken(adminSession.token)
+    setAdminRoles(adminSession.roles)
+  }
+
   // 登录
   const loginAction = (userInfo) => {
     const username = userInfo.username.trim()
@@ -239,6 +249,7 @@ export const useUserStore = defineStore('user', () => {
           phone: phoneNumber
         }) || username)
         SET_AVATAR(avatar)
+        syncAdminSession()
         resolve(res)
       }).catch(error => {
         reject(error)
@@ -253,6 +264,8 @@ export const useUserStore = defineStore('user', () => {
       logout(token.value).then(() => {
         resetProfileState()
         removeToken()
+        removeAdminToken()
+        removeAdminRoles()
         storage.clean()
         jobSignupOrderStore.clear()
         resolve()
@@ -275,6 +288,8 @@ export const useUserStore = defineStore('user', () => {
     permissions,
     SET_NAME,
     SET_AVATAR,
+    SET_ROLES,
+    SET_PERMISSIONS,
     SET_ENROLLMENT,
     SET_PHONE,
     SET_SESSION_KEY,

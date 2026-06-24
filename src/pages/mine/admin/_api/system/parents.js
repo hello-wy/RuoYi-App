@@ -4,6 +4,7 @@ import request from '@/utils/request'
 export function listParents(query) {
   return request({
     url: '/system/parents/list',
+    adminAuth: true,
     method: 'get',
     params: query
   })
@@ -13,6 +14,7 @@ export function listParents(query) {
 export function getParents(id) {
   return request({
     url: '/system/parents/' + id,
+    adminAuth: true,
     method: 'get'
   })
 }
@@ -21,6 +23,7 @@ export function getParents(id) {
 export function addParents(data) {
   return request({
     url: '/system/parents',
+    adminAuth: true,
     method: 'post',
     data: data
   })
@@ -30,6 +33,7 @@ export function addParents(data) {
 export function updateParents(data) {
   return request({
     url: '/system/parents',
+    adminAuth: true,
     method: 'put',
     data: data
   })
@@ -39,6 +43,7 @@ export function updateParents(data) {
 export function delParents(id) {
   return request({
     url: '/system/parents/' + id,
+    adminAuth: true,
     method: 'delete'
   })
 }

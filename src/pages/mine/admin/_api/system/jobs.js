@@ -4,6 +4,7 @@ import request from '@/utils/request'
 export function listJobs(query) {
   return request({
     url: '/system/jobs/list',
+    adminAuth: true,
     method: 'get',
     params: query
   })
@@ -13,6 +14,7 @@ export function listJobs(query) {
 export function getJobs(id) {
   return request({
     url: '/system/jobs/' + id,
+    adminAuth: true,
     method: 'get'
   })
 }
@@ -21,6 +23,7 @@ export function getJobs(id) {
 export function addJobs(data) {
   return request({
     url: '/system/jobs',
+    adminAuth: true,
     method: 'post',
     data: data
   })
@@ -30,6 +33,7 @@ export function addJobs(data) {
 export function updateJobs(data) {
   return request({
     url: '/system/jobs',
+    adminAuth: true,
     method: 'put',
     data: data
   })
@@ -39,6 +43,7 @@ export function updateJobs(data) {
 export function delJobs(id) {
   return request({
     url: '/system/jobs/' + id,
+    adminAuth: true,
     method: 'delete'
   })
 }

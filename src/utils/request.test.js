@@ -8,6 +8,7 @@ vi.mock('@/config', () => ({
 }))
 
 vi.mock('@/utils/auth', () => ({
+  getAdminToken: vi.fn(() => ''),
   getToken: vi.fn(() => '')
 }))
 
@@ -56,5 +57,28 @@ describe('request', () => {
     }
 
     expect(settledCalls.map(([type]) => type)).toEqual(['reject'])
+  })
+
+  test('uses admin token for adminAuth requests', async () => {
+    const { getAdminToken } = await import('@/utils/auth')
+    getAdminToken.mockReturnValueOnce('system-token')
+    uni.request.mockReturnValueOnce(Promise.resolve({
+      data: {
+        code: 200,
+        data: []
+      }
+    }))
+
+    await request({
+      url: '/system/student/list',
+      method: 'get',
+      adminAuth: true
+    })
+
+    expect(uni.request).toHaveBeenCalledWith(expect.objectContaining({
+      header: expect.objectContaining({
+        Authorization: 'Bearer system-token'
+      })
+    }))
   })
 })

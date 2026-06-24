@@ -26,12 +26,6 @@
       "style": {
         "navigationBarTitleText": "商家申请"
       }
-    },
-    {
-      "path": "pages/price/list",
-      "style": {
-        "navigationBarTitleText": "价格"
-      }
     }
   ],
   "subPackages": [
@@ -111,6 +105,29 @@
           "style": {
             "navigationStyle": "custom",
             "navigationBarTitleText": "兼职报名须知"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/personality",
+      "pages": [
+        {
+          "path": "start",
+          "style": {
+            "navigationBarTitleText": "天人合一·性格测试"
+          }
+        },
+        {
+          "path": "answer",
+          "style": {
+            "navigationBarTitleText": "性格测试"
+          }
+        },
+        {
+          "path": "complete",
+          "style": {
+            "navigationBarTitleText": "答题完成"
           }
         }
       ]
@@ -401,6 +418,19 @@
           "path": "student/detail",
           "style": {
             "navigationBarTitleText": "学员详情"
+          }
+        },
+        {
+          "path": "personality-test/index",
+          "style": {
+            "navigationBarTitleText": "性格测试管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "personality-test/detail",
+          "style": {
+            "navigationBarTitleText": "答题详情"
           }
         },
         {

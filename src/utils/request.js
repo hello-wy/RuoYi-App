@@ -1,5 +1,5 @@
 import config from '@/config'
-import { getToken } from '@/utils/auth'
+import { getAdminToken, getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
 import { toast, showConfirm, tansParams } from '@/utils/common'
 
@@ -24,6 +24,20 @@ function rejectWithMessage(reject, payload, fallback) {
   })
 }
 
+function resolveAuthToken(config = {}) {
+  const requestUrl = config.url || ''
+  if (config.adminAuth === true) {
+    return {
+      header: 'Authorization',
+      token: getAdminToken()
+    }
+  }
+  return {
+    header: requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization',
+    token: getToken()
+  }
+}
+
 const request = config => {
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
@@ -31,12 +45,9 @@ const request = config => {
     ...(config.headers || {}),
     ...(config.header || {})
   }
-  if (getToken() && !isToken) {
-    const requestUrl = config.url || ''
-    const authHeader = requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization'
-    if (!config.header[authHeader]) {
-      config.header[authHeader] = 'Bearer ' + getToken()
-    }
+  const auth = resolveAuthToken(config)
+  if (auth.token && !isToken && !config.header[auth.header]) {
+    config.header[auth.header] = 'Bearer ' + auth.token
   }
   // get请求映射params参数
   if (config.params) {

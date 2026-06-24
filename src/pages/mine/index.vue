@@ -11,14 +11,14 @@
                 <uni-icons type="auth-filled" size="18" :color="verifyShieldColor" />
                 <text class="shield-mark">{{ isProfileVerified ? '✓' : '?' }}</text>
               </view>
-              <view v-if="shouldEnableRegularContent" class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
+              <view v-if="showRegularContent" class="user-identity-tag" :class="`tag-${userType}`" @click="handleSwitchIdentity">
                 <text class="tag-text">{{ userIdentityLabel }}</text>
                 <uni-icons type="redo" size="12" color="#ffffff" />
               </view>
             </view>
           </view>
         </view>
-        <view v-if="shouldEnableRegularContent" class="header-right" @click="handleToProfile">
+        <view v-if="showRegularContent" class="header-right" @click="handleToProfile">
           <text class="homepage-text">个人主页</text>
           <uni-icons type="right" size="14" color="#ECFEF6" />
         </view>
@@ -32,7 +32,7 @@
         <view class="primary-cta-btn">立即前往</view>
       </view>
 
-      <view v-if="shouldEnableRegularContent" class="stats-row">
+      <view v-if="showRegularContent" class="stats-row">
         <view class="stat-item" @click="handleToEnrollment">
           <text class="stat-num">{{ enrollmentList }}</text>
           <view class="stat-btn">我的学籍</view>
@@ -46,7 +46,7 @@
     </view>
 
     <view class="content-section">
-      <view v-if="shouldEnableRegularContent" class="card">
+      <view v-if="showRegularContent" class="card">
         <view class="card-title">学习中心</view>
         <view class="study-grid">
           <view
@@ -83,7 +83,7 @@
         </template>
       </view>
     </view>
-  <view class="agent-float-btn" @click="handleOpenMerchantAgent">
+  <view v-if="showAgentEntry" class="agent-float-btn" @click="handleOpenMerchantAgent">
       <uni-icons type="staff-filled" size="18" color="#ffffff" />
       <text class="agent-float-text">代理</text>
     </view>
@@ -189,6 +189,41 @@
     v-model:idCard="verifyForm.idCard"
     type="icon"
   />
+
+  <!-- 微信昵称快速设置弹窗 -->
+  <view v-if="showNicknamePopup" class="dialog-overlay" @touchmove.stop.prevent>
+    <view class="dialog-mask" :class="{ 'dialog-mask--active': nicknamePopupVisible }" @click="closeNicknamePopup"></view>
+    <view class="dialog-sheet" :class="{ 'dialog-sheet--active': nicknamePopupVisible }">
+      <view class="dialog-card">
+        <view class="dialog-header">
+          <text class="dialog-title">设置微信昵称</text>
+          <view class="dialog-close" @click="closeNicknamePopup">
+            <uni-icons type="closeempty" size="18" color="#64748B" />
+          </view>
+        </view>
+        <view class="nickname-form">
+          <text class="nickname-tips">
+            您的昵称目前为默认或为空，请点击下方输入框选择微信昵称或手动输入。
+          </text>
+          <view class="input-wrap">
+            <input
+              type="nickname"
+              class="nickname-input"
+              :value="tempNickname"
+              placeholder="点击选择微信昵称或手动输入"
+              @blur="handleNicknameBlur"
+              @input="handleNicknameInput"
+            />
+          </view>
+        </view>
+        <view class="dialog-btn-row is-single">
+          <view class="dialog-btn dialog-btn-primary" :class="{ 'is-disabled': !tempNickname || tempNickname === '微信用户' }" @click="saveNickname()">
+            <text class="dialog-btn-primary-text">确认保存</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script setup>
@@ -199,16 +234,17 @@ import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import { useUserStore } from '@/store'
 import { hasUserType, normalizeUserType, USER_TYPES } from '@/utils/userType'
+import { isAdminUser } from '@/utils/admin'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
-import { getWxUserProfileDetail } from '@/api/wxmini/profile'
+import { getWxUserProfileDetail, updateWxUserProfile } from '@/api/wxmini/profile'
 import { getParttimeGroupQrcode, getMerchantAgentConfig } from '@/api/wxmini/config'
-import { isAdminUser, shouldEnableRegularMineFeatures } from '@/utils/admin'
 import { isRealnameAuthed, resolveUserDisplayName } from '@/utils/userDisplay'
-import { filterMineMenuItems } from './index.helpers'
+import { buildMinePageModel } from './index.helpers'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
 const { phone, roles, token, userType } = storeToRefs(userStore)
+const isAdmin = computed(() => isAdminUser(token.value, roles.value))
 const jifen = ref(0)
 const enrollmentList = ref(0)
 const shouldAutoOpenLogin = ref(false)
@@ -238,11 +274,9 @@ const hasLogin = computed(() => Boolean(token.value))
 const normalizedUserType = computed(() => normalizeUserType(userType.value))
 const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value))
 
-const isAdmin = computed(() => isAdminUser(token.value, roles.value))
-const shouldEnableRegularContent = computed(() => shouldEnableRegularMineFeatures(token.value, roles.value))
-const showWalletEntry = computed(() => shouldEnableRegularContent.value && hasLogin.value)
-const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT && shouldEnableRegularContent.value)
-const showMerchantPayrollEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT && shouldEnableRegularContent.value)
+const showWalletEntry = computed(() => hasLogin.value)
+const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT)
+const showMerchantPayrollEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT)
 const isProfileVerified = computed(() => isRealnameAuthed(profileDetail.value?.isRealnameAuth))
 const mineDisplayName = computed(() => resolveUserDisplayName(profileDetail.value || {
   phone: phone.value
@@ -254,11 +288,7 @@ const userIdentityLabel = computed(() => {
   return labels[normalizedUserType.value] || '未设置'
 })
 
-const showPrimaryCard = computed(() => hasLogin.value && shouldEnableRegularContent.value)
 const studyItems = computed(() => {
-  if (!shouldEnableRegularContent.value) {
-    return []
-  }
   return [
     { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
     { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleToOrderCenter },
@@ -300,19 +330,21 @@ const baseMenuItems = [
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
   { key: 'service', label: '客服电话', icon: 'headphones', iconColor: '#059669', iconClass: 'menu-icon-light', description: '周一至周日 09:00-24:00', onClick: handleBuilding },
+  { key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', visible: () => isAdmin.value, onClick: handleToAdmin },
   settingMenuItem
 ]
 
+const minePageModel = computed(() => buildMinePageModel({
+  isAdmin: isAdmin.value,
+  hasLogin: hasLogin.value,
+  normalizedUserType: normalizedUserType.value,
+  menuItems: baseMenuItems
+}))
+const showRegularContent = computed(() => minePageModel.value.showRegularContent)
+const showPrimaryCard = computed(() => minePageModel.value.showPrimaryCard)
+const showAgentEntry = computed(() => minePageModel.value.showAgentEntry)
 const menuItems = computed(() => {
-  if (isAdmin.value) {
-    return [
-      { key: 'admin', label: '管理后台', icon: 'staff-filled', iconColor: '#047857', iconClass: 'menu-icon-primary', onClick: handleToAdmin },
-      scheduleMenuItem,
-      settingMenuItem
-    ]
-  }
-
-  return filterMineMenuItems(baseMenuItems, normalizedUserType.value)
+  return minePageModel.value.menuItems
 })
 
 function createPopupState(overrides = {}) {
@@ -350,25 +382,23 @@ function handleToCourse() {
 }
 
 function loadEnrollment() {
-  if (!shouldEnableRegularContent.value) {
-    return
-  }
   getTotalEnrollments().then(res => {
     enrollmentList.value = res.data
   })
 }
 
 async function loadProfileDetail() {
-  if (!hasLogin.value || !shouldEnableRegularContent.value) return
+  if (!hasLogin.value) return
   const res = await getWxUserProfileDetail()
   profileDetail.value = res.data || {}
   verifyForm.value.verified = isProfileVerified.value
   verifyForm.value.realName = profileDetail.value.realName || ''
   userStore.updateWxProfileState(res.data || {})
+  checkAndPromptNickname()
 }
 
 async function ensureUserTypeReady() {
-  if (!hasLogin.value || !shouldEnableRegularContent.value) return
+  if (!hasLogin.value) return
   await loadProfileDetail()
   if (!hasSelectedUserType.value) {
     proxy.$tab.navigateTo('/pages/guide/index')
@@ -376,7 +406,8 @@ async function ensureUserTypeReady() {
 }
 
 function initRegularMineData() {
-  if (!hasLogin.value || !shouldEnableRegularContent.value) {
+  if (!hasLogin.value || isAdmin.value) {
+    // 管理员账号登录不走普通用户流程（profile/昵称/身份类型等）
     return
   }
   loadEnrollment()
@@ -385,6 +416,7 @@ function initRegularMineData() {
 
 function handleLoginSuccess() {
   shouldAutoOpenLogin.value = false
+  hasPromptedNickname.value = false
   initRegularMineData()
 }
 
@@ -600,6 +632,67 @@ onShow(() => {
 watch(() => verifyForm.value.verified, value => {
   if (value) loadProfileDetail()
 })
+
+const showNicknamePopup = ref(false)
+const nicknamePopupVisible = ref(false)
+const tempNickname = ref('')
+const hasPromptedNickname = ref(false)
+
+function openNicknamePopup() {
+  tempNickname.value = ''
+  showNicknamePopup.value = true
+  setTimeout(() => {
+    nicknamePopupVisible.value = true
+  }, 20)
+}
+
+function closeNicknamePopup() {
+  nicknamePopupVisible.value = false
+  setTimeout(() => {
+    showNicknamePopup.value = false
+  }, 220)
+}
+
+function handleNicknameBlur(e) {
+  const name = (e.detail.value || '').trim()
+  tempNickname.value = name
+}
+
+function handleNicknameInput(e) {
+  const name = (e.detail.value || '').trim()
+  tempNickname.value = name
+}
+
+async function saveNickname(nameVal) {
+  const finalNickname = nameVal || tempNickname.value
+  if (!finalNickname || finalNickname === '微信用户') {
+    proxy.$modal.msgError('昵称不能为空或“微信用户”')
+    return
+  }
+  try {
+    proxy.$modal.loading('正在保存...')
+    await updateWxUserProfile({
+      userName: finalNickname,
+      nickName: finalNickname
+    })
+    proxy.$modal.closeLoading()
+    proxy.$modal.msgSuccess('设置昵称成功')
+    closeNicknamePopup()
+    loadProfileDetail()
+  } catch (error) {
+    proxy.$modal.closeLoading()
+    proxy.$modal.msgError(error?.msg || error?.message || '保存失败，请稍后重试')
+  }
+}
+
+function checkAndPromptNickname() {
+  if (hasPromptedNickname.value) return
+  const userName = profileDetail.value?.userName || ''
+  if (!userName || userName === '微信用户') {
+    hasPromptedNickname.value = true
+    openNicknamePopup()
+  }
+}
 </script>
 
 <style lang="scss" scoped src="./index.scss"></style>

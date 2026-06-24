@@ -56,14 +56,14 @@ describe('LoginPopup helpers', () => {
     })).toBe('/pages/guide/index')
   })
 
-  test('keeps admin account login on configured success route without identity', () => {
+  test('routes admin account login directly to admin backend without identity', () => {
     expect(resolveLoginSuccessUrl({
       mode: 'account',
       token: 'admin-token',
       roles: ['admin'],
       userType: '',
       fallbackUrl: '/pages/index'
-    })).toBe('/pages/index')
+    })).toBe('/pages/mine/admin/index')
   })
 
   test('requests phone code only after wx login asks for it and platform supports it', () => {

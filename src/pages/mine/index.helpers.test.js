@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { EMPTY_USER_TYPE, USER_TYPES } from '@/utils/userType'
-import { filterMineMenuItems } from './index.helpers'
+import { buildMinePageModel, filterMineMenuItems } from './index.helpers'
 
 function createMenuItems() {
   return [
@@ -34,5 +34,23 @@ describe('mine menu helpers', () => {
 
     expect(parentKeys).toEqual(['schedule', 'baby', 'coursePackage', 'setting'])
     expect(studentKeys).toEqual(['schedule', 'setting'])
+  })
+
+  test('shows only admin backend and settings entries for admin accounts', () => {
+    const model = buildMinePageModel({
+      isAdmin: true,
+      hasLogin: true,
+      normalizedUserType: EMPTY_USER_TYPE,
+      menuItems: [
+        { key: 'wallet' },
+        { key: 'schedule' },
+        { key: 'admin', visible: true },
+        { key: 'setting' }
+      ]
+    })
+
+    expect(model.showRegularContent).toBe(false)
+    expect(model.showPrimaryCard).toBe(false)
+    expect(model.menuItems.map(item => item.key)).toEqual(['admin', 'setting'])
   })
 })

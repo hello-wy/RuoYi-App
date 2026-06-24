@@ -1,6 +1,6 @@
 import { useUserStore } from '@/store'
 import config from '@/config'
-import { getToken } from '@/utils/auth'
+import { getAdminToken, getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
 import { toast, showConfirm, tansParams } from '@/utils/common'
 
@@ -73,18 +73,29 @@ function resolveTransportErrorMessage(error = {}) {
   return message
 }
 
+function resolveAuthToken(config = {}) {
+  const requestUrl = config.url || ''
+  if (config.adminAuth === true) {
+    return {
+      header: 'Authorization',
+      token: getAdminToken()
+    }
+  }
+  return {
+    header: requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization',
+    token: getToken()
+  }
+}
+
 export default function upload(config) {
   const header = {
     ...(config.headers || {}),
     ...(config.header || {})
   }
   const isToken = header.isToken === false
-  if (getToken() && !isToken) {
-    const requestUrl = config.url || ''
-    const authHeader = requestUrl.startsWith('/wxmini') ? 'Wx-Authorization' : 'Authorization'
-    if (!header[authHeader]) {
-      header[authHeader] = 'Bearer ' + getToken()
-    }
+  const auth = resolveAuthToken(config)
+  if (auth.token && !isToken && !header[auth.header]) {
+    header[auth.header] = 'Bearer ' + auth.token
   }
   config.header = header
   if (config.params) {

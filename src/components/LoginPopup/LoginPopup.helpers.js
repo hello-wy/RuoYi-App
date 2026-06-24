@@ -27,10 +27,11 @@ export function resolveLoginSuccessUrl({
   roles = [],
   userType = '',
   fallbackUrl = '',
-  guideUrl = '/pages/guide/index'
+  guideUrl = '/pages/guide/index',
+  adminUrl = '/pages/mine/admin/index'
 } = {}) {
   if (isAdminUser(token, roles)) {
-    return fallbackUrl
+    return adminUrl
   }
 
   const loginUserType = payload && Object.prototype.hasOwnProperty.call(payload, 'userType')

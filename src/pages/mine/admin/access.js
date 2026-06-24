@@ -1,13 +1,13 @@
-import { useUserStore } from '@/store'
-import { getToken } from '@/utils/auth'
-import { isAdminUser as checkIsAdminUser } from '@/utils/admin'
+import { getAdminToken, getAdminRoles } from '@/utils/auth'
+import { hasAdminRole } from '@/utils/admin'
 
 const MINE_PAGE = '/pages/mine/index'
 const REDIRECT_DELAY_MS = 800
 
 export function isAdminUser() {
-  const roles = useUserStore().roles
-  return checkIsAdminUser(getToken(), roles)
+  const token = getAdminToken()
+  const roles = getAdminRoles()
+  return Boolean(token) && hasAdminRole(roles)
 }
 
 export function requireAdminAccess(proxy) {
@@ -16,7 +16,7 @@ export function requireAdminAccess(proxy) {
   }
 
   if (proxy && proxy.$modal) {
-    proxy.$modal.showToast('无权限访问')
+    proxy.$modal.showToast('请先登录管理员账号')
   }
   setTimeout(() => {
     const pageStack = getCurrentPages()

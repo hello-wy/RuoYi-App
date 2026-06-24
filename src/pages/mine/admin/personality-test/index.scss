@@ -1,0 +1,213 @@
+$mint-bg: #f3fbf8;
+$mint-header: #dff7f0;
+$mint-border: #d7f1eb;
+$text-main: #0f172a;
+$text-body: #0f3d3a;
+$text-sub: #5f857f;
+$teal: #0f766e;
+$teal-light: #ecfdf5;
+
+page {
+  background-color: $mint-bg;
+}
+
+.personality-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: $mint-bg;
+  box-sizing: border-box;
+}
+
+.summary-card,
+.filter-card,
+.record-card,
+.state-box {
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 14rpx 36rpx rgba(14, 148, 136, 0.08);
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 34rpx 28rpx;
+  background: $mint-header;
+}
+
+.summary-title {
+  display: block;
+  font-size: 38rpx;
+  font-weight: 700;
+  color: $teal;
+}
+
+.summary-subtitle {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.summary-count {
+  width: 168rpx;
+  height: 168rpx;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.count-value {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: $teal;
+}
+
+.count-label {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: $text-sub;
+}
+
+.filter-card {
+  margin-top: 22rpx;
+  padding: 24rpx;
+}
+
+.filter-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: $text-main;
+}
+
+.status-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.status-tab {
+  flex: 1;
+  padding: 18rpx 0;
+  border-radius: 999rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: $text-sub;
+  background: #f8fafc;
+}
+
+.status-tab.active {
+  color: #ffffff;
+  background: $teal;
+  font-weight: 700;
+}
+
+.record-scroll {
+  height: calc(100vh - 360rpx);
+  margin-top: 22rpx;
+}
+
+.record-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  padding-bottom: 40rpx;
+}
+
+.record-card {
+  padding: 26rpx 24rpx;
+  border: 1rpx solid $mint-border;
+}
+
+.record-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.user-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: $text-main;
+}
+
+.user-meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: $text-sub;
+}
+
+.status-tag {
+  flex-shrink: 0;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.status-tag.completed {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.status-tag.progress {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.status-tag.muted {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.info-label {
+  width: 128rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: $text-sub;
+}
+
+.info-value {
+  flex: 1;
+  font-size: 26rpx;
+  color: $text-body;
+}
+
+.state-box {
+  padding: 110rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: $text-sub;
+}
+
+.retry-btn {
+  margin-top: 20rpx;
+}
