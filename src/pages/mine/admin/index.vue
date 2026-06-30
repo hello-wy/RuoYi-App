@@ -73,6 +73,13 @@ const pendingTutorReviewCountText = computed(() => {
 
 const actionItems = [
   {
+    key: 'system-user',
+    label: '系统用户',
+    icon: 'staff-filled',
+    iconColor: '#0f766e',
+    onClick: handleSystemUser
+  },
+  {
     key: 'tutor-review',
     label: '教员审核',
     icon: 'checkbox-filled',
@@ -157,6 +164,10 @@ const actionItems = [
     onClick: handleRefundManagement
   }
 ]
+
+function handleSystemUser() {
+  proxy.$tab.navigateTo('/pages/mine/admin/system-user/index')
+}
 
 function handleTutorReview() {
   proxy.$tab.navigateTo('/pages/mine/admin/tutor-review')

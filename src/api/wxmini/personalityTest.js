@@ -26,6 +26,13 @@ export function getCurrentQuestion(attemptId) {
   }).then(unwrap)
 }
 
+export function getPersonalityQuestion(attemptId, questionNo) {
+  return request({
+    url: `/wxmini/personality-test/attempts/${attemptId}/questions/${questionNo}`,
+    method: 'get'
+  }).then(unwrap)
+}
+
 export function savePersonalityAnswer(attemptId, data) {
   return request({
     url: `/wxmini/personality-test/attempts/${attemptId}/answers`,

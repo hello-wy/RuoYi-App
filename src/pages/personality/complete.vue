@@ -1,30 +1,109 @@
 <template>
   <view class="complete-page">
-    <view class="confetti-wrap">
-      <view v-for="item in confetti" :key="item" class="confetti" :class="`c${item}`"></view>
-    </view>
+    <scroll-view class="complete-content" scroll-y>
+      <!-- White card containing the tables and titles -->
+      <view class="white-card">
+        <view class="title-wrap">
+          <text class="page-title">天人合一性格测试表</text>
+        </view>
 
-    <view class="complete-card">
-      <view class="check-wrap">
-        <text class="check-icon">✅</text>
+        <!-- First Table: Dimensions Count Table -->
+        <view class="table-container">
+          <view class="table-row header-row">
+            <view class="table-cell label-cell"></view>
+            <view v-for="d in 9" :key="d" class="table-cell num-cell">{{ d }}</view>
+          </view>
+          
+          <block v-if="tables.hasRows">
+            <view v-for="row in tables.countRows" :key="row.label" class="table-row">
+              <view class="table-cell label-cell">{{ row.label }}</view>
+              <view v-for="(val, idx) in row.values" :key="idx" class="table-cell val-cell">{{ val }}</view>
+            </view>
+          </block>
+          <block v-else>
+            <!-- Fallback mock / empty rows to match screenshot structure -->
+            <view v-for="label in ['是', '不确定', '否', '是/不确定']" :key="label" class="table-row">
+              <view class="table-cell label-cell">{{ label }}</view>
+              <view v-for="d in 9" :key="d" class="table-cell val-cell">0</view>
+            </view>
+          </block>
+        </view>
+
+        <!-- Subtitle: Options sorted from high to low -->
+        <view class="subtitle-wrap">
+          <text class="page-subtitle">选项从高到低排序</text>
+        </view>
+
+        <!-- Second Table: Dimensions Rank Table -->
+        <view class="table-container">
+          <!-- Empty header row matching the screenshot -->
+          <view class="table-row header-row empty-header-row">
+            <view class="table-cell label-cell"></view>
+            <view v-for="d in 9" :key="d" class="table-cell num-cell"></view>
+          </view>
+          
+          <block v-if="tables.hasRows">
+            <view v-for="row in tables.rankRows" :key="row.label" class="table-row">
+              <view class="table-cell label-cell">{{ row.label }}</view>
+              <view v-for="(val, idx) in row.values" :key="idx" class="table-cell val-cell">{{ val }}</view>
+            </view>
+          </block>
+          <block v-else>
+            <!-- Fallback mock / empty rows to match screenshot structure -->
+            <view v-for="label in ['是', '否', '是/不确定']" :key="label" class="table-row">
+              <view class="table-cell label-cell">{{ label }}</view>
+              <view v-for="d in 9" :key="d" class="table-cell val-cell">-</view>
+            </view>
+          </block>
+        </view>
+
+        <!-- Scissors instructions -->
+        <view class="instruction-wrap">
+          <view class="scissors-text">
+            <text class="scissors-icon">✂️</text>
+            <text>请截图保存</text>
+          </view>
+          <view class="action-text">
+            <text>添加客服微信，回复我要解读</text>
+          </view>
+        </view>
       </view>
-      <text class="complete-title">答题完成</text>
-      <text class="complete-desc">你已完成 {{ result.answeredCount || 180 }} 道性格测试题</text>
-      <button class="home-btn" @click="goHome">返回主页</button>
-      <button class="share-btn" open-type="share">分享测试</button>
-    </view>
+
+      <!-- Starry Sky section containing text and actions -->
+      <view class="starry-section">
+        <view class="starry-content">
+          <view class="congrats-text">
+            <text>恭喜您完成解密自我性格的第一步!，性格一直默默决定着我们人生的每一个选择，选择不同，人生结果也会不同。所以要想掌控自己的命运，唯有通透性格、完善性格!</text>
+          </view>
+          <view class="guide-text">
+            <text>请截图并识别二维码，或搜索小程序“学优职傢”，叵复：“我要解读”。即可根据您的需求完成性格解析和咨询。</text>
+          </view>
+        </view>
+
+        <!-- Navigation buttons at the bottom so they don't block the main screenshot area -->
+        <view class="bottom-buttons">
+          <button class="share-btn" open-type="share">分享测试</button>
+          <button class="home-btn" @click="goHome">返回主页</button>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </template>
 
 <script>
 import { getPersonalityResult } from '@/api/wxmini/personalityTest'
+import { buildPersonalityResultTables } from './complete.helpers'
 
 export default {
   data() {
     return {
       attemptId: '',
-      result: {},
-      confetti: Array.from({ length: 24 }, (_, index) => index + 1)
+      result: {}
+    }
+  },
+  computed: {
+    tables() {
+      return buildPersonalityResultTables(this.result)
     }
   },
   onLoad(options) {
@@ -49,6 +128,7 @@ export default {
         const res = await getPersonalityResult(this.attemptId)
         this.result = res || {}
       } catch (e) {
+        uni.showToast({ title: e?.msg || e?.message || '结果加载失败', icon: 'none' })
         this.result = {}
       }
     },
@@ -61,146 +141,179 @@ export default {
 
 <style lang="scss">
 page {
-  background: #f5f7fb;
+  background-color: #050b18;
 }
 
 .complete-page {
   position: relative;
   min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 8%, rgba(103, 232, 249, 0.36), transparent 34%),
-    linear-gradient(180deg, #eef7ff 0%, #f8fafc 100%);
+  background-color: #050b18;
+}
+
+.complete-content {
+  width: 100%;
+  height: 100%;
+}
+
+.white-card {
+  background-color: #ffffff;
+  border-bottom-left-radius: 60rpx;
+  border-bottom-right-radius: 60rpx;
+  padding: 30rpx 30rpx 24rpx;
+  box-sizing: border-box;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.05);
+}
+
+.title-wrap {
+  text-align: center;
+  padding: 10rpx 0 15rpx;
+}
+
+.page-title {
+  font-size: 38rpx;
+  color: #707070;
+  font-weight: 400;
+  letter-spacing: 2rpx;
+}
+
+.table-container {
+  width: 100%;
+  border-left: 2rpx solid #e2e8f0;
+  border-top: 2rpx solid #e2e8f0;
+  box-sizing: border-box;
+  margin-bottom: 8rpx;
+  background-color: #ffffff;
+}
+
+.table-row {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48rpx;
+  width: 100%;
+}
+
+.table-cell {
+  flex: 1;
+  height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
+  border-right: 2rpx solid #e2e8f0;
+  border-bottom: 2rpx solid #e2e8f0;
+  font-size: 24rpx;
+  color: #333333;
   box-sizing: border-box;
 }
 
-.complete-card {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  padding: 64rpx 42rpx 48rpx;
-  border-radius: 34rpx;
-  background: #fff;
-  box-shadow: 0 22rpx 60rpx rgba(15, 23, 42, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.label-cell {
+  flex: 0 0 140rpx;
+  width: 140rpx;
+  font-size: 24rpx;
+  color: #333333;
+  font-weight: bold;
 }
 
-.check-wrap {
-  width: 150rpx;
-  height: 150rpx;
-  border-radius: 999rpx;
-  background: linear-gradient(135deg, #22c55e 0%, #14b8a6 100%);
+.num-cell {
+  color: #555555;
+}
+
+.subtitle-wrap {
+  text-align: center;
+  padding: 20rpx 0 10rpx;
+}
+
+.page-subtitle {
+  font-size: 32rpx;
+  color: #888888;
+  font-weight: 400;
+  letter-spacing: 1rpx;
+}
+
+.instruction-wrap {
+  text-align: center;
+  margin-top: 30rpx;
+}
+
+.scissors-text {
+  color: #ff4d4f;
+  font-size: 26rpx;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 14rpx 34rpx rgba(34, 197, 94, 0.28);
+  margin-bottom: 8rpx;
 }
 
-.check-icon {
-  color: #fff;
-  font-size: 96rpx;
-  line-height: 120rpx;
-  font-weight: 900;
-}
-
-.complete-title {
-  margin-top: 34rpx;
-  color: #1e293b;
-  font-size: 42rpx;
-  font-weight: 900;
-}
-
-.complete-desc {
-  margin-top: 18rpx;
-  margin-bottom: 54rpx;
-  color: #64748b;
+.scissors-icon {
+  margin-right: 8rpx;
   font-size: 28rpx;
 }
 
-.home-btn,
+.action-text {
+  color: #1890ff;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.starry-section {
+  padding: 40rpx 44rpx 60rpx;
+  box-sizing: border-box;
+  background-color: #050b18;
+  /* Deep space gradient + starry dust pattern */
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(24, 144, 255, 0.25), transparent 45%),
+    radial-gradient(circle at 85% 60%, rgba(147, 51, 234, 0.2), transparent 45%),
+    radial-gradient(1.5px 1.5px at 30px 40px, #ffffff, transparent),
+    radial-gradient(2px 2px at 120px 180px, #ffffff, transparent),
+    radial-gradient(1.5px 1.5px at 250px 100px, #ffffff, transparent),
+    radial-gradient(2.5px 2.5px at 80px 290px, #ffffff, transparent),
+    radial-gradient(1.5px 1.5px at 210px 340px, #ffffff, transparent),
+    radial-gradient(2px 2px at 330px 220px, #ffffff, transparent),
+    radial-gradient(1.5px 1.5px at 160px 450px, #ffffff, transparent),
+    radial-gradient(2.5px 2.5px at 290px 480px, #ffffff, transparent);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.congrats-text,
+.guide-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.8;
+  text-align: justify;
+  margin-bottom: 24rpx;
+  letter-spacing: 1rpx;
+}
+
+.bottom-buttons {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
 .share-btn {
-  width: 100%;
-  height: 92rpx;
-  border-radius: 999rpx;
-  line-height: 92rpx;
+  background-color: #1890ff;
+  color: #ffffff;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
   font-size: 30rpx;
-  font-weight: 800;
+  font-weight: bold;
 }
 
 .home-btn {
-  background: #3b82f6;
-  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  font-size: 30rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.2);
+  font-weight: bold;
 }
 
-.share-btn {
-  margin-top: 22rpx;
-  background: #eef6ff;
-  color: #2563eb;
-}
-
-.home-btn::after,
-.share-btn::after {
+.share-btn::after,
+.home-btn::after {
   border: none;
-}
-
-.confetti-wrap {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.confetti {
-  position: absolute;
-  top: -40rpx;
-  width: 14rpx;
-  height: 26rpx;
-  border-radius: 4rpx;
-  background: #f97316;
-  animation: confetti-fall 2.8s linear infinite;
-}
-
-.c1 { left: 5vw; background: #ef4444; animation-delay: 0s; }
-.c2 { left: 9vw; background: #f97316; animation-delay: .2s; animation-duration: 3s; }
-.c3 { left: 13vw; background: #facc15; animation-delay: .6s; animation-duration: 2.6s; }
-.c4 { left: 18vw; background: #22c55e; animation-delay: .1s; animation-duration: 3.4s; }
-.c5 { left: 23vw; background: #06b6d4; animation-delay: .8s; animation-duration: 2.9s; }
-.c6 { left: 28vw; background: #3b82f6; animation-delay: .3s; animation-duration: 3.7s; }
-.c7 { left: 33vw; background: #8b5cf6; animation-delay: 1s; animation-duration: 2.8s; }
-.c8 { left: 38vw; background: #ec4899; animation-delay: .4s; animation-duration: 3.1s; }
-.c9 { left: 43vw; background: #14b8a6; animation-delay: .7s; animation-duration: 3.5s; }
-.c10 { left: 48vw; background: #f59e0b; animation-delay: .15s; animation-duration: 2.7s; }
-.c11 { left: 53vw; background: #84cc16; animation-delay: .9s; animation-duration: 3.2s; }
-.c12 { left: 58vw; background: #0ea5e9; animation-delay: .35s; animation-duration: 3.6s; }
-.c13 { left: 63vw; background: #a855f7; animation-delay: .55s; animation-duration: 2.9s; }
-.c14 { left: 68vw; background: #f43f5e; animation-delay: .25s; animation-duration: 3.3s; }
-.c15 { left: 73vw; background: #10b981; animation-delay: .75s; animation-duration: 2.8s; }
-.c16 { left: 78vw; background: #6366f1; animation-delay: .45s; animation-duration: 3.8s; }
-.c17 { left: 83vw; background: #eab308; animation-delay: 1.1s; animation-duration: 3s; }
-.c18 { left: 88vw; background: #06b6d4; animation-delay: .65s; animation-duration: 3.4s; }
-.c19 { left: 93vw; background: #f97316; animation-delay: .05s; animation-duration: 2.9s; }
-.c20 { left: 97vw; background: #22c55e; animation-delay: .85s; animation-duration: 3.5s; }
-.c21 { left: 16vw; background: #3b82f6; animation-delay: 1.25s; animation-duration: 3.2s; }
-.c22 { left: 36vw; background: #ec4899; animation-delay: 1.05s; animation-duration: 2.8s; }
-.c23 { left: 66vw; background: #facc15; animation-delay: 1.35s; animation-duration: 3.7s; }
-.c24 { left: 86vw; background: #8b5cf6; animation-delay: 1.15s; animation-duration: 3.1s; }
-
-@keyframes confetti-fall {
-  0% {
-    transform: translateY(-60rpx) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(110vh) rotate(540deg);
-    opacity: 0;
-  }
 }
 </style>

@@ -376,6 +376,13 @@
           }
         },
         {
+          "path": "system-user/index",
+          "style": {
+            "navigationBarTitleText": "管理员用户管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
           "path": "tutor-review",
           "style": {
             "navigationBarTitleText": "教员审核",

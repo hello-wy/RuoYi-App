@@ -32,6 +32,25 @@
           <uni-icons type="right" size="18" color="#94a3b8"></uni-icons>
         </view>
       </view>
+
+      <view class="nav-actions">
+        <button
+          class="nav-btn secondary"
+          :class="{ disabled: !canGoPrevious }"
+          :disabled="!canGoPrevious"
+          @click="goPreviousQuestion"
+        >
+          上一题
+        </button>
+        <button
+          class="nav-btn primary"
+          :class="{ disabled: !canGoNext }"
+          :disabled="!canGoNext"
+          @click="goNextQuestion"
+        >
+          下一题
+        </button>
+      </view>
     </view>
 
     <view v-else class="empty-wrap">
@@ -43,7 +62,7 @@
 </template>
 
 <script>
-import { getCurrentQuestion, savePersonalityAnswer } from '@/api/wxmini/personalityTest'
+import { getCurrentQuestion, getPersonalityQuestion, savePersonalityAnswer } from '@/api/wxmini/personalityTest'
 
 export default {
   data() {
@@ -52,13 +71,20 @@ export default {
       question: null,
       loading: true,
       submitting: false,
-      selectedValue: null
+      selectedValue: null,
+      answeredValues: {}
     }
   },
   computed: {
     progressPercent() {
       if (!this.question || !this.question.totalQuestions) return 0
       return Math.min(100, Math.round((Number(this.question.questionNo) / Number(this.question.totalQuestions)) * 100))
+    },
+    canGoPrevious() {
+      return this.canMoveToQuestion(Number(this.question?.questionNo) - 1)
+    },
+    canGoNext() {
+      return !this.loading && !this.submitting && !!this.question && this.selectedValue !== null
     }
   },
   onLoad(options) {
@@ -75,10 +101,7 @@ export default {
       this.loading = true
       try {
         const res = await getCurrentQuestion(this.attemptId)
-        this.question = res || null
-        if (!this.question) {
-          uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
-        }
+        this.applyQuestion(res)
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '题目加载失败', icon: 'none' })
       } finally {
@@ -88,25 +111,60 @@ export default {
     async handleSelect(option) {
       if (this.submitting || !this.question) return
       this.selectedValue = option.value
+      await this.submitSelectedAnswer()
+    },
+    async goPreviousQuestion() {
+      await this.loadQuestionByNo(Number(this.question.questionNo) - 1)
+    },
+    async goNextQuestion() {
+      if (!this.canGoNext) return
+      await this.submitSelectedAnswer()
+    },
+    async submitSelectedAnswer() {
+      if (this.submitting || !this.question || this.selectedValue === null) return
+      const answerValue = this.selectedValue
       this.submitting = true
       try {
         const res = await savePersonalityAnswer(this.attemptId, {
           questionId: this.question.questionId,
-          answerValue: option.value
+          answerValue
         })
+        this.answeredValues[this.question.questionNo] = answerValue
         const data = res || {}
         if (data.completed) {
           uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
           return
         }
-        this.question = data.nextQuestion
-        this.selectedValue = null
+        this.applyQuestion(data.nextQuestion)
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '保存失败，请重试', icon: 'none' })
-        this.selectedValue = null
+        this.selectedValue = this.answeredValues[this.question.questionNo] ?? null
       } finally {
         this.submitting = false
       }
+    },
+    async loadQuestionByNo(questionNo) {
+      if (!this.canMoveToQuestion(questionNo)) return
+      this.loading = true
+      try {
+        const res = await getPersonalityQuestion(this.attemptId, questionNo)
+        this.applyQuestion(res)
+      } catch (e) {
+        uni.showToast({ title: e?.msg || e?.message || '题目加载失败', icon: 'none' })
+      } finally {
+        this.loading = false
+      }
+    },
+    applyQuestion(question) {
+      this.question = question || null
+      this.selectedValue = this.question ? this.answeredValues[this.question.questionNo] ?? null : null
+      if (!this.question) {
+        uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
+      }
+    },
+    canMoveToQuestion(questionNo) {
+      const totalQuestions = Number(this.question?.totalQuestions)
+      return !this.loading && !this.submitting && questionNo >= 1 && questionNo <= totalQuestions
     },
     goHome() {
       uni.switchTab({ url: '/pages/index' })
@@ -238,6 +296,47 @@ page {
   color: #334155;
   font-size: 32rpx;
   font-weight: 800;
+}
+
+.nav-actions {
+  margin-top: 48rpx;
+  padding-bottom: 22rpx;
+  display: flex;
+  flex-direction: row;
+  gap: 24rpx;
+}
+
+.nav-btn {
+  flex: 1;
+  height: 88rpx;
+  margin: 0;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 88rpx;
+}
+
+.nav-btn::after {
+  border: none;
+}
+
+.nav-btn.primary {
+  color: #fff;
+  background: #3b82f6;
+  box-shadow: 0 12rpx 28rpx rgba(59, 130, 246, 0.22);
+}
+
+.nav-btn.secondary {
+  color: #2563eb;
+  background: #eff6ff;
+  border: 2rpx solid #bfdbfe;
+}
+
+.nav-btn.disabled {
+  color: #94a3b8;
+  background: #e2e8f0;
+  border-color: #e2e8f0;
+  box-shadow: none;
 }
 
 .empty-text {
