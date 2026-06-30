@@ -1,9 +1,12 @@
 import request from '@/utils/request'
 
-function buildWxminiLoginParams(appid, code, phoneCode = '') {
+function buildWxminiLoginParams(appid, code, phoneCode = '', inviteCode = '') {
   const params = { appid, code }
   if (phoneCode) {
-    return { ...params, phoneCode }
+    params.phoneCode = phoneCode
+  }
+  if (inviteCode) {
+    params.inviteCode = inviteCode
   }
   return params
 }
@@ -67,13 +70,13 @@ export function getCodeImg() {
 }
 
 // 微信小程序登录，未注册时可携带 phoneCode 完成手机号快捷注册
-export function wxminiLogin(appid, code, phoneCode = '') {
+export function wxminiLogin(appid, code, phoneCode = '', inviteCode = '') {
   return request({
     url: '/wxmini/login',
     headers: {
       isToken: false
     },
     method: 'get',
-    params: buildWxminiLoginParams(appid, code, phoneCode)
+    params: buildWxminiLoginParams(appid, code, phoneCode, inviteCode)
   })
 }

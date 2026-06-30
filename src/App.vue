@@ -8,10 +8,35 @@
   import { setupMiniProgramUpdate } from '@/utils/update-manager'
   // #endif
 
-  onLaunch(async () => {
+  onLaunch(async (options) => {
     // #ifdef MP-WEIXIN
     setupMiniProgramUpdate()
     // #endif
+
+    // 解析分销邀请码并存入本地缓存
+    if (options && options.query) {
+      let inviteCode = options.query.inviteCode
+      if (!inviteCode && options.query.scene) {
+        try {
+          const scene = decodeURIComponent(options.query.scene)
+          if (scene.includes('inviteCode=')) {
+            const match = scene.match(/inviteCode=([^&]+)/)
+            if (match) {
+              inviteCode = match[1]
+            }
+          } else {
+            inviteCode = scene
+          }
+        } catch (e) {
+          console.error('Failed to parse WeChat scene param:', e)
+        }
+      }
+      if (inviteCode) {
+        uni.setStorageSync('pendingInviteCode', inviteCode)
+        console.log('App launch: pendingInviteCode detected and saved:', inviteCode)
+      }
+    }
+
     initApp()
     const cityNode = await findCityNodeByName('南京市')
     if (cityNode) {

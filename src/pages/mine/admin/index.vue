@@ -162,6 +162,13 @@ const actionItems = [
     icon: 'undo-filled',
     iconColor: '#0f9d8f',
     onClick: handleRefundManagement
+  },
+  {
+    key: 'referral',
+    label: '邀请管理',
+    icon: 'flag-filled',
+    iconColor: '#f59e0b',
+    onClick: handleReferralManagement
   }
 ]
 
@@ -203,6 +210,10 @@ function handleTutoringScheduleAudit() {
 
 function handleRefundManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/refund/index')
+}
+
+function handleReferralManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/referral/index')
 }
 
 function handleUnreadyFeature() {

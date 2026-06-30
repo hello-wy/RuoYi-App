@@ -330,6 +330,7 @@ const baseMenuItems = [
   { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: () => showParttimeGroupEntry.value, onClick: handleOpenParttimeGroup },
   { key: 'baby', label: '萌娃管理', icon: 'person-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-primary', onClick: handleToBaby },
   { key: 'coursePackage', label: '课时包', icon: 'calendar-filled', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '选择陪伴官与课时订单', onClick: handleToCoursePackage },
+  { key: 'referral', label: '我的邀请码', icon: 'flag-filled', iconColor: '#F59E0B', iconClass: 'menu-icon-primary', description: '邀请好友注册赢福利', onClick: handleToReferral },
   { key: 'feedback', label: '课程建议及评价', icon: 'heart-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', onClick: handleBuilding },
   { key: 'salon', label: '我的沙龙活动', icon: 'staff-filled', iconColor: '#14B8A6', iconClass: 'menu-icon-soft', onClick: handleBuilding },
   { key: 'service', label: '客服电话', icon: 'headphones', iconColor: '#059669', iconClass: 'menu-icon-light', description: '周一至周日 09:00-24:00', onClick: handleBuilding },
@@ -491,6 +492,12 @@ function handleToMerchantPayroll() {
 function handleToSetting() {
   withLogin(() => {
     proxy.$tab.navigateTo('/pages/mine/setting/index')
+  })
+}
+
+function handleToReferral() {
+  withLogin(() => {
+    proxy.$tab.navigateTo('/pages/mine/referral/index')
   })
 }
 

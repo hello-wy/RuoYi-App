@@ -328,6 +328,19 @@
       ]
     },
     {
+      "root": "pages/mine/referral",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationBarTitleText": "分销邀请码",
+            "navigationBarBackgroundColor": "#0F9D8F",
+            "navigationBarTextStyle": "white"
+          }
+        }
+      ]
+    },
+    {
       "root": "pages/mine/info",
       "pages": [
         {
@@ -457,6 +470,13 @@
           "path": "refund/index",
           "style": {
             "navigationBarTitleText": "退款管理"
+          }
+        },
+        {
+          "path": "referral/index",
+          "style": {
+            "navigationBarTitleText": "邀请关系管理",
+            "enablePullDownRefresh": true
           }
         }
       ]

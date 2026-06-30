@@ -192,11 +192,14 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxLogin = (appid, code) => {
     return new Promise((resolve, reject) => {
-      wxminiLogin(appid, code).then(async res => {
+      const inviteCode = uni.getStorageSync('pendingInviteCode') || ''
+      wxminiLogin(appid, code, '', inviteCode).then(async res => {
         try {
           const loginData = res.data || {}
           assertWxLoginReady(loginData)
-          resolve(await applyWxSession(buildWxProfile(loginData)))
+          const result = await applyWxSession(buildWxProfile(loginData))
+          uni.removeStorageSync('pendingInviteCode')
+          resolve(result)
         } catch (error) {
           reject(error)
         }
@@ -208,11 +211,14 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxPhoneLogin = ({ appid, code, phoneCode }) => {
     return new Promise((resolve, reject) => {
-      wxminiLogin(appid, code, phoneCode).then(async loginRes => {
+      const inviteCode = uni.getStorageSync('pendingInviteCode') || ''
+      wxminiLogin(appid, code, phoneCode, inviteCode).then(async loginRes => {
         try {
           const loginData = loginRes.data || {}
           assertWxLoginReady(loginData)
-          resolve(await applyWxSession(buildWxProfile(loginData)))
+          const result = await applyWxSession(buildWxProfile(loginData))
+          uni.removeStorageSync('pendingInviteCode')
+          resolve(result)
         } catch (error) {
           reject(error)
         }
