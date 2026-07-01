@@ -1,18 +1,37 @@
 <script setup>
   import config from './config'
   import { getToken } from '@/utils/auth'
+  import { bindReferral } from '@/api/wxmini/referral'
   import { useConfigStore, useLocationStore } from '@/store'
-  import { onLaunch } from '@dcloudio/uni-app'
+  import { onLaunch, onShow } from '@dcloudio/uni-app'
   import { findCityNodeByName } from '@/utils/pca'
   // #ifdef MP-WEIXIN
   import { setupMiniProgramUpdate } from '@/utils/update-manager'
   // #endif
+
+  let bindingPendingInviteCode = false
 
   onLaunch(async (options) => {
     // #ifdef MP-WEIXIN
     setupMiniProgramUpdate()
     // #endif
 
+    saveInviteCodeFromOptions(options)
+
+    initApp()
+    bindPendingInviteCodeIfLoggedIn()
+    const cityNode = await findCityNodeByName('南京市')
+    if (cityNode) {
+      useLocationStore().setCity(cityNode)
+    }
+  })
+
+  onShow((options) => {
+    saveInviteCodeFromOptions(options)
+    bindPendingInviteCodeIfLoggedIn()
+  })
+
+  function saveInviteCodeFromOptions(options) {
     // 解析分销邀请码并存入本地缓存
     if (options && options.query) {
       let inviteCode = options.query.inviteCode
@@ -31,18 +50,31 @@
           console.error('Failed to parse WeChat scene param:', e)
         }
       }
+      inviteCode = String(inviteCode || '').trim()
       if (inviteCode) {
         uni.setStorageSync('pendingInviteCode', inviteCode)
-        console.log('App launch: pendingInviteCode detected and saved:', inviteCode)
+        console.log('pendingInviteCode detected and saved:', inviteCode)
       }
     }
+  }
 
-    initApp()
-    const cityNode = await findCityNodeByName('南京市')
-    if (cityNode) {
-      useLocationStore().setCity(cityNode)
+  function bindPendingInviteCodeIfLoggedIn() {
+    const inviteCode = String(uni.getStorageSync('pendingInviteCode') || '').trim()
+    if (!getToken() || !inviteCode || bindingPendingInviteCode) {
+      return
     }
-  })
+    bindingPendingInviteCode = true
+    bindReferral(inviteCode).then(() => {
+      uni.removeStorageSync('pendingInviteCode')
+    }).catch(error => {
+      const message = error?.msg || error?.message || error?.errMsg || ''
+      if (['已经被邀请过了', '邀请码不能为空', '邀请码无效', '不能绑定自己的邀请码'].includes(message)) {
+        uni.removeStorageSync('pendingInviteCode')
+      }
+    }).finally(() => {
+      bindingPendingInviteCode = false
+    })
+  }
 
   // 初始化应用
   function initApp() {

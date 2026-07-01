@@ -6,6 +6,7 @@ import storage from '@/utils/storage'
 import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
 import { getInfo, login, logout, wxminiLogin } from '@/api/login'
+import { bindReferral } from '@/api/wxmini/referral'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeAdminRoles, removeAdminToken, removeToken, setAdminRoles, setAdminToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
@@ -16,6 +17,7 @@ import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
 const PHONE_CODE_REQUIRED_MESSAGE = '需要手机号授权后继续登录'
+const REFERRAL_TERMINAL_MESSAGES = ['已经被邀请过了', '邀请码不能为空', '邀请码无效', '不能绑定自己的邀请码']
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
@@ -107,6 +109,34 @@ export const useUserStore = defineStore('user', () => {
     return profile
   }
 
+  const clearPendingInviteCode = () => {
+    uni.removeStorageSync('pendingInviteCode')
+  }
+
+  const shouldClearPendingInviteCode = (message) => REFERRAL_TERMINAL_MESSAGES.includes(message)
+
+  const bindPendingInviteCode = async () => {
+    const inviteCode = String(uni.getStorageSync('pendingInviteCode') || '').trim()
+    if (!inviteCode) {
+      return
+    }
+    try {
+      await bindReferral(inviteCode)
+      clearPendingInviteCode()
+    } catch (error) {
+      const message = error?.msg || error?.message || error?.errMsg || ''
+      if (shouldClearPendingInviteCode(message)) {
+        clearPendingInviteCode()
+      }
+    }
+  }
+
+  const applyWxSessionAndBindReferral = async (profile) => {
+    const result = await applyWxSession(profile)
+    await bindPendingInviteCode()
+    return result
+  }
+
   const buildWxProfile = (loginData, phoneData = {}) => ({
     apiToken: loginData.apiToken || '',
     sessionKey: phoneData.sessionKey || loginData.sessionKey || '',
@@ -192,13 +222,11 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxLogin = (appid, code) => {
     return new Promise((resolve, reject) => {
-      const inviteCode = uni.getStorageSync('pendingInviteCode') || ''
-      wxminiLogin(appid, code, '', inviteCode).then(async res => {
+      wxminiLogin(appid, code).then(async res => {
         try {
           const loginData = res.data || {}
           assertWxLoginReady(loginData)
-          const result = await applyWxSession(buildWxProfile(loginData))
-          uni.removeStorageSync('pendingInviteCode')
+          const result = await applyWxSessionAndBindReferral(buildWxProfile(loginData))
           resolve(result)
         } catch (error) {
           reject(error)
@@ -211,13 +239,11 @@ export const useUserStore = defineStore('user', () => {
 
   const resolveWxPhoneLogin = ({ appid, code, phoneCode }) => {
     return new Promise((resolve, reject) => {
-      const inviteCode = uni.getStorageSync('pendingInviteCode') || ''
-      wxminiLogin(appid, code, phoneCode, inviteCode).then(async loginRes => {
+      wxminiLogin(appid, code, phoneCode).then(async loginRes => {
         try {
           const loginData = loginRes.data || {}
           assertWxLoginReady(loginData)
-          const result = await applyWxSession(buildWxProfile(loginData))
-          uni.removeStorageSync('pendingInviteCode')
+          const result = await applyWxSessionAndBindReferral(buildWxProfile(loginData))
           resolve(result)
         } catch (error) {
           reject(error)

@@ -25,6 +25,15 @@ export function getMyInviter() {
   })
 }
 
+// 登录用户绑定邀请码
+export function bindReferral(inviteCode) {
+  return request({
+    url: '/wxmini/referral/bind',
+    method: 'post',
+    data: { inviteCode }
+  })
+}
+
 // 管理员分页获取全量邀请列表
 export function listAllReferrals(query) {
   return request({

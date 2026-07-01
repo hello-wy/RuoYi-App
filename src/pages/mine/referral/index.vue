@@ -3,7 +3,7 @@
     <!-- 头部邀请卡片 -->
     <view class="referral-header-card">
       <view class="header-title">推荐好友注册 共享优质服务</view>
-      <view class="header-subtitle">新用户注册时将自动绑定为您的下级</view>
+      <view class="header-subtitle">好友登录后可通过邀请码绑定为您的下级</view>
       
       <!-- 邀请码展示区 -->
       <view class="code-box">
@@ -75,15 +75,27 @@ onLoad(() => {
 })
 
 onShow(() => {
-  // 页面显示时重新载入数据，防止有新注册用户能及时展示
+  // 页面显示时重新载入数据，防止有新绑定用户能及时展示
   fetchCodeAndStats()
+  fetchInvitees(true)
 })
 
 // 分享配置
 onShareAppMessage(() => {
+  if (!inviteCode.value) {
+    uni.showToast({
+      title: '邀请码加载中，请稍后再分享',
+      icon: 'none'
+    })
+    return {
+      title: '邀请你加入智育傢，点击立即注册！',
+      path: '/pages/index',
+      imageUrl: ''
+    }
+  }
   return {
     title: '邀请你加入智育傢，点击立即注册！',
-    path: `/pages/index?inviteCode=${inviteCode.value}`,
+    path: `/pages/index?inviteCode=${encodeURIComponent(inviteCode.value)}`,
     imageUrl: '' // 可以不填使用默认截屏，或指定一张好看的分享封面
   }
 })

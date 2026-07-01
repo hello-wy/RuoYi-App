@@ -50,13 +50,13 @@
 				>
 					<!-- 文件类型图标 -->
 					<view class="file-icon-wrap" :style="{ background: getFileColor(item.fileType) }">
-						<text class="file-icon-text">{{ getFileExt(item.filePath) }}</text>
+						<text class="file-icon-text">{{ getFileExt(item) }}</text>
 					</view>
 
 					<view class="material-info">
 						<text class="material-name">{{ item.name }}</text>
 						<view class="material-meta">
-							<text class="material-size">{{ item.fileSize || '--' }}</text>
+							<text class="material-size">{{ item.fileSizeText || '--' }}</text>
 							<text class="meta-dot">·</text>
 							<text class="material-date">{{ item.createTime }}</text>
 						</view>
@@ -84,7 +84,7 @@
 </template>
 
 <script>
-import { listMaterials } from '@/pages/growup/_api/system/growup'
+import { listMaterials } from '@/api/wxmini/growup'
 
 export default {
 	data() {
@@ -161,20 +161,22 @@ export default {
 			this.load()
 		},
 		openMaterial(item) {
-			if (item.filePath) {
+			const url = item.downloadUrl || item.filePath
+			if (url) {
 				uni.navigateTo({
-					url: '/pages/common/webview/index?url=' + encodeURIComponent(item.filePath) + '&title=' + encodeURIComponent(item.name)
+					url: '/pages/common/webview/index?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(item.name)
 				})
 			}
 		},
 		downloadMaterial(item) {
-			if (!item.filePath) {
+			const url = item.downloadUrl || item.filePath
+			if (!url) {
 				uni.showToast({ title: '文件不存在', icon: 'none' })
 				return
 			}
 			uni.showLoading({ title: '准备下载...' })
 			uni.downloadFile({
-				url: item.filePath,
+				url,
 				success: (res) => {
 					uni.hideLoading()
 					if (res.statusCode === 200) {
@@ -185,6 +187,8 @@ export default {
 								uni.showToast({ title: '无法打开该文件', icon: 'none' })
 							}
 						})
+					} else {
+						uni.showToast({ title: '下载失败，请重试', icon: 'none' })
 					}
 				},
 				fail: () => {
@@ -193,9 +197,13 @@ export default {
 				}
 			})
 		},
-		getFileExt(path) {
+		getFileExt(item) {
+			const type = item?.fileType
+			if (type) return String(type).toUpperCase().slice(0, 4)
+			const path = item?.downloadUrl || item?.filePath || ''
 			if (!path) return 'FILE'
-			const parts = path.split('.')
+			const purePath = path.split('?')[0]
+			const parts = purePath.split('.')
 			return (parts[parts.length - 1] || 'FILE').toUpperCase().slice(0, 4)
 		},
 		getFileColor(type) {
