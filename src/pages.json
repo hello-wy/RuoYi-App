@@ -121,7 +121,9 @@
         {
           "path": "answer",
           "style": {
-            "navigationBarTitleText": "性格测试"
+            "navigationBarTitleText": "性格测试",
+            "navigationBarBackgroundColor": "#ffffff",
+            "navigationBarTextStyle": "black"
           }
         },
         {

@@ -1,6 +1,6 @@
 <template>
   <view class="personality-start">
-    <view class="star-layer"></view>
+    <image class="page-bg" src="/static/images/personality-starry-bg.jpg" mode="aspectFill"></image>
     <view class="content-wrap">
       <view class="intro-card">
         <text class="title">{{ entry.title || '天人合一·性格测试' }}</text>
@@ -110,23 +110,23 @@ export default {
 
 <style lang="scss">
 page {
-  background: #122567;
+  background: #061733;
 }
 
 .personality-start {
   position: relative;
   min-height: 100vh;
   overflow: hidden;
+  background: #061733;
 }
 
-.star-layer {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,0.95) 0 2rpx, transparent 3rpx),
-    radial-gradient(circle, rgba(255,255,255,0.65) 0 1rpx, transparent 2rpx);
-  background-size: 54rpx 54rpx, 86rpx 86rpx;
-  opacity: 0.72;
+.page-bg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
 }
 
 .content-wrap {
