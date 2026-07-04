@@ -1,12 +1,61 @@
 import request from '@/utils/request'
+import { getAdminLevelLabel } from '@/pages/mine/admin/_api/system/user'
 
-export function listStudents(params) {
-  return request({
+function toBoolean(value) {
+  if (typeof value === 'boolean') return value
+  if (value === 1 || value === '1') return true
+  if (value === 0 || value === '0') return false
+  return Boolean(value)
+}
+
+function normalizeStudentRow(row = {}) {
+  const boundUserName = row.boundUserNickName || row.boundUserName || ''
+  const boundUserPhone = row.boundUserPhone || ''
+  const studentId = row.id ?? row.studentId ?? row.userInfoId ?? row.assignmentId
+  return {
+    ...row,
+    id: studentId,
+    studentId,
+    assignmentId: row.assignmentId ?? '',
+    bound: toBoolean(row.bound),
+    canBind: toBoolean(row.canBind),
+    canClaim: toBoolean(row.canClaim),
+    ownerDeptName: row.ownerDeptName || '',
+    boundUserName,
+    boundUserPhone,
+    boundUserAdminLevelLabel: row.boundUserAdminLevel
+      ? getAdminLevelLabel(row.boundUserAdminLevel)
+      : '',
+    boundUserDisplayName: boundUserName || boundUserPhone || ''
+  }
+}
+
+function normalizeStaffCandidate(row = {}) {
+  const sysUserId = row.sysUserId ?? row.userId ?? row.id
+  const phone = row.boundUserPhone || row.phonenumber || row.phone || row.userName || ''
+  const nickName = row.boundUserNickName || row.nickName || row.userName || ''
+  return {
+    ...row,
+    sysUserId,
+    phone,
+    nickName,
+    displayName: nickName || phone || '未命名员工',
+    adminLevelLabel: row.adminLevel ? getAdminLevelLabel(row.adminLevel) : '员工',
+    deptName: row.deptName || row.dept?.deptName || row.boundDeptName || ''
+  }
+}
+
+export async function listStudents(params) {
+  const res = await request({
     url: '/system/student/list',
     adminAuth: true,
     method: 'get',
     params
   })
+  return {
+    ...res,
+    rows: Array.isArray(res?.rows) ? res.rows.map(normalizeStudentRow) : []
+  }
 }
 
 export function getStudentDetail(id) {
@@ -85,6 +134,33 @@ export function updateStudentSituation(id, data) {
     url: '/system/student/' + id + '/situation',
     adminAuth: true,
     method: 'put',
+    data
+  })
+}
+
+export async function searchStudentStaffCandidates(params = {}) {
+  const res = await request({
+    url: '/system/student/staff-candidates',
+    adminAuth: true,
+    method: 'get',
+    params: {
+      adminLevel: 'employee',
+      ...params
+    }
+  })
+  return {
+    ...res,
+    rows: Array.isArray(res?.rows) ? res.rows.map(normalizeStaffCandidate) : [],
+    total: Number(res?.total || 0)
+  }
+}
+
+export function bindStudentStaff(studentId, sysUserId) {
+  const data = sysUserId ? { sysUserId } : {}
+  return request({
+    url: `/system/student/${studentId}/binding`,
+    adminAuth: true,
+    method: 'post',
     data
   })
 }

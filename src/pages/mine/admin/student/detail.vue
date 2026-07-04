@@ -229,7 +229,7 @@ async function loadDetail(id) {
     detail.value = res.data || {}
     situationDraft.value = detail.value.studentSituation || ''
   } catch (error) {
-    uni.showToast({ title: '学员详情不存在', icon: 'none' })
+    uni.showToast({ title: error?.msg || error?.message || '学员详情不存在', icon: 'none' })
     setTimeout(() => {
       uni.navigateBack({ delta: 1 })
     }, 600)

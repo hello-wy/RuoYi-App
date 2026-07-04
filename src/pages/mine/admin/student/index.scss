@@ -11,7 +11,8 @@ page {
 .summary-wrap,
 .manage-card,
 .student-card,
-.state-box {
+.state-box,
+.dialog-card {
   background: #fff;
   border-radius: 24rpx;
   box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
@@ -21,8 +22,25 @@ page {
   padding: 28rpx 24rpx 24rpx;
   margin-bottom: 20rpx;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.summary-main,
+.summary-stat {
+  display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.summary-main {
+  flex-shrink: 0;
+}
+
+.summary-stat {
+  flex: 1;
+  min-width: 0;
 }
 
 .summary-circle {
@@ -46,6 +64,19 @@ page {
   margin-top: 16rpx;
   font-size: 26rpx;
   color: #64748b;
+}
+
+.summary-side-value {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.summary-side-label {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .manage-card {
@@ -79,20 +110,73 @@ page {
   color: #94a3b8;
 }
 
-.search-box {
+.filter-card {
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  border-radius: 22rpx;
+  background: #f8fafc;
+}
+
+.assignment-tabs {
+  display: flex;
+  gap: 14rpx;
+  margin-bottom: 18rpx;
+}
+
+.assignment-chip {
+  flex: 1;
+  height: 64rpx;
+  line-height: 64rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  background: #fff;
+  color: #64748b;
+  font-size: 26rpx;
+}
+
+.assignment-chip.active {
+  background: #0f766e;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 10rpx 24rpx rgba(15, 118, 110, 0.18);
+}
+
+.search-row,
+.candidate-search-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.search-row {
+  flex-wrap: nowrap;
+}
+
+.search-box,
+.candidate-search-box {
   display: flex;
   align-items: center;
   gap: 12rpx;
   height: 76rpx;
-  width: 360rpx;
   flex-shrink: 0;
   padding: 0 20rpx;
-  background: #f8fafc;
+  background: #fff;
   border-radius: 999rpx;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.candidate-search-box {
+  flex: 1;
+  background: #f8fafc;
 }
 
 .search-input {
   flex: 1;
+  min-width: 0;
   font-size: 28rpx;
   color: #1f2937;
 }
@@ -101,8 +185,20 @@ page {
   color: #94a3b8;
 }
 
+.search-btn,
+.candidate-search-btn {
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 30rpx;
+  border-radius: 999rpx;
+  background: #0f766e;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
 .student-scroll {
-  height: calc(100vh - 440rpx);
+  height: calc(100vh - 500rpx);
 }
 
 .student-list {
@@ -114,16 +210,41 @@ page {
 
 .student-card {
   padding: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20rpx;
+  display: block;
   background: #f8fafc;
   box-shadow: none;
 }
 
+.student-main,
+.candidate-main {
+  min-width: 0;
+}
+
+.student-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.student-info,
+.candidate-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
 .student-name {
   display: block;
+  max-width: 300rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 32rpx;
   font-weight: 700;
   color: #111827;
@@ -136,17 +257,100 @@ page {
   color: #64748b;
 }
 
+.assignment-tag,
+.type-tag,
+.level-tag {
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.assignment-tag.bound {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.assignment-tag.unbound {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.info-block {
+  margin-top: 18rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: #fff;
+}
+
+.info-line {
+  display: flex;
+  gap: 18rpx;
+  margin-bottom: 10rpx;
+}
+
+.info-line:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  width: 120rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.info-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 24rpx;
+  color: #334155;
+  word-break: break-all;
+}
+
+.action-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+  margin-top: 24rpx;
+}
+
+.action-btn {
+  margin: 0;
+  padding: 0 24rpx;
+  height: 58rpx;
+  line-height: 58rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+}
+
+.action-btn.primary {
+  background: #0f766e;
+  color: #fff;
+}
+
+.action-btn.ghost {
+  background: #ecfdf5;
+  color: #0f766e;
+}
+
 .card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  padding-top: 4rpx;
+}
+
+.card-type-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
 }
 
 .type-tag {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
   background: #ecfeff;
-  font-size: 24rpx;
   color: #0f766e;
 }
 
@@ -167,4 +371,147 @@ page {
 
 .retry-btn {
   margin-top: 20rpx;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.dialog-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.dialog-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24rpx;
+}
+
+.dialog-card {
+  padding: 32rpx;
+  max-height: 78vh;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.dialog-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dialog-subtitle {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #64748b;
+}
+
+.dialog-close {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+
+.candidate-state {
+  padding: 72rpx 0;
+  display: flex;
+  justify-content: center;
+}
+
+.candidate-list {
+  max-height: 520rpx;
+  margin-top: 18rpx;
+}
+
+.candidate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  padding: 22rpx 20rpx;
+  margin-bottom: 14rpx;
+  border: 2rpx solid transparent;
+  border-radius: 20rpx;
+  background: #f8fafc;
+}
+
+.candidate-item.active {
+  border-color: #0f766e;
+  background: #ecfdf5;
+}
+
+.candidate-name,
+.candidate-phone {
+  display: block;
+}
+
+.candidate-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.candidate-phone {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #475569;
+}
+
+.candidate-meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.level-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.dept-text {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.dialog-btn-row {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}
+
+.dialog-btn {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+}
+
+.dialog-btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.dialog-btn-primary {
+  background: #0f766e;
+  color: #fff;
 }

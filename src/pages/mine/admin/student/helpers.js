@@ -99,9 +99,13 @@ export function createInitialListState() {
   return {
     pageNum: 1,
     pageSize: 10,
-    realName: '',
+    keyword: '',
+    assignmentStatus: 'all',
     list: [],
     total: 0,
+    allTotal: 0,
+    boundTotal: 0,
+    unboundTotal: 0,
     loading: false,
     finished: false,
     loadError: false

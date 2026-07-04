@@ -147,7 +147,7 @@ const actionItems = [
     label: '查看未分配学员',
     icon: 'search',
     iconColor: '#059669',
-    onClick: handleUnreadyFeature
+    onClick: handleUnassignedStudents
   },
   {
     key: 'profit-survey',
@@ -194,6 +194,10 @@ function handleMerchantUserTypeWhitelist() {
 
 function handleStudentManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/student/index')
+}
+
+function handleUnassignedStudents() {
+  proxy.$tab.navigateTo('/pages/mine/admin/student/index?assignmentStatus=unbound')
 }
 
 function handlePersonalityTest() {
