@@ -1,46 +1,64 @@
 <template>
-		<view class="page">
-			<!-- 自定义悬浮导航 -->
-			<view class="float-bar" :style="{ top: (statusBarHeight + 8) + 'px' }">
-				<view class="float-btn" @click="goBack">
-					<uni-icons type="left" size="20" color="#fff"></uni-icons>
+	<view class="page">
+		<!-- 自定义悬浮导航 -->
+		<view class="float-bar" :style="{ top: (statusBarHeight + 8) + 'px' }">
+			<view class="float-btn" @click="goBack">
+				<uni-icons type="left" size="20" color="#fff"></uni-icons>
+			</view>
+		</view>
+
+		<!-- 加载中 -->
+		<view v-if="loading" class="loading-wrap">
+			<uni-load-more status="loading"></uni-load-more>
+		</view>
+
+		<!-- 加载失败 -->
+		<view v-else-if="error" class="error-wrap">
+			<uni-icons type="close-circle" size="40" color="#e2e8f0"></uni-icons>
+			<text class="error-text">加载失败，请重试</text>
+			<view class="retry-btn" @click="loadDetail">
+				<text class="retry-text">重新加载</text>
+			</view>
+		</view>
+
+		<block v-else-if="detail">
+			<scroll-view scroll-y class="content-scroll">
+				<!-- 顶部封面图 / 渐变横幅 -->
+				<view class="cover-banner">
+					<image
+						v-if="topCoverUrl"
+						:src="topCoverUrl"
+						mode="aspectFill"
+						class="cover-image"
+						@error="handleTopCoverError"
+					></image>
+					<view v-else class="cover-gradient">
+						<view class="cover-decor-circle c1"></view>
+						<view class="cover-decor-circle c2"></view>
+						<text class="cover-title-gradient">{{ detail.name }}</text>
+						<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
+					</view>
 				</view>
-			</view>
 
-			<!-- 加载中 -->
-			<view v-if="loading" class="loading-wrap">
-				<uni-load-more status="loading"></uni-load-more>
-			</view>
-
-			<!-- 加载失败 -->
-			<view v-else-if="error" class="error-wrap">
-				<uni-icons type="close-circle" size="40" color="#e2e8f0"></uni-icons>
-				<text class="error-text">加载失败，请重试</text>
-				<view class="retry-btn" @click="loadDetail">
-					<text class="retry-text">重新加载</text>
-				</view>
-			</view>
-
-			<block v-else-if="detail">
-				<scroll-view scroll-y class="content-scroll">
-					<!-- 顶部封面图 / 渐变横幅 -->
-					<view class="cover-banner">
-						<image
-							v-if="topCoverUrl"
-							:src="topCoverUrl"
-							mode="aspectFill"
-							class="cover-image"
-							@error="handleTopCoverError"
-						></image>
-						<view v-else class="cover-gradient">
-							<view class="cover-decor-circle c1"></view>
-							<view class="cover-decor-circle c2"></view>
-							<text class="cover-title-gradient">{{ detail.name }}</text>
-							<text class="cover-date-gradient">{{ formatDateRange(detail.startTime, detail.endTime) }}</text>
+				<view class="content-wrap">
+					<view class="detail-tabs">
+						<view
+							class="detail-tab"
+							:class="{ active: activeTab === 'detail' }"
+							@click="switchTab('detail')"
+						>
+							<text>课程详情</text>
+						</view>
+						<view
+							class="detail-tab"
+							:class="{ active: activeTab === 'review', disabled: !orderNo }"
+							@click="switchTab('review')"
+						>
+							<text>课程评价</text>
 						</view>
 					</view>
 
-					<view class="content-wrap">
+					<view v-show="activeTab === 'detail'">
 						<!-- 课程名称 + 基本信息 -->
 						<view class="course-info-card">
 							<text class="course-name">{{ detail.name }}</text>
@@ -146,42 +164,76 @@
 								</view>
 							</view>
 						</view>
-
-						<view style="height: 130px;"></view>
 					</view>
-				</scroll-view>
 
-				<!-- 底部操作栏 -->
-				<view class="bottom-bar">
-					<view class="btn-row">
-						<button class="btn-share" open-type="share">
-							<view class="btn-share-inner">
-								<uni-icons type="redo" size="24" color="#6B7280"></uni-icons>
-								<text class="btn-share-text">分享</text>
+					<view v-show="activeTab === 'review'" class="review-panel">
+						<view class="section-block review-card">
+							<text class="section-title">课程评价</text>
+							<view v-if="!orderNo" class="review-tip-card">
+								<uni-icons type="info" size="18" color="#94a3b8"></uni-icons>
+								<text class="review-tip-text">请从“我的课程”进入课程详情后评价，公开详情页不会绑定订单。</text>
 							</view>
-						</button>
-						<view
-							class="btn-enroll"
-							:class="{ 'btn-disabled': detail.enrolled }"
-							@click="handleEnroll"
-						>
-							<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
+							<view v-else-if="reviewLoading" class="review-loading">
+								<uni-load-more status="loading"></uni-load-more>
+							</view>
+							<block v-else>
+								<textarea
+									v-model="reviewContent"
+									class="review-textarea"
+									maxlength="1000"
+									placeholder="请输入你对本次课程的评价"
+									placeholder-class="review-placeholder"
+									:disabled="reviewSaving"
+								/>
+								<view class="review-footer">
+									<text class="review-count">{{ reviewContent.length }}/1000</text>
+									<view
+										class="review-save-btn"
+										:class="{ disabled: reviewSaving }"
+										@click="handleSaveReview"
+									>
+										<text class="review-save-text">{{ reviewSaving ? '保存中...' : '保存评价' }}</text>
+									</view>
+								</view>
+							</block>
 						</view>
 					</view>
+
+					<view style="height: 130px;"></view>
 				</view>
-			</block>
-		</view>
+			</scroll-view>
+
+			<!-- 底部操作栏 -->
+			<view class="bottom-bar">
+				<view class="btn-row">
+					<button class="btn-share" open-type="share">
+						<view class="btn-share-inner">
+							<uni-icons type="redo" size="24" color="#6B7280"></uni-icons>
+							<text class="btn-share-text">分享</text>
+						</view>
+					</button>
+					<view
+						class="btn-enroll"
+						:class="{ 'btn-disabled': detail.enrolled }"
+						@click="handleEnroll"
+					>
+						<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
+					</view>
+				</view>
+			</view>
+		</block>
+	</view>
 </template>
 
 <script>
 import config from '@/config'
-import { getCourse } from '@/api/wxmini/growup'
+import { getCourse, getMyCourseReview, saveMyCourseReview } from '@/api/wxmini/growup'
 import {
 	buildLectureImageUrl,
 	formatLectureImageVersion,
 	getLectureImageSrc,
 	resolveLectureCoverDirectoryId,
-} from './lecture-cover'
+} from '@/utils/lecture-cover'
 
 const DEFAULT_ENROLLED_COUNT = 0
 const DEFAULT_REMAIN_COUNT = 150
@@ -202,43 +254,49 @@ export default {
 			statusBarHeight: 0,
 			type: 'course',
 			id: '',
+			orderNo: '',
+			activeTab: 'detail',
 			loading: true,
 			error: false,
 			detail: null,
 			myEnrollmentCount: 0,
 			topCoverLoadFailed: false,
+			reviewContent: '',
+			reviewLoaded: false,
+			reviewLoading: false,
+			reviewSaving: false,
 		}
 	},
 	computed: {
 		topCoverUrl() {
-				const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
-				const updateDate = this.detail?.updateDate
-				const version = this.formatImageVersion(updateDate)
-				const fallbackUrl = this.detail?.coverUrl ? `${this.detail.coverUrl}${version}` : ''
-				if (!coverDirectoryId) {
-					return fallbackUrl
-				}
-				if (this.topCoverLoadFailed) {
-					return fallbackUrl
-				}
-				return getLectureImageSrc({
-					baseUrl: config.baseUrl,
-					lecture: { id: coverDirectoryId, updateDate },
-					fileName: 'cover.webp'
-				})
-			},
+			const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
+			const updateDate = this.detail?.updateDate
+			const version = this.formatImageVersion(updateDate)
+			const fallbackUrl = this.detail?.coverUrl ? `${this.detail.coverUrl}${version}` : ''
+			if (!coverDirectoryId) {
+				return fallbackUrl
+			}
+			if (this.topCoverLoadFailed) {
+				return fallbackUrl
+			}
+			return getLectureImageSrc({
+				baseUrl: config.baseUrl,
+				lecture: { id: coverDirectoryId, updateDate },
+				fileName: 'cover.webp'
+			})
+		},
 		posterUrls() {
-				const coverCount = Number(this.detail?.cover) || 0
-				const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
-				const updateDate = this.detail?.updateDate
-				if (!coverDirectoryId || coverCount < 1) {
-					return []
-				}
-				return Array.from(
-					{ length: coverCount },
-					(_, index) => this.buildLectureImageUrl(coverDirectoryId, `${index + 1}.webp`, updateDate)
-				)
-			},
+			const coverCount = Number(this.detail?.cover) || 0
+			const coverDirectoryId = resolveLectureCoverDirectoryId(this.detail || { id: this.id })
+			const updateDate = this.detail?.updateDate
+			if (!coverDirectoryId || coverCount < 1) {
+				return []
+			}
+			return Array.from(
+				{ length: coverCount },
+				(_, index) => this.buildLectureImageUrl(coverDirectoryId, `${index + 1}.webp`, updateDate)
+			)
+		},
 		lecturers() {
 			const speakers = this.detail?.speakers
 			if (Array.isArray(speakers) && speakers.length) {
@@ -271,6 +329,7 @@ export default {
 		this.statusBarHeight = sys.statusBarHeight || 0
 		this.type = options.type || 'course'
 		this.id = options.id || ''
+		this.orderNo = options.orderNo ? decodeURIComponent(options.orderNo) : ''
 		this.loadDetail()
 	},
 	onShareAppMessage() {
@@ -286,15 +345,15 @@ export default {
 	},
 	methods: {
 		formatImageVersion(updateDate) {
-				return formatLectureImageVersion(updateDate)
-			},
-			buildLectureImageUrl(courseId, fileName, updateDate) {
-				return buildLectureImageUrl({
-					baseUrl: config.baseUrl,
-					lecture: { id: courseId, updateDate },
-					fileName,
-				})
-			},
+			return formatLectureImageVersion(updateDate)
+		},
+		buildLectureImageUrl(courseId, fileName, updateDate) {
+			return buildLectureImageUrl({
+				baseUrl: config.baseUrl,
+				lecture: { id: courseId, updateDate },
+				fileName,
+			})
+		},
 		goBack() {
 			uni.navigateBack()
 		},
@@ -322,6 +381,55 @@ export default {
 				this.error = true
 			} finally {
 				this.loading = false
+			}
+		},
+		switchTab(tab) {
+			if (tab === 'review' && !this.orderNo) {
+				uni.showToast({ title: '请从我的课程进入后评价', icon: 'none' })
+				return
+			}
+			this.activeTab = tab
+			if (tab === 'review' && this.orderNo && !this.reviewLoaded && !this.reviewLoading) {
+				this.loadReview()
+			}
+		},
+		async loadReview() {
+			this.reviewLoading = true
+			try {
+				const review = await getMyCourseReview(this.id, this.orderNo)
+				this.reviewContent = review?.content || ''
+				this.reviewLoaded = true
+			} catch (error) {
+				uni.showToast({ title: error?.msg || '评价加载失败', icon: 'none' })
+			} finally {
+				this.reviewLoading = false
+			}
+		},
+		async handleSaveReview() {
+			if (this.reviewSaving) return
+			if (!this.orderNo) {
+				uni.showToast({ title: '请从我的课程进入后评价', icon: 'none' })
+				return
+			}
+			const content = this.reviewContent.trim()
+			if (!content) {
+				uni.showToast({ title: '请输入评价内容', icon: 'none' })
+				return
+			}
+			if (content.length > 1000) {
+				uni.showToast({ title: '评价内容不能超过1000字', icon: 'none' })
+				return
+			}
+			this.reviewSaving = true
+			try {
+				const review = await saveMyCourseReview(this.id, { orderNo: this.orderNo, content })
+				this.reviewContent = review?.content || content
+				this.reviewLoaded = true
+				uni.showToast({ title: '保存成功', icon: 'success' })
+			} catch (error) {
+				uni.showToast({ title: error?.msg || '保存失败', icon: 'none' })
+			} finally {
+				this.reviewSaving = false
 			}
 		},
 		viewEnrolledUsers() {
@@ -470,6 +578,37 @@ page {
 	padding: 16px 14px 0;
 	min-height: calc(100vh - 222px);
 	z-index: 1;
+}
+
+.detail-tabs {
+	display: flex;
+	flex-direction: row;
+	background: #fff;
+	border-radius: 14px;
+	padding: 4px;
+	margin-bottom: 12px;
+	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.detail-tab {
+	flex: 1;
+	height: 38px;
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 14px;
+	font-weight: 600;
+	color: #64748b;
+}
+
+.detail-tab.active {
+	background: linear-gradient(135deg, #3B82F6 0%, #6366f1 100%);
+	color: #fff;
+}
+
+.detail-tab.disabled {
+	color: #cbd5e1;
 }
 
 .course-info-card {
@@ -751,6 +890,80 @@ page {
 	background: #f8fafc;
 }
 
+.review-panel {
+	min-height: 320px;
+}
+
+.review-card {
+	padding: 16px;
+}
+
+.review-tip-card {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 8px;
+	background: #f8fafc;
+	border-radius: 12px;
+	padding: 12px;
+}
+
+.review-tip-text {
+	flex: 1;
+	font-size: 13px;
+	line-height: 1.7;
+	color: #64748b;
+}
+
+.review-loading {
+	padding: 30px 0;
+}
+
+.review-textarea {
+	width: 100%;
+	min-height: 180px;
+	box-sizing: border-box;
+	background: #f8fafc;
+	border-radius: 12px;
+	padding: 12px;
+	font-size: 14px;
+	line-height: 1.7;
+	color: #1e293b;
+}
+
+.review-placeholder {
+	color: #94a3b8;
+}
+
+.review-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 12px;
+}
+
+.review-count {
+	font-size: 12px;
+	color: #94a3b8;
+}
+
+.review-save-btn {
+	border-radius: 999px;
+	padding: 9px 18px;
+	background: linear-gradient(135deg, #3B82F6 0%, #6366f1 100%);
+}
+
+.review-save-btn.disabled {
+	background: #cbd5e1;
+}
+
+.review-save-text {
+	font-size: 13px;
+	font-weight: 700;
+	color: #fff;
+}
+
 .bottom-bar {
 	position: fixed;
 	bottom: 0;
@@ -829,4 +1042,3 @@ page {
 	line-height: 1;
 }
 </style>
-

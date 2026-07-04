@@ -102,9 +102,14 @@
           <text class="form-label">用户昵称</text>
           <input v-model="form.nickName" class="form-input" placeholder="请输入用户昵称" />
         </view>
-        <view v-if="!form.userId" class="form-item">
-          <text class="form-label">登录密码</text>
-          <input v-model="form.rawPassword" class="form-input" password placeholder="请输入登录密码" />
+        <view class="form-item">
+          <text class="form-label">{{ form.userId ? '新登录密码' : '登录密码' }}</text>
+          <input
+            v-model="form.rawPassword"
+            class="form-input"
+            password
+            :placeholder="form.userId ? '不修改请留空' : '请输入登录密码'"
+          />
         </view>
         <view class="form-item">
           <text class="form-label">管理员层级</text>
@@ -136,7 +141,7 @@
     <view class="dialog-sheet">
       <view class="dialog-card">
         <view class="dialog-header">
-          <text class="dialog-title">创建成功</text>
+          <text class="dialog-title">{{ credentialTitle }}</text>
         </view>
         <text class="credential-tip">请复制后发送给用户，关闭后将无法再次查看登录密码。</text>
         <view class="credential-box">
@@ -168,6 +173,7 @@ import {
   deleteSystemUser,
   getAdminLevelLabel,
   listSystemUsers,
+  resetSystemUserPassword,
   updateSystemUser
 } from '@/pages/mine/admin/_api/system/user'
 
@@ -179,6 +185,7 @@ const users = ref([])
 const total = ref(0)
 const formVisible = ref(false)
 const credentialVisible = ref(false)
+const credentialTitle = ref('创建成功')
 const credentialText = ref('')
 const adminLevels = ADMIN_LEVEL_OPTIONS
 const statusOptions = [
@@ -300,13 +307,30 @@ async function submitForm() {
   const payload = buildSystemUserPayload(form.value)
   try {
     if (payload.userId) {
-      await updateSystemUser(payload)
-      proxy.$modal.showToast('修改成功')
+      const resetPassword = String(form.value.rawPassword || '').trim()
+      const { rawPassword: _rawPassword, ...profilePayload } = payload
+      if (resetPassword) {
+        await resetSystemUserPassword(profilePayload.userId, resetPassword)
+      }
+      await updateSystemUser(profilePayload)
+      if (resetPassword) {
+        credentialTitle.value = '密码已重置'
+        credentialText.value = buildCredentialText({
+          phone: profilePayload.phonenumber,
+          password: resetPassword
+        })
+        credentialVisible.value = true
+        proxy.$modal.showToast('修改成功，密码已重置')
+      } else {
+        proxy.$modal.showToast('修改成功')
+      }
     } else {
-      await addSystemUser(payload)
+      const res = await addSystemUser(payload)
+      const credentials = res?.data || {}
+      credentialTitle.value = '创建成功'
       credentialText.value = buildCredentialText({
-        phone: payload.phonenumber,
-        password: payload.rawPassword
+        phone: credentials.phone || payload.phonenumber,
+        password: credentials.password || payload.rawPassword
       })
       credentialVisible.value = true
       proxy.$modal.showToast('新增成功')

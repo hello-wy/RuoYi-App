@@ -11,10 +11,175 @@ page {
 .hero-card,
 .tab-card,
 .profile-card,
-.empty-card {
+.situation-card,
+.empty-card,
+.record-section,
+.state-card {
   background: #fff;
   border-radius: 28rpx;
   box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+}
+
+.school-panel {
+  margin-top: 20rpx;
+}
+
+.school-total-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 22rpx;
+  background: linear-gradient(135deg, #edeaff 0%, #f7f9ff 100%);
+  box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+}
+
+.school-total-label {
+  display: block;
+  font-size: 24rpx;
+  color: #7c74ae;
+}
+
+.school-total-value {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #4019b8;
+}
+
+.school-total-value.blue {
+  color: #2395df;
+}
+
+.school-group-card {
+  margin-top: 20rpx;
+  overflow: hidden;
+  border-radius: 18rpx;
+  background: #fff;
+  box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+}
+
+.school-group-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 22rpx 28rpx;
+  background: #e7e6ff;
+}
+
+.school-group-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #4019b8;
+}
+
+.school-group-sub,
+.school-group-date {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #8a7ac5;
+}
+
+.school-group-date {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.school-item-card {
+  padding: 28rpx;
+  border-top: 1rpx solid #f0edf9;
+}
+
+.school-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.school-item-title {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #201c34;
+}
+
+.zero-badge {
+  flex-shrink: 0;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: #f1f5f9;
+  font-size: 22rpx;
+  color: #94a3b8;
+}
+
+.compact-empty {
+  margin-top: 20rpx;
+  padding: 56rpx 24rpx;
+}
+
+.share-mini-btn {
+  margin: 0;
+  padding: 0 18rpx;
+  height: 52rpx;
+  line-height: 52rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #c7bfff;
+  background: #fff;
+  font-size: 22rpx;
+  color: #6b4fe8;
+}
+
+.school-item-meta {
+  margin-top: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  font-size: 26rpx;
+  color: #9a97a8;
+}
+
+.school-item-remain {
+  margin-top: 14rpx;
+  text-align: right;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #2395df;
+}
+
+.school-stats-row {
+  margin-top: 20rpx;
+  display: flex;
+  border-top: 1rpx solid #f0edf9;
+  padding-top: 18rpx;
+}
+
+.school-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.school-stat.divider {
+  border-left: 1rpx solid #d5d8e5;
+  border-right: 1rpx solid #d5d8e5;
+}
+
+.school-stat-num {
+  display: block;
+  font-size: 30rpx;
+  color: #64748b;
+}
+
+.school-stat-label {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: #64748b;
 }
 
 .hero-card {
@@ -60,6 +225,19 @@ page {
   background: linear-gradient(135deg, #7c6cff 0%, #5b4fd8 100%);
 }
 
+.situation-action {
+  margin-top: 20rpx;
+  height: 78rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #9aa8ff 0%, #ffc0f4 100%);
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3e1fb4;
+}
+
 .profile-card {
   margin-top: 20rpx;
   padding: 22rpx 28rpx;
@@ -94,6 +272,157 @@ page {
 
 .info-value.multiline {
   white-space: pre-wrap;
+}
+
+.study-panel {
+  margin-top: 20rpx;
+}
+
+.record-section,
+.state-card {
+  padding: 28rpx;
+}
+
+.record-section + .record-section {
+  margin-top: 20rpx;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #201c34;
+}
+
+.record-empty {
+  padding: 36rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.record-card {
+  padding: 24rpx 0;
+  border-top: 1rpx solid #f0edf9;
+}
+
+.record-card:first-of-type {
+  border-top: none;
+}
+
+.record-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.record-title {
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #201c34;
+  line-height: 1.5;
+}
+
+.record-status {
+  flex-shrink: 0;
+  padding: 6rpx 14rpx;
+  border-radius: 999rpx;
+  background: #eef2ff;
+  font-size: 22rpx;
+  color: #5b4fd8;
+}
+
+.record-status.signed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.record-line {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: #64748b;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.retry-btn {
+  border-radius: 999rpx;
+  background: #7c6cff;
+  color: #fff;
+}
+
+.situation-card {
+  margin-top: 20rpx;
+  padding: 34rpx 30rpx;
+}
+
+.situation-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #201c34;
+}
+
+.situation-textarea {
+  margin-top: 24rpx;
+  width: 100%;
+  min-height: 220rpx;
+  box-sizing: border-box;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #f8fafc;
+  font-size: 30rpx;
+  line-height: 1.6;
+  color: #201c34;
+}
+
+.situation-placeholder {
+  color: #b2aec4;
+}
+
+.situation-footer {
+  margin-top: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.situation-count {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+.save-btn {
+  margin: 0;
+  min-width: 168rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #7c6cff 0%, #5b4fd8 100%);
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.save-btn[disabled] {
+  opacity: 0.7;
 }
 
 .empty-card {

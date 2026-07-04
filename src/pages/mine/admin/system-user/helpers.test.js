@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest'
 import {
   buildEmptySystemUserForm,
   buildSystemUserPayload,
-  validateSystemUserForm
+  validateSystemUserForm,
+  validateSystemUserPassword
 } from './helpers'
 
 describe('system user helpers', () => {
@@ -58,5 +59,31 @@ describe('system user helpers', () => {
       adminLevel: 'employee',
       rawPassword: ''
     })).toEqual({ valid: true, message: '' })
+  })
+
+  test('rejects short create password', () => {
+    expect(validateSystemUserForm({
+      phonenumber: '13800000000',
+      nickName: '张三',
+      adminLevel: 'employee',
+      rawPassword: '1234'
+    })).toEqual({ valid: false, message: '密码长度必须在5到20个字符之间' })
+  })
+
+  test('rejects illegal password characters', () => {
+    expect(validateSystemUserPassword('Admin<123')).toEqual({
+      valid: false,
+      message: '密码不能包含非法字符：< > " \' \\ |'
+    })
+  })
+
+  test('rejects invalid nonblank password when editing a user', () => {
+    expect(validateSystemUserForm({
+      userId: 1,
+      phonenumber: '13800000000',
+      nickName: '张三',
+      adminLevel: 'employee',
+      rawPassword: 'Admin|123'
+    })).toEqual({ valid: false, message: '密码不能包含非法字符：< > " \' \\ |' })
   })
 })

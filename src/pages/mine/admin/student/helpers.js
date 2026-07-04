@@ -14,7 +14,15 @@ export function getGenderText(value) {
 }
 
 export function getDisplayName(detail = {}) {
-  return detail.realName || detail.nickName || detail.userName || ''
+  return detail.realName || detail.realname || detail.nickName || detail.userName || detail.username || ''
+}
+
+export function getStudentDisplayName(student = {}) {
+  return student.realName || student.realname || student.userName || student.username || ''
+}
+
+export function getStudentRealName(student = {}) {
+  return student.realName || student.realname || ''
 }
 
 export function buildProfileFields(detail = {}) {
@@ -46,6 +54,45 @@ export function buildProfileFields(detail = {}) {
     { key: 'workYears', label: '工作年限', value: detail.workYears },
     { key: 'personalIntro', label: '个人简介', value: detail.personalIntro, multiline: true }
   ]
+}
+
+export function normalizeEnrollmentSummary(data = {}) {
+  const groups = Array.isArray(data.groups) ? data.groups : []
+  return {
+    total: Number(data.total || 0),
+    remain: Number(data.remain || 0),
+    usedCount: Number(data.usedCount || 0),
+    sharedCount: Number(data.sharedCount || 0),
+    groups: groups.map((group, groupIndex) => {
+      const items = Array.isArray(group.items) ? group.items : []
+      return {
+        key: group.lectureName || `group-${groupIndex}`,
+        lectureName: group.lectureName || '未命名课程',
+        total: Number(group.total || 0),
+        remain: Number(group.remain || 0),
+        usedCount: Number(group.usedCount || 0),
+        sharedCount: Number(group.sharedCount || 0),
+        items: items.map((item, index) => ({
+          ...item,
+          key: item.id || `${groupIndex}-${index}`,
+          lectureName: item.lectureName || group.lectureName || '未命名课程',
+          total: Number(item.total || 0),
+          remain: Number(item.remain || 0),
+          usedCount: Number(item.usedCount || 0),
+          sharedCount: Number(item.sharedCount || 0),
+          availableShareCount: Number(item.availableShareCount ?? item.remain ?? 0)
+        }))
+      }
+    })
+  }
+}
+
+export function formatShortDate(value) {
+  if (!value) return '--'
+  const text = String(value)
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) return `${match[1]}.${match[2]}.${match[3]}`
+  return text
 }
 
 export function createInitialListState() {

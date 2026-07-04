@@ -269,7 +269,7 @@ import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import {
 	getLectureImageSrc,
 	prefetchLectureCovers,
-} from './lecture-cover'
+} from '@/utils/lecture-cover'
 
 const BANNER_COURSE_ORDER = [
 	'幸福解码',

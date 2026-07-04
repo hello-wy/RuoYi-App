@@ -55,8 +55,8 @@
             @click="goDetail(item.id)"
           >
             <view>
-              <text class="student-name">{{ item.displayName || '未命名用户' }}</text>
-              <text class="student-meta">实名：{{ item.realName || '未填写' }}</text>
+              <text class="student-name">{{ getStudentDisplayName(item) || '未命名用户' }}</text>
+              <text class="student-meta">实名：{{ getStudentRealName(item) || '未填写' }}</text>
             </view>
             <view class="card-right">
               <text class="type-tag">{{ item.userTypeLabel || getUserTypeText(item.userType) }}</text>
@@ -74,7 +74,7 @@
 <script>
 import { listStudents } from '@/pages/mine/admin/_api/system/student'
 import { requireAdminAccess } from '../access'
-import { createInitialListState, getUserTypeText } from './helpers'
+import { createInitialListState, getStudentDisplayName, getStudentRealName, getUserTypeText } from './helpers'
 
 const PAGE_SIZE = 10
 
@@ -105,6 +105,8 @@ export default {
   },
   methods: {
     getUserTypeText,
+    getStudentDisplayName,
+    getStudentRealName,
     async loadList(reset = false) {
       if (this.loading) {
         return

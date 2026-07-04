@@ -150,6 +150,7 @@
 import { getCourse, getCourseEnrollment } from '@/api/wxmini/growup'
 import { getWxUserProfileDetail } from '@/api/wxmini/profile'
 import { createCoursePayOrder, queryCoursePayOrder } from '@/api/wxmini/coursePay'
+import { requestWxPayment } from '@/utils/wxPayment'
 import {
 	buildCourseEnrollmentText,
 	buildCourseTimeText,
@@ -270,7 +271,7 @@ export default {
 					enrollmentId: this.requiresEnrollment && this.courseEnrollment ? this.courseEnrollment.id : undefined,
 				}
 				const result = await createCoursePayOrder(data)
-				await this.requestWxPayment(result.payParam)
+				await requestWxPayment(result.payParam)
 				await this.confirmPaidAndNavigate(result.orderNo)
 			} catch(e) {
 				const msg = (e && (e.msg || e.errMsg || e.message)) || '报名支付未完成'
@@ -278,20 +279,6 @@ export default {
 			} finally {
 				this.submitting = false
 			}
-		},
-		requestWxPayment(payParam = {}) {
-			if (!payParam.timeStamp || !payParam.nonceStr || !(payParam.packageValue || payParam.package) || !payParam.paySign) {
-				throw new Error('支付参数不完整')
-			}
-			return uni.requestPayment({
-				provider: 'wxpay',
-				appId: payParam.appId || payParam.appid,
-				timeStamp: payParam.timeStamp,
-				nonceStr: payParam.nonceStr,
-				package: payParam.packageValue || payParam.package,
-				signType: payParam.signType || 'RSA',
-				paySign: payParam.paySign
-			})
 		},
 		async confirmPaidAndNavigate(orderNo) {
 			for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {

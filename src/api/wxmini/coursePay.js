@@ -28,6 +28,11 @@ function normalizeCourseOrder(item = {}) {
     orderNo: source.orderNo || source.outTradeNo || '',
     courseId: source.courseId ?? source.lectureId ?? '',
     courseName: source.courseName || source.name || source.title || '',
+    courseTime: source.courseTime || source.time || source.lectureTime || '',
+    courseEndDate: source.courseEndDate || source.endDate || '',
+    courseLocation: source.courseLocation || source.location || source.lectureLocation || '',
+    courseCover: source.courseCover || source.coverUrl || source.lectureCover || '',
+    courseCoverId: source.courseCoverId ?? source.coverId ?? '',
     amount: source.amount ?? source.registrationFee ?? source.registration_fee ?? 0,
     status: Number(source.status),
     payParam: normalizePayParam(source.payParam || source.paymentParam || {})
@@ -56,6 +61,13 @@ export function queryCoursePayOrder(orderNo) {
   return request({
     url: `/wxmini/pay/courses/orders/${orderNo}`,
     method: 'get'
+  }).then(res => normalizeCourseOrder(unwrapData(res)))
+}
+
+export function cancelCoursePayOrder(orderNo) {
+  return request({
+    url: `/wxmini/pay/courses/orders/${orderNo}/cancel`,
+    method: 'post'
   }).then(res => normalizeCourseOrder(unwrapData(res)))
 }
 

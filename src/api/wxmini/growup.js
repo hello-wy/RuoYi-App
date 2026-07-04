@@ -59,6 +59,10 @@ function normalizeMaterialListResponse(res = {}) {
     }
 }
 
+function normalizeReview(res = {}) {
+    return res.data ?? null
+}
+
 //获得最近所有课程
 export function listCourse(query) {
     return request({
@@ -97,6 +101,23 @@ export function enrollCourse(id, data) {
         method: 'post',
         data
     })
+}
+
+export function getMyCourseReview(courseId, orderNo) {
+    return request({
+        url: `/wxmini/growup/courses/${courseId}/reviews/my`,
+        method: 'get',
+        params: { orderNo },
+        showError: false
+    }).then(normalizeReview)
+}
+
+export function saveMyCourseReview(courseId, data) {
+    return request({
+        url: `/wxmini/growup/courses/${courseId}/reviews/my`,
+        method: 'post',
+        data
+    }).then(normalizeReview)
 }
 
 export function getEnrollmentsList() {

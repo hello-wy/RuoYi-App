@@ -1,3 +1,5 @@
+const PASSWORD_ILLEGAL_PATTERN = /[<>"'\\|]/
+
 export function buildEmptySystemUserForm() {
   return {
     userId: undefined,
@@ -32,6 +34,22 @@ export function buildSystemUserPayload(form = {}) {
   return payloadWithoutPassword
 }
 
+export function validateSystemUserPassword(rawPassword, required = true) {
+  const password = String(rawPassword || '').trim()
+  if (!password) {
+    return required
+      ? { valid: false, message: '请输入登录密码' }
+      : { valid: true, message: '' }
+  }
+  if (password.length < 5 || password.length > 20) {
+    return { valid: false, message: '密码长度必须在5到20个字符之间' }
+  }
+  if (PASSWORD_ILLEGAL_PATTERN.test(password)) {
+    return { valid: false, message: '密码不能包含非法字符：< > " \' \\ |' }
+  }
+  return { valid: true, message: '' }
+}
+
 export function validateSystemUserForm(form = {}) {
   const phonenumber = String(form.phonenumber || '').trim()
   const nickName = String(form.nickName || '').trim()
@@ -46,8 +64,5 @@ export function validateSystemUserForm(form = {}) {
   if (!form.adminLevel) {
     return { valid: false, message: '请选择管理员层级' }
   }
-  if (!form.userId && !rawPassword) {
-    return { valid: false, message: '请输入登录密码' }
-  }
-  return { valid: true, message: '' }
+  return validateSystemUserPassword(rawPassword, !form.userId)
 }

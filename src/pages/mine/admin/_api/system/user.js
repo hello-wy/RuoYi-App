@@ -43,6 +43,15 @@ export function updateSystemUser(data) {
   })
 }
 
+export function resetSystemUserPassword(userId, password) {
+  return request({
+    url: '/system/user/resetPwd',
+    adminAuth: true,
+    method: 'put',
+    data: { userId, password }
+  })
+}
+
 export function deleteSystemUser(userId) {
   return request({
     url: `/system/user/${userId}`,
