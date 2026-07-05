@@ -18,7 +18,10 @@
 			:src="banners[0].imageSrc"
 			:alt="banners[0].alt"
 			mode="widthFix"
+			@click="openLoginPopup"
 		></image>
+
+		<LoginPopup :auto-open="shouldAutoOpenLogin" @close="handleLoginPopupClose" />
 
 		<!-- 服务项目组件 -->
 		<service-grid></service-grid>
@@ -34,6 +37,7 @@
 <script>
 import homebottom from '@/components/HomeBottom/HomeBottom.vue'
 // import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
+import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
 import { listWxminiDept } from '@/api/wxmini/dept'
 import { useLocationStore } from '@/store'
@@ -44,6 +48,7 @@ export default {
 	components: {
 		homebottom,
 		// CategoryQuickSearch,
+		LoginPopup,
 		ServiceGrid
 	},
 	data() {
@@ -52,7 +57,8 @@ export default {
 			cityIndex: 0,
 			range: [{ text: '南京市', value: undefined }],
 			citys: [],
-			selectedCityText: '南京市'
+			selectedCityText: '南京市',
+			shouldAutoOpenLogin: false
 		}
 	},
 	computed: {
@@ -99,6 +105,14 @@ export default {
 			})
 
 			await this.getAreas()
+		},
+
+		openLoginPopup() {
+			this.shouldAutoOpenLogin = true
+		},
+
+		handleLoginPopupClose() {
+			this.shouldAutoOpenLogin = false
 		},
 
 		// changeCity(e) {

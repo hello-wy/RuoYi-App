@@ -18,7 +18,7 @@
 
     saveInviteCodeFromOptions(options)
 
-    initApp()
+    initApp(options)
     bindPendingInviteCodeIfLoggedIn()
     const cityNode = await findCityNodeByName('南京市')
     if (cityNode) {
@@ -77,21 +77,26 @@
   }
 
   // 初始化应用
-  function initApp() {
+  function initApp(options) {
     // 初始化应用配置
     initConfig()
     // 检查用户登录状态
-    checkLogin()
+    checkLogin(options)
   }
 
   function initConfig() {
     useConfigStore().setConfig(config)
   }
 
-  function checkLogin() {
-    if (!getToken()) {
-      uni.reLaunch({ url: '/pages/mine/index' })
+  function checkLogin(options) {
+    if (getToken() || isShareLandingPage(options?.path)) {
+      return
     }
+    uni.reLaunch({ url: '/pages/mine/index' })
+  }
+
+  function isShareLandingPage(path) {
+    return ['pages/growup/detail', 'pages/salon/detail'].includes(path)
   }
 </script>
 

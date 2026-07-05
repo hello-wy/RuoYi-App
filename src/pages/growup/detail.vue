@@ -228,6 +228,7 @@
 <script>
 import config from '@/config'
 import { getCourse, getMyCourseReview, saveMyCourseReview } from '@/api/wxmini/growup'
+import { getMyReferralCode } from '@/api/wxmini/referral'
 import {
 	buildLectureImageUrl,
 	formatLectureImageVersion,
@@ -265,6 +266,7 @@ export default {
 			reviewLoaded: false,
 			reviewLoading: false,
 			reviewSaving: false,
+			inviteCode: '',
 		}
 	},
 	computed: {
@@ -331,19 +333,36 @@ export default {
 		this.id = options.id || ''
 		this.orderNo = options.orderNo ? decodeURIComponent(options.orderNo) : ''
 		this.loadDetail()
+		this.loadInviteCode()
 	},
 	onShareAppMessage() {
 		const title = this.detail?.name || '课程详情'
 		const imageUrl = this.topCoverUrl || this.detail?.coverUrl || ''
-		const path = `/pages/growup/detail?id=${this.id}&type=${this.type}`
+		const path = this.buildSharePath()
 		return { title, imageUrl, path }
 	},
 	onShareTimeline() {
 		const title = this.detail?.name || '课程详情'
 		const imageUrl = this.topCoverUrl || this.detail?.coverUrl || ''
-		return { title, imageUrl }
+		return { title, imageUrl, query: this.buildShareQuery() }
 	},
 	methods: {
+		async loadInviteCode() {
+			try {
+				const res = await getMyReferralCode()
+				this.inviteCode = res?.data?.inviteCode || ''
+			} catch (e) {
+				this.inviteCode = ''
+			}
+		},
+		buildShareQuery() {
+			const query = `id=${encodeURIComponent(this.id)}&type=${encodeURIComponent(this.type)}`
+			if (!this.inviteCode) return query
+			return `${query}&inviteCode=${encodeURIComponent(this.inviteCode)}`
+		},
+		buildSharePath() {
+			return `/pages/growup/detail?${this.buildShareQuery()}`
+		},
 		formatImageVersion(updateDate) {
 			return formatLectureImageVersion(updateDate)
 		},

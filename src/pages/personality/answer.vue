@@ -106,10 +106,9 @@ export default {
         this.loading = false
       }
     },
-    async handleSelect(option) {
+    handleSelect(option) {
       if (this.submitting || !this.question) return
       this.selectedValue = option.value
-      await this.submitSelectedAnswer()
     },
     async goPreviousQuestion() {
       await this.loadQuestionByNo(Number(this.question.questionNo) - 1)

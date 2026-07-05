@@ -3,13 +3,14 @@
   "type": "module",
   "version": "1.2.0",
   "private": true,
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "unh dev",
     "build": "unh build",
     "dev:mp-weixin": "unh dev mp-weixin",
     "build:mp-weixin": "unh build mp-weixin",
     "check:mp-weixin": "test -f dist/build/mp-weixin/project.config.json && test -f dist/build/mp-weixin/app.json",
-    "ci:mp-weixin": "npm run build:mp-weixin && npm run check:mp-weixin",
+    "ci:mp-weixin": "pnpm run build:mp-weixin && pnpm run check:mp-weixin",
     "test": "vitest run",
     "test:update-manager": "vitest run src/utils/update-manager.test.js",
     "upload:mp-weixin": "node conf/upload.cjs"

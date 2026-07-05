@@ -101,6 +101,7 @@
 <script>
 import { getInfo } from '@/pages/salon/_api/system/info'
 import { createSalonPayOrder, querySalonPayOrder } from '@/pages/salon/_api/wxmini/salonPay'
+import { getMyReferralCode } from '@/api/wxmini/referral'
 import { useUserStore } from '@/store';
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 
@@ -112,25 +113,43 @@ export default {
 			loading: false,
 			error: false,
 			joining: false,
-			shouldAutoOpenLogin: false
+			shouldAutoOpenLogin: false,
+			inviteCode: ''
 		}
 	},
 	onLoad(options) {
 		this.salonId = options.id || ''
 		this.loadDetail()
+		this.loadInviteCode()
 	},
 	onShareAppMessage() {
 		const title = this.detail?.title || '沙龙活动详情'
 		const imageUrl = this.detail?.coverImg || ''
-		const path = `/pages/salon/detail?id=${this.salonId}`
+		const path = this.buildSharePath()
 		return { title, imageUrl, path }
 	},
 	onShareTimeline() {
 		const title = this.detail?.title || '沙龙活动详情'
 		const imageUrl = this.detail?.coverImg || ''
-		return { title, imageUrl }
+		return { title, imageUrl, query: this.buildShareQuery() }
 	},
 	methods: {
+		async loadInviteCode() {
+			try {
+				const res = await getMyReferralCode()
+				this.inviteCode = res?.data?.inviteCode || ''
+			} catch (e) {
+				this.inviteCode = ''
+			}
+		},
+		buildShareQuery() {
+			const query = `id=${encodeURIComponent(this.salonId)}`
+			if (!this.inviteCode) return query
+			return `${query}&inviteCode=${encodeURIComponent(this.inviteCode)}`
+		},
+		buildSharePath() {
+			return `/pages/salon/detail?${this.buildShareQuery()}`
+		},
 		async loadDetail() {
 			if (!this.salonId) return
 			this.loading = true
