@@ -9,6 +9,7 @@ import { ref } from 'vue'
 export const useLocationStore = defineStore('location', () => {
     // 当前城市 { code, name }
     const city = ref({ code: '', name: '' })
+    const department = ref({ deptId: undefined, deptName: '' })
     // 当前城市下的区县列表，格式适配 uni-data-picker localdata: [{ value, text }]
     const districts = ref([])
 
@@ -49,6 +50,13 @@ export const useLocationStore = defineStore('location', () => {
     }
 
 
+    function setDepartment(dept = {}) {
+        department.value = {
+            deptId: dept.deptId || dept.value,
+            deptName: dept.deptName || dept.text || ''
+        }
+    }
+
     /**
      * 获取当前选中城市
      * @returns {{ code: string, name: string }}
@@ -59,8 +67,10 @@ export const useLocationStore = defineStore('location', () => {
 
     return {
         city,
+        department,
         districts,
         setCity,
+        setDepartment,
         getCity
     }
 })

@@ -1,3 +1,5 @@
+import { getAdminToken } from '@/utils/auth'
+
 export const ADMIN_ROLE = 'admin'
 
 export function hasAdminRole(roles = []) {
@@ -5,7 +7,11 @@ export function hasAdminRole(roles = []) {
 }
 
 export function isAdminUser(token, roles = []) {
-  return Boolean(token) && hasAdminRole(roles)
+  if (!token) return false
+  if (hasAdminRole(roles)) return true
+  if (typeof uni === 'undefined') return false
+  const adminToken = getAdminToken()
+  return adminToken === token
 }
 
 export function shouldEnableRegularMineFeatures(token, roles = []) {

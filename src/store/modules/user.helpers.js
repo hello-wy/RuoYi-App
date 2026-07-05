@@ -6,6 +6,6 @@ export function createAdminSessionSnapshot(token, roles = []) {
   }
   return {
     token,
-    roles
+    roles: ['admin']
   }
 }

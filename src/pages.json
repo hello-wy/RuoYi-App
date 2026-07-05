@@ -398,6 +398,13 @@
           }
         },
         {
+          "path": "department/index",
+          "style": {
+            "navigationBarTitleText": "部门管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
           "path": "tutor-review",
           "style": {
             "navigationBarTitleText": "教员审核",

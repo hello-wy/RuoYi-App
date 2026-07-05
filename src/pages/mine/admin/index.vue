@@ -80,6 +80,13 @@ const actionItems = [
     onClick: handleSystemUser
   },
   {
+    key: 'department',
+    label: '部门管理',
+    icon: 'folder-add-filled',
+    iconColor: '#0d9488',
+    onClick: handleDepartmentManagement
+  },
+  {
     key: 'tutor-review',
     label: '教员审核',
     icon: 'checkbox-filled',
@@ -174,6 +181,10 @@ const actionItems = [
 
 function handleSystemUser() {
   proxy.$tab.navigateTo('/pages/mine/admin/system-user/index')
+}
+
+function handleDepartmentManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/department/index')
 }
 
 function handleTutorReview() {

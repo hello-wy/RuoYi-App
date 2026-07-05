@@ -8,6 +8,7 @@ export function buildEmptySystemUserForm() {
     nickName: '',
     rawPassword: '',
     adminLevel: 'employee',
+    deptId: undefined,
     status: '0',
     remark: '',
     roleIds: [],
@@ -63,6 +64,9 @@ export function validateSystemUserForm(form = {}) {
   }
   if (!form.adminLevel) {
     return { valid: false, message: '请选择管理员层级' }
+  }
+  if (!form.deptId) {
+    return { valid: false, message: '请选择部门' }
   }
   return validateSystemUserPassword(rawPassword, !form.userId)
 }

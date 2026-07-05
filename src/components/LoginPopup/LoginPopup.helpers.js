@@ -22,6 +22,7 @@ export function createLoginForm({ isDev, initialLoginForm = {} } = {}) {
 }
 
 export function resolveLoginSuccessUrl({
+  mode = '',
   payload = null,
   token = '',
   roles = [],
@@ -30,7 +31,7 @@ export function resolveLoginSuccessUrl({
   guideUrl = '/pages/guide/index',
   adminUrl = '/pages/mine/admin/index'
 } = {}) {
-  if (isAdminUser(token, roles)) {
+  if (mode === 'account' || isAdminUser(token, roles)) {
     return adminUrl
   }
 

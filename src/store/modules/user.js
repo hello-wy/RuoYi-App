@@ -213,6 +213,10 @@ export const useUserStore = defineStore('user', () => {
       login(username, password, code, uuid).then(res => {
         setToken(res.token)
         SET_TOKEN(res.token)
+        SET_ROLES(['admin'])
+        SET_PERMISSIONS([])
+        SET_USER_TYPE('')
+        syncAdminSession()
         resolve()
       }).catch(error => {
         reject(error)

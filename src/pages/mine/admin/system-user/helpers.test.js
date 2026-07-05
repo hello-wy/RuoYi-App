@@ -16,13 +16,15 @@ describe('system user helpers', () => {
       phonenumber: ' 13800000000 ',
       rawPassword: ' Admin123 ',
       nickName: '张三',
-      adminLevel: 'employee'
+      adminLevel: 'employee',
+      deptId: 201
     })).toEqual({
       phonenumber: '13800000000',
       rawPassword: 'Admin123',
       userName: '13800000000',
       nickName: '张三',
-      adminLevel: 'employee'
+      adminLevel: 'employee',
+      deptId: 201
     })
   })
 
@@ -32,14 +34,25 @@ describe('system user helpers', () => {
       phonenumber: '13800000000',
       rawPassword: '',
       nickName: '张三',
-      adminLevel: 'employee'
+      adminLevel: 'employee',
+      deptId: 201
     })).toEqual({
       userId: 1,
       phonenumber: '13800000000',
       userName: '13800000000',
       nickName: '张三',
-      adminLevel: 'employee'
+      adminLevel: 'employee',
+      deptId: 201
     })
+  })
+
+  test('requires department when creating a user', () => {
+    expect(validateSystemUserForm({
+      phonenumber: '13800000000',
+      nickName: '张三',
+      adminLevel: 'employee',
+      rawPassword: 'Admin123'
+    })).toEqual({ valid: false, message: '请选择部门' })
   })
 
   test('requires raw password when creating a user', () => {
@@ -47,6 +60,7 @@ describe('system user helpers', () => {
       phonenumber: '13800000000',
       nickName: '张三',
       adminLevel: 'employee',
+      deptId: 201,
       rawPassword: ''
     })).toEqual({ valid: false, message: '请输入登录密码' })
   })
@@ -57,6 +71,7 @@ describe('system user helpers', () => {
       phonenumber: '13800000000',
       nickName: '张三',
       adminLevel: 'employee',
+      deptId: 201,
       rawPassword: ''
     })).toEqual({ valid: true, message: '' })
   })
@@ -66,6 +81,7 @@ describe('system user helpers', () => {
       phonenumber: '13800000000',
       nickName: '张三',
       adminLevel: 'employee',
+      deptId: 201,
       rawPassword: '1234'
     })).toEqual({ valid: false, message: '密码长度必须在5到20个字符之间' })
   })
@@ -83,6 +99,7 @@ describe('system user helpers', () => {
       phonenumber: '13800000000',
       nickName: '张三',
       adminLevel: 'employee',
+      deptId: 201,
       rawPassword: 'Admin|123'
     })).toEqual({ valid: false, message: '密码不能包含非法字符：< > " \' \\ |' })
   })

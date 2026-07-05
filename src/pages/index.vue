@@ -35,6 +35,7 @@
 import homebottom from '@/components/HomeBottom/HomeBottom.vue'
 // import CategoryQuickSearch from '@/components/CategoryQuickSearch/CategoryQuickSearch.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
+import { listWxminiDept } from '@/api/wxmini/dept'
 import { useLocationStore } from '@/store'
 import { findCityNodeByName } from '@/utils/pca'
 import { HOME_BANNER_ITEMS } from './home-banner'
@@ -49,7 +50,7 @@ export default {
 		return {
 			banners: HOME_BANNER_ITEMS,
 			cityIndex: 0,
-			range: [{ text: '南京市', value: '3201' }],
+			range: [{ text: '南京市', value: undefined }],
 			citys: [],
 			selectedCityText: '南京市'
 		}
@@ -58,9 +59,29 @@ export default {
 
 	},
 	async mounted() {
+		await this.loadDepartments()
 		await this.getAreas()
 	},
 	methods: {
+		async loadDepartments() {
+			try {
+				const res = await listWxminiDept({ deptName: '南京市' })
+				const rows = Array.isArray(res?.data) ? res.data : []
+				if (rows.length > 0) {
+					this.range = rows.map(item => ({ text: item.deptName, value: item.deptId }))
+				}
+				const nanjingIndex = this.range.findIndex(item => item.text === '南京市')
+				this.cityIndex = nanjingIndex >= 0 ? nanjingIndex : 0
+				this.selectedCityText = this.range[this.cityIndex]?.text || '南京市'
+				useLocationStore().setDepartment({
+					deptId: this.range[this.cityIndex]?.value,
+					deptName: this.selectedCityText
+				})
+			} catch (error) {
+				console.error('加载部门失败', error)
+			}
+		},
+
 		async getAreas() {
 			const cityNode = await findCityNodeByName(this.selectedCityText)
 
@@ -72,6 +93,10 @@ export default {
 		async change(e) {
 			this.cityIndex = e.detail.value
 			this.selectedCityText = this.range[this.cityIndex].text
+			useLocationStore().setDepartment({
+				deptId: this.range[this.cityIndex]?.value,
+				deptName: this.selectedCityText
+			})
 
 			await this.getAreas()
 		},

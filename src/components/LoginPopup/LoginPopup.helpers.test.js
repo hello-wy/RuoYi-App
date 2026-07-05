@@ -48,12 +48,14 @@ describe('LoginPopup helpers', () => {
     })).toBe('')
   })
 
-  test('routes account login without identity to guide after profile loads', () => {
+  test('routes system account login directly to admin backend without identity', () => {
     expect(resolveLoginSuccessUrl({
       mode: 'account',
+      token: 'system-token',
+      roles: ['admin'],
       userType: '',
       fallbackUrl: '/pages/index'
-    })).toBe('/pages/guide/index')
+    })).toBe('/pages/mine/admin/index')
   })
 
   test('routes admin account login directly to admin backend without identity', () => {

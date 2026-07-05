@@ -118,6 +118,12 @@
           </picker>
         </view>
         <view class="form-item">
+          <text class="form-label">部门</text>
+          <picker :range="deptOptions" range-key="text" :value="selectedDeptIndex" @change="handleDeptChange">
+            <view class="picker-input">{{ selectedDeptLabel }}</view>
+          </picker>
+        </view>
+        <view class="form-item">
           <text class="form-label">状态</text>
           <picker :range="statusOptions" range-key="label" :value="selectedStatusIndex" @change="handleStatusChange">
             <view class="picker-input">{{ selectedStatusLabel }}</view>
@@ -165,6 +171,7 @@ import {
   buildSystemUserPayload,
   validateSystemUserForm
 } from '@/pages/mine/admin/system-user/helpers'
+import { listDept, normalizeDeptOptions } from '@/pages/mine/admin/_api/system/dept'
 import {
   ADMIN_LEVEL_OPTIONS,
   addSystemUser,
@@ -187,6 +194,7 @@ const formVisible = ref(false)
 const credentialVisible = ref(false)
 const credentialTitle = ref('创建成功')
 const credentialText = ref('')
+const deptOptions = ref([])
 const adminLevels = ADMIN_LEVEL_OPTIONS
 const statusOptions = [
   { label: '启用', value: '0' },
@@ -203,6 +211,8 @@ const form = ref(buildEmptyForm())
 const hasNextPage = computed(() => query.value.pageNum * query.value.pageSize < total.value)
 const selectedLevelIndex = computed(() => Math.max(0, adminLevels.findIndex(item => item.value === form.value.adminLevel)))
 const selectedLevelLabel = computed(() => getAdminLevelLabel(form.value.adminLevel))
+const selectedDeptIndex = computed(() => Math.max(0, deptOptions.value.findIndex(item => String(item.value) === String(form.value.deptId))))
+const selectedDeptLabel = computed(() => deptOptions.value[selectedDeptIndex.value]?.text || '请选择部门')
 const selectedStatusIndex = computed(() => Math.max(0, statusOptions.findIndex(item => item.value === form.value.status)))
 const selectedStatusLabel = computed(() => statusOptions[selectedStatusIndex.value]?.label || '启用')
 
@@ -218,6 +228,17 @@ function buildListQuery() {
     userName: keyword || undefined,
     phonenumber: keyword || undefined,
     adminLevel: query.value.adminLevel || undefined
+  }
+}
+
+async function loadDepartments() {
+  if (!requireAdminAccess(proxy)) return
+  try {
+    const res = await listDept({ status: '0' })
+    deptOptions.value = normalizeDeptOptions(res?.data || [])
+  } catch (error) {
+    deptOptions.value = []
+    proxy.$modal.msgError(error?.msg || '加载部门失败')
   }
 }
 
@@ -261,7 +282,10 @@ function changePage(delta) {
 }
 
 function openCreateForm() {
-  form.value = buildEmptyForm()
+  form.value = {
+    ...buildEmptyForm(),
+    deptId: deptOptions.value[0]?.value
+  }
   formVisible.value = true
 }
 
@@ -285,6 +309,11 @@ function closeForm() {
 function handleLevelChange(event) {
   const index = Number(event.detail.value || 0)
   form.value.adminLevel = adminLevels[index]?.value || 'employee'
+}
+
+function handleDeptChange(event) {
+  const index = Number(event.detail.value || 0)
+  form.value.deptId = deptOptions.value[index]?.value
 }
 
 function handleStatusChange(event) {
@@ -338,7 +367,7 @@ async function submitForm() {
     formVisible.value = false
     await loadUsers()
   } catch (error) {
-    proxy.$modal.msgError(error?.msg || '保存失败')
+    proxy.$modal.alert(error?.msg || '保存失败', '保存失败')
   } finally {
     saving.value = false
   }
@@ -389,8 +418,13 @@ function copyCredential() {
   })
 }
 
-onLoad(loadUsers)
-onShow(loadUsers)
+async function initPage() {
+  await loadDepartments()
+  await loadUsers()
+}
+
+onLoad(initPage)
+onShow(initPage)
 </script>
 
 <style lang="scss" scoped>
