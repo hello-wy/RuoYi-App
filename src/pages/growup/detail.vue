@@ -229,6 +229,7 @@
 import config from '@/config'
 import { getCourse, getMyCourseReview, saveMyCourseReview } from '@/api/wxmini/growup'
 import { getMyReferralCode } from '@/api/wxmini/referral'
+import { getToken } from '@/utils/auth'
 import {
 	buildLectureImageUrl,
 	formatLectureImageVersion,
@@ -348,6 +349,10 @@ export default {
 	},
 	methods: {
 		async loadInviteCode() {
+			if (!getToken()) {
+				this.inviteCode = ''
+				return
+			}
 			try {
 				const res = await getMyReferralCode()
 				this.inviteCode = res?.data?.inviteCode || ''

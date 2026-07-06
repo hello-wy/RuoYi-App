@@ -102,6 +102,7 @@
 import { getInfo } from '@/pages/salon/_api/system/info'
 import { createSalonPayOrder, querySalonPayOrder } from '@/pages/salon/_api/wxmini/salonPay'
 import { getMyReferralCode } from '@/api/wxmini/referral'
+import { getToken } from '@/utils/auth'
 import { useUserStore } from '@/store';
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 
@@ -135,6 +136,10 @@ export default {
 	},
 	methods: {
 		async loadInviteCode() {
+			if (!getToken()) {
+				this.inviteCode = ''
+				return
+			}
 			try {
 				const res = await getMyReferralCode()
 				this.inviteCode = res?.data?.inviteCode || ''

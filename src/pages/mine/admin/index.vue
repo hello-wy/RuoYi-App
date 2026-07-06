@@ -158,10 +158,10 @@ const actionItems = [
   },
   {
     key: 'profit-survey',
-    label: '盈利问卷提醒',
+    label: '问卷管理',
     icon: 'notification-filled',
     iconColor: '#10b981',
-    onClick: handleUnreadyFeature
+    onClick: handleSurveyManagement
   },
   {
     key: 'refund',
@@ -213,6 +213,10 @@ function handleUnassignedStudents() {
 
 function handlePersonalityTest() {
   proxy.$tab.navigateTo('/pages/mine/admin/personality-test/index')
+}
+
+function handleSurveyManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/survey/index')
 }
 
 function handleTutoringBindings() {

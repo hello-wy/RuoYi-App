@@ -228,27 +228,36 @@
 					</view> -->
 				</view>
 
-				<view v-if="surveys.length === 0" class="empty-card">
+				<view v-if="!isLoggedIn" class="empty-card survey-login-card" @click="shouldAutoOpenLogin = true">
+					<uni-icons type="person" size="28" color="#cbd5e1"></uni-icons>
+					<text class="empty-text">登录后查看问卷活动</text>
+				</view>
+
+				<view v-else-if="!hasSurveyGroups && !surveysLoading" class="empty-card">
 					<text class="empty-text">暂无问卷</text>
 				</view>
 
-				<view
-					v-for="survey in surveys"
-					:key="survey.id"
-					class="survey-card"
-					@click="navTo('/pages/common/webview/index?url=' + survey.url)"
-				>
-					<view class="survey-icon-wrap">
-						<uni-icons type="list" size="20" color="#EF4444"></uni-icons>
+				<view v-for="group in surveyGroups" :key="group.courseId" class="survey-course-group">
+					<text class="survey-course-name">{{ group.courseName }}</text>
+					<view
+						v-for="survey in group.assignments"
+						:key="survey.assignmentId"
+						class="survey-card"
+						:class="{ submitted: survey.submitted }"
+						@click="handleSurveyClick(survey)"
+					>
+						<view class="survey-icon-wrap">
+							<uni-icons type="list" size="20" color="#EF4444"></uni-icons>
+						</view>
+						<view class="survey-info">
+							<text class="survey-name">{{ survey.title }}</text>
+							<text v-if="survey.assignedAt" class="survey-deadline">发放：{{ formatDateOnly(survey.assignedAt) }}</text>
+						</view>
+						<view class="survey-action">
+							<text class="survey-action-text" :class="{ submitted: survey.submitted }">{{ survey.submitted ? '已提交' : '去填写' }}</text>
+							<uni-icons v-if="!survey.submitted" type="right" size="13" color="#3B82F6"></uni-icons>
+						</view>
 					</view>
-					<!-- <view class="survey-info"> -->
-						<text class="survey-name">{{ survey.topic }}</text>
-						<!-- <text class="survey-deadline">截止：{{ survey.deadline }}</text> -->
-					<!-- </view> -->
-					<!-- <view class="survey-action">
-						<text class="survey-action-text">{{ survey.answered ? '已完成' : '去填写' }}</text>
-						<uni-icons type="right" size="13" :color="survey.answered ? '#94a3b8' : '#3B82F6'"></uni-icons>
-					</view> -->
 				</view>
 			</view>
 		</scroll-view>
@@ -262,6 +271,7 @@ import {
 	listCourse
 } from '@/api/wxmini/growup'
 import { getPaidCourseOrder, scanCourseSignIn } from '@/api/wxmini/coursePay'
+import { listSurveyAssignments } from '@/api/wxmini/survey'
 import { useUserStore } from '@/store'
 import { isAdminUser } from '@/utils/admin'
 import { getToken } from '@/utils/auth'
@@ -292,7 +302,9 @@ export default {
 			allCourses: [],
 			allCoursesExpanded: false,
 			salons: [],
-			surveys: [],
+			surveyGroups: [],
+			surveysLoading: false,
+			hasLoadedSurveys: false,
 			coverLoadFailed: {},
 			locationMultilineMap: {},
 			banners: [],
@@ -302,15 +314,29 @@ export default {
 	onLoad() {
 		this.loadAll()
 	},
+	onShow() {
+		if (this.hasLoadedSurveys) {
+			this.loadSurveys()
+		}
+	},
 	computed: {
 		showAllCoursesMore() {
 			return this.allCourses.length > 3
 		},
 		displayedCourses() {
 			return this.allCoursesExpanded ? this.allCourses : this.allCourses.slice(0, 3)
+		},
+		isLoggedIn() {
+			return !!useUserStore().token
+		},
+		hasSurveyGroups() {
+			return this.surveyGroups.some(group => group.assignments && group.assignments.length)
 		}
 	},
 	methods: {
+		formatDateOnly(value) {
+			return String(value || '').slice(0, 10)
+		},
 		parseCourseTimestamp(value) {
 			if (!value) return NaN
 			if (value instanceof Date) return value.getTime()
@@ -413,7 +439,7 @@ export default {
 			})
 		},
 		async loadAll() {
-			await this.loadRecentCourses()
+			await Promise.all([this.loadRecentCourses(), this.loadSurveys()])
 		},
 		async loadRecentCourses() {
 			this.coursesLoading = true
@@ -424,7 +450,6 @@ export default {
 				this.allCourses = upcomingCourses
 				this.allCoursesExpanded = false
 				this.featuredCourse = upcomingCourses[0] || null
-				this.surveys = this.featuredCourse?.questionnaire || []
 				await this.prefetchBannerAndCourseCovers(upcomingCourses)
 				this.$nextTick(() => {
 					this.updateLocationAlignment()
@@ -433,12 +458,35 @@ export default {
 				this.featuredCourse = null
 				this.allCourses = []
 				this.allCoursesExpanded = false
-				this.surveys = []
 				this.banners = this.buildBannerItems([])
 				this.locationMultilineMap = {}
 			} finally {
 				this.coursesLoading = false
 			}
+		},
+		async loadSurveys() {
+			this.hasLoadedSurveys = true
+			if (!this.isLoggedIn) {
+				this.surveyGroups = []
+				this.surveysLoading = false
+				return
+			}
+			this.surveysLoading = true
+			try {
+				const groups = await listSurveyAssignments()
+				this.surveyGroups = groups.filter(group => group.assignments && group.assignments.length)
+			} catch (e) {
+				this.surveyGroups = []
+			} finally {
+				this.surveysLoading = false
+			}
+		},
+		handleSurveyClick(survey) {
+			if (survey.submitted) {
+				uni.showToast({ title: '问卷已提交', icon: 'none' })
+				return
+			}
+			uni.navigateTo({ url: `/pages/growup/survey/answer?assignmentId=${survey.assignmentId}` })
 		},
 		async onRefresh() {
 			this.refreshing = true
@@ -986,6 +1034,22 @@ page {
 }
 
 /* ===== 问卷卡片 ===== */
+.survey-login-card {
+	cursor: pointer;
+}
+
+.survey-course-group {
+	margin-bottom: 14px;
+}
+
+.survey-course-name {
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	color: #64748b;
+	margin: 2px 0 8px;
+}
+
 .survey-card {
 	display: flex;
 	flex-direction: row;
@@ -1010,6 +1074,7 @@ page {
 
 .survey-info {
 	flex: 1;
+	min-width: 0;
 }
 
 .survey-name {
@@ -1025,11 +1090,26 @@ page {
 	color: #94a3b8;
 }
 
+.survey-card.submitted {
+	opacity: 0.72;
+}
+
 .survey-action {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: 2px;
+	flex-shrink: 0;
+}
+
+.survey-action-text {
+	font-size: 12px;
+	font-weight: 600;
+	color: #3B82F6;
+}
+
+.survey-action-text.submitted {
+	color: #94a3b8;
 }
 
 .lecture-action-row {

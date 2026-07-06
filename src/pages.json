@@ -151,6 +151,14 @@
           }
         },
         {
+          "path": "survey/answer",
+          "style": {
+            "navigationBarTitleText": "问卷填写",
+            "navigationBarBackgroundColor": "#ffffff",
+            "navigationBarTextStyle": "black"
+          }
+        },
+        {
           "path": "qrcode/index",
           "style": {
             "navigationBarTitleText": "我的二维码"
@@ -458,6 +466,19 @@
         },
         {
           "path": "personality-test/detail",
+          "style": {
+            "navigationBarTitleText": "答题详情"
+          }
+        },
+        {
+          "path": "survey/index",
+          "style": {
+            "navigationBarTitleText": "问卷管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "survey/detail",
           "style": {
             "navigationBarTitleText": "答题详情"
           }
