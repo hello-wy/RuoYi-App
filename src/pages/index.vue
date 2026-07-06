@@ -40,9 +40,9 @@ import homebottom from '@/components/HomeBottom/HomeBottom.vue'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import ServiceGrid from '@/components/ServiceGrid/ServiceGrid.vue'
 import { listWxminiDept } from '@/api/wxmini/dept'
-import { useLocationStore } from '@/store'
+import { useLocationStore, useUserStore } from '@/store'
 import { findCityNodeByName } from '@/utils/pca'
-import { HOME_BANNER_ITEMS } from './home-banner'
+import { HOME_BANNER_ITEMS, resolveHomeBannerAction } from './home-banner'
 
 export default {
 	components: {
@@ -108,6 +108,11 @@ export default {
 		},
 
 		openLoginPopup() {
+			const action = resolveHomeBannerAction(useUserStore().token)
+			if (action.type === 'mine') {
+				uni.switchTab({ url: '/pages/mine/index' })
+				return
+			}
 			this.shouldAutoOpenLogin = true
 		},
 

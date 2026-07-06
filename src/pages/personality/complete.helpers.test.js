@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildPersonalityResultTables } from './complete.helpers'
+import { buildPersonalityResultTables, normalizePersonalityReportResult } from './complete.helpers'
 
 describe('personality complete helpers', () => {
   test('counts answers by dimension and sorts dimensions by answer count', () => {
@@ -42,5 +42,46 @@ describe('personality complete helpers', () => {
     expect(tables.countRows[1].values[1]).toBe(1)
     expect(tables.countRows[2].values[2]).toBe(1)
     expect(tables.hasRows).toBe(true)
+  })
+
+  test('normalizes report fields defensively', () => {
+    const report = normalizePersonalityReportResult({
+      scores: [{ type: 3, score: 18 }, { dimensionNo: 2, value: 12 }],
+      reports: [
+        {
+          type: 3,
+          name: '成就者',
+          coreSummary: '3号成就者 侧翼3w2｜常态平衡型',
+          coreFear: '害怕失败',
+          coreDesire: '渴望被肯定',
+          intro: '目标清晰，行动力强，能快速推进结果',
+          advantages: '高效、进取、结果感',
+          weaknesses: ['急躁', '怕失败'],
+          stressState: '压力下容易用忙碌证明自己。',
+          relaxState: '放松时更能回到真实需要。',
+          growthAdvice: '把真实感受也列入复盘指标。'
+        }
+      ]
+    })
+
+    expect(report.scores[2]).toEqual({ type: 3, score: 18 })
+    expect(report.reports[0].title).toBe('3号成就者 侧翼3w2｜常态平衡型')
+    expect(report.reports[0].advantages).toEqual(['高效', '进取', '结果感'])
+    expect(report.reports[0].blindSpotTip).toContain('急躁')
+  })
+
+  test('derives fallback report from old answer result when report fields are absent', () => {
+    const report = normalizePersonalityReportResult({
+      answers: [
+        { dimension_no: 8, answer_label: '是' },
+        { dimension_no: 8, answer_label: '不确定' },
+        { dimension_no: 1, answer_label: '是' }
+      ]
+    })
+
+    expect(report.scores[7]).toEqual({ type: 8, score: 2 })
+    expect(report.hasReports).toBe(true)
+    expect(report.reports[0].type).toBe(8)
+    expect(report.reports[0].coreFear).toBeTruthy()
   })
 })

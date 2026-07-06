@@ -82,6 +82,7 @@
 
         <!-- Navigation buttons at the bottom so they don't block the main screenshot area -->
         <view class="bottom-buttons">
+          <button class="report-btn" @click="goReport">性格测试报告</button>
           <button class="share-btn" open-type="share">分享测试</button>
           <button class="home-btn" @click="goHome">返回主页</button>
         </view>
@@ -131,6 +132,13 @@ export default {
         uni.showToast({ title: e?.msg || e?.message || '结果加载失败', icon: 'none' })
         this.result = {}
       }
+    },
+    goReport() {
+      if (!this.attemptId) {
+        uni.showToast({ title: '缺少测试记录', icon: 'none' })
+        return
+      }
+      uni.navigateTo({ url: `/pages/personality/report?attemptId=${this.attemptId}` })
     },
     goHome() {
       uni.switchTab({ url: '/pages/index' })
@@ -291,6 +299,17 @@ page {
   gap: 24rpx;
 }
 
+.report-btn {
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: 46rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 12rpx 28rpx rgba(239, 68, 68, 0.28);
+}
+
 .share-btn {
   background-color: #1890ff;
   color: #ffffff;
@@ -312,6 +331,7 @@ page {
   font-weight: bold;
 }
 
+.report-btn::after,
 .share-btn::after,
 .home-btn::after {
   border: none;

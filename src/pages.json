@@ -131,6 +131,14 @@
           "style": {
             "navigationBarTitleText": "答题完成"
           }
+        },
+        {
+          "path": "report",
+          "style": {
+            "navigationBarTitleText": "性格测试报告",
+            "navigationBarBackgroundColor": "#fff7ed",
+            "navigationBarTextStyle": "black"
+          }
         }
       ]
     },
