@@ -70,6 +70,20 @@ describe('personality complete helpers', () => {
     expect(report.reports[0].blindSpotTip).toContain('急躁')
   })
 
+  test('keeps multiple backend interpretation reports', () => {
+    const report = normalizePersonalityReportResult({
+      reports: [
+        { type: 6, name: '忠诚型', score: 19, level: '极致高', summary: '6号忠诚型', career: '适合风险把控。' },
+        { type: 5, name: '理智型', score: 18, category: '人格低：极致低', summary: '5号理智型', relationship: '需要多表达。' }
+      ]
+    })
+
+    expect(report.reportCount).toBe(2)
+    expect(report.reports.map(item => item.type)).toEqual([6, 5])
+    expect(report.reports[0].level).toBe('极致高')
+    expect(report.reports[1].level).toBe('人格低：极致低')
+  })
+
   test('derives fallback report from old answer result when report fields are absent', () => {
     const report = normalizePersonalityReportResult({
       answers: [

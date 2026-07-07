@@ -95,6 +95,8 @@
 import { getPersonalityResult } from '@/api/wxmini/personalityTest'
 import { buildPersonalityResultTables } from './complete.helpers'
 
+const DEFAULT_ATTEMPT_ID = '9'
+
 export default {
   data() {
     return {
@@ -108,7 +110,7 @@ export default {
     }
   },
   onLoad(options) {
-    this.attemptId = options.attemptId || ''
+    this.attemptId = options.attemptId || DEFAULT_ATTEMPT_ID
     this.loadResult()
   },
   onShareAppMessage() {

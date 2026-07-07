@@ -1,23 +1,19 @@
 <template>
   <view class="report-page">
     <scroll-view class="report-scroll" scroll-y>
-      <view class="hero-card">
-        <view class="eyebrow">性格测试报告</view>
-        <text class="hero-title">九型分数雷达图</text>
-        <view class="radar-wrap">
-          <canvas canvas-id="scoreRadar" id="scoreRadar" class="radar-canvas"></canvas>
-        </view>
-        <view class="score-list">
-          <view v-for="item in report.scores" :key="item.type" class="score-item">
-            <text>{{ item.type }}号</text>
-            <text>{{ item.score }}</text>
-          </view>
-        </view>
+      <view v-if="report.hasReports" class="report-overview">
+        <text class="overview-eyebrow">评估验证报告</text>
+        <text class="overview-title">共生成 {{ report.reportCount }} 项性格解读</text>
+        <text class="overview-desc">以下内容按测评结果分组展示，建议结合完成页截图一起保存。</text>
       </view>
 
       <block v-if="report.hasReports">
-        <view v-for="item in report.reports" :key="item.type" class="report-card">
-          <view class="type-badge">{{ item.type }}号</view>
+        <view v-for="(item, index) in report.reports" :key="`${item.type}-${index}`" class="report-card">
+          <view class="card-heading">
+            <view class="type-badge">{{ item.type }}号</view>
+            <text v-if="item.level" class="level-badge">{{ item.level }}</text>
+            <text v-if="item.score" class="score-badge">{{ item.score }}分</text>
+          </view>
           <text class="core-title">{{ item.title }}</text>
           <text class="intro">{{ item.intro }}</text>
 
@@ -48,19 +44,34 @@
           </view>
 
           <view class="two-columns state-columns">
-            <view class="state-box">
+            <view v-if="item.stressState" class="state-box">
               <text class="column-title">压力状态</text>
               <text class="state-text">{{ item.stressState }}</text>
             </view>
-            <view class="state-box">
+            <view v-if="item.relaxState" class="state-box">
               <text class="column-title">放松状态</text>
               <text class="state-text">{{ item.relaxState }}</text>
             </view>
           </view>
 
           <view class="advice-box">
-            <text class="section-label">简易成长建议</text>
+            <text class="section-label">成长建议</text>
             <text class="advice-text">{{ item.growthAdvice }}</text>
+          </view>
+
+          <view v-if="item.career || item.relationship || item.health" class="report-detail-list">
+            <view v-if="item.career" class="detail-item">
+              <text class="detail-label">事业财富</text>
+              <text class="detail-text">{{ item.career }}</text>
+            </view>
+            <view v-if="item.relationship" class="detail-item">
+              <text class="detail-label">亲密关系</text>
+              <text class="detail-text">{{ item.relationship }}</text>
+            </view>
+            <view v-if="item.health" class="detail-item">
+              <text class="detail-label">身心健康</text>
+              <text class="detail-text">{{ item.health }}</text>
+            </view>
           </view>
 
           <view class="blind-note">盲区提示：{{ item.blindSpotTip }}</view>
@@ -69,10 +80,10 @@
 
       <view v-else class="empty-card">
         <text class="empty-title">报告生成中</text>
-        <text class="empty-text">暂未获取到报告字段，已先展示分数图；稍后可重新进入查看。</text>
+        <text class="empty-text">暂未获取到报告字段，稍后可重新进入查看。</text>
       </view>
 
-      <button class="consult-btn" @click="contactConsultant">想获取完整深度分析，添加专业咨询师微信一对一解读</button>
+      <button class="consult-btn" open-type="contact">添加专业咨询微信，一对一解读完整深度分析</button>
     </scroll-view>
   </view>
 </template>
@@ -92,9 +103,6 @@ export default {
     this.attemptId = options.attemptId || ''
     this.loadReport()
   },
-  onReady() {
-    this.drawRadar()
-  },
   methods: {
     async loadReport() {
       if (!this.attemptId) {
@@ -104,89 +112,10 @@ export default {
       try {
         const result = await getPersonalityResult(this.attemptId)
         this.report = normalizePersonalityReportResult(result || {})
-        this.$nextTick(() => this.drawRadar())
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '报告加载失败', icon: 'none' })
         this.report = normalizePersonalityReportResult({})
-        this.$nextTick(() => this.drawRadar())
       }
-    },
-    drawRadar() {
-      const scores = this.report.scores || []
-      if (!scores.length) return
-
-      const ctx = uni.createCanvasContext('scoreRadar', this)
-      const size = 300
-      const center = size / 2
-      const radius = 104
-      const maxScore = Math.max(...scores.map(item => Number(item.score) || 0), 1)
-      const points = scores.map((item, index) => {
-        const angle = -Math.PI / 2 + index * (Math.PI * 2 / scores.length)
-        const valueRadius = radius * ((Number(item.score) || 0) / maxScore)
-        return {
-          label: `${item.type}`,
-          score: item.score,
-          axisX: center + Math.cos(angle) * radius,
-          axisY: center + Math.sin(angle) * radius,
-          x: center + Math.cos(angle) * valueRadius,
-          y: center + Math.sin(angle) * valueRadius,
-          labelX: center + Math.cos(angle) * (radius + 26),
-          labelY: center + Math.sin(angle) * (radius + 26)
-        }
-      })
-
-      ctx.clearRect(0, 0, size, size)
-      ctx.setFillStyle('#fff7ed')
-      ctx.fillRect(0, 0, size, size)
-
-      for (let level = 1; level <= 4; level += 1) {
-        const levelRadius = radius * level / 4
-        ctx.beginPath()
-        points.forEach((_, index) => {
-          const angle = -Math.PI / 2 + index * (Math.PI * 2 / points.length)
-          const x = center + Math.cos(angle) * levelRadius
-          const y = center + Math.sin(angle) * levelRadius
-          index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-        })
-        ctx.closePath()
-        ctx.setStrokeStyle(level === 4 ? '#fdba74' : '#fed7aa')
-        ctx.stroke()
-      }
-
-      points.forEach(point => {
-        ctx.beginPath()
-        ctx.moveTo(center, center)
-        ctx.lineTo(point.axisX, point.axisY)
-        ctx.setStrokeStyle('#ffedd5')
-        ctx.stroke()
-      })
-
-      ctx.beginPath()
-      points.forEach((point, index) => {
-        index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y)
-      })
-      ctx.closePath()
-      ctx.setFillStyle('rgba(249, 115, 22, 0.24)')
-      ctx.fill()
-      ctx.setStrokeStyle('#f97316')
-      ctx.setLineWidth(2)
-      ctx.stroke()
-
-      points.forEach(point => {
-        ctx.beginPath()
-        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2)
-        ctx.setFillStyle('#ea580c')
-        ctx.fill()
-        ctx.setFillStyle('#7c2d12')
-        ctx.setFontSize(12)
-        ctx.setTextAlign('center')
-        ctx.fillText(`${point.label}号`, point.labelX, point.labelY + 4)
-      })
-
-      ctx.draw()
-    },
-    contactConsultant() {
-      uni.showToast({ title: '请添加专业咨询师微信', icon: 'none' })
     }
   }
 }
@@ -207,7 +136,7 @@ page {
   box-sizing: border-box;
 }
 
-.hero-card,
+.report-overview,
 .report-card,
 .empty-card {
   margin: 28rpx 28rpx 0;
@@ -217,64 +146,67 @@ page {
   box-shadow: 0 16rpx 42rpx rgba(124, 45, 18, 0.08);
 }
 
-.hero-card {
+.report-overview {
   background: linear-gradient(180deg, #fffbeb, #ffffff);
 }
 
-.eyebrow {
+.overview-eyebrow,
+.overview-title,
+.overview-desc {
+  display: block;
+}
+
+.overview-eyebrow {
   color: #ea580c;
   font-size: 24rpx;
   font-weight: 700;
   margin-bottom: 12rpx;
 }
 
-.hero-title {
-  display: block;
+.overview-title {
   color: #1f2937;
   font-size: 40rpx;
   font-weight: 800;
+  line-height: 1.35;
 }
 
-.radar-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 24rpx;
+.overview-desc {
+  margin-top: 12rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.6;
 }
 
-.radar-canvas {
-  width: 600rpx;
-  height: 600rpx;
-  border-radius: 28rpx;
-  overflow: hidden;
-  background: #fff7ed;
-}
-
-.score-list {
+.card-heading {
   display: flex;
   flex-wrap: wrap;
   gap: 12rpx;
-  margin-top: 20rpx;
+  align-items: center;
 }
 
-.score-item {
-  display: flex;
-  justify-content: space-between;
-  width: calc((100% - 24rpx) / 3);
-  padding: 12rpx 16rpx;
-  border-radius: 18rpx;
-  color: #9a3412;
-  background: #ffedd5;
-  font-size: 24rpx;
-}
-
-.type-badge {
+.type-badge,
+.level-badge,
+.score-badge {
   display: inline-block;
   padding: 8rpx 18rpx;
   border-radius: 999rpx;
-  color: #ffffff;
-  background: #f97316;
   font-size: 24rpx;
   font-weight: 700;
+}
+
+.type-badge {
+  color: #ffffff;
+  background: #f97316;
+}
+
+.level-badge {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.score-badge {
+  color: #166534;
+  background: #dcfce7;
 }
 
 .core-title {
@@ -381,6 +313,40 @@ page {
   padding: 24rpx;
   border-radius: 24rpx;
   background: #fff7ed;
+}
+
+.report-detail-list {
+  margin-top: 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.detail-item {
+  padding: 22rpx;
+  border-bottom: 2rpx solid #ffffff;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label,
+.detail-text {
+  display: block;
+}
+
+.detail-label {
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+}
+
+.detail-text {
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 1.55;
 }
 
 .blind-note {

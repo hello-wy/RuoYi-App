@@ -4,6 +4,22 @@ function unwrap(response) {
   return response?.data ?? response
 }
 
+function normalizePersonalityResultResponse(result) {
+  if (!result || typeof result !== 'object') return result
+
+  const reports = resolveReportItems(result)
+  return reports ? { ...result, reports } : result
+}
+
+function resolveReportItems(result) {
+  const reportArrays = [result.reports, result.interpretations, result.reportItems, result.items]
+  const arrayValue = reportArrays.find(Array.isArray)
+  if (arrayValue) return arrayValue
+
+  const reportValue = [result.report, result.interpretation, result.reportItem].find(item => item && typeof item === 'object')
+  return reportValue ? [reportValue] : null
+}
+
 export function getPersonalityEntry() {
   return request({
     url: '/wxmini/personality-test/entry',
@@ -45,7 +61,7 @@ export function getPersonalityResult(attemptId) {
   return request({
     url: `/wxmini/personality-test/attempts/${attemptId}/result`,
     method: 'get'
-  }).then(unwrap)
+  }).then(unwrap).then(normalizePersonalityResultResponse)
 }
 
 export function getPersonalityAttemptCount() {

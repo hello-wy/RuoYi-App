@@ -59,7 +59,8 @@ export function normalizePersonalityReportResult(result = {}) {
   return {
     scores,
     reports,
-    hasReports: reports.length > 0
+    hasReports: reports.length > 0,
+    reportCount: reports.length
   }
 }
 
@@ -131,7 +132,7 @@ function normalizeScores(result) {
 
 function normalizeReports(result, scores) {
   const sourceReports = [result.reports, result.reportItems, result.items].find(items => {
-    return Array.isArray(items) && items.some(item => item && (item.coreSummary || item.core_summary || item.name || item.typeName || item.type_name))
+    return Array.isArray(items) && items.some(item => item && (item.coreSummary || item.core_summary || item.summary || item.name || item.typeName || item.type_name))
   })
 
   if (sourceReports) {
@@ -153,15 +154,20 @@ function normalizeReportItem(report) {
   return {
     type,
     name,
+    level: pickString(report.level, report.category),
+    score: toNumber(report.score),
     title: pickString(report.coreSummary, report.core_summary, report.summary) || `${type}号${name} 常态平衡型`,
     coreFear: pickString(report.coreFear, report.core_fear, report.fear) || fallback.fear,
     coreDesire: pickString(report.coreDesire, report.core_desire, report.desire) || fallback.desire,
     intro: limitText(pickString(report.intro, report.shortIntro, report.short_intro, report.description) || fallback.intro, 50),
-    advantages: toList(report.advantages ?? report.strengths, fallback.advantages).slice(0, 3),
-    weaknesses: weaknesses.slice(0, 3),
+    advantages: toList(report.advantages ?? report.strengths, fallback.advantages).slice(0, 4),
+    weaknesses: weaknesses.slice(0, 4),
     stressState: pickString(report.stressState, report.stress_state, report.stress) || fallback.stress,
-    relaxState: pickString(report.relaxState, report.relax_state, report.relax) || fallback.relax,
+    relaxState: pickString(report.relaxState, report.relax_state, report.relax),
     growthAdvice: pickString(report.growthAdvice, report.growth_advice, report.growth, report.advice) || fallback.advice,
+    career: pickString(report.career, report.careerAdvice, report.career_advice),
+    relationship: pickString(report.relationship, report.relationshipAdvice, report.relationship_advice),
+    health: pickString(report.health, report.healthAdvice, report.health_advice),
     blindSpotTip: pickString(report.blindSpotTip, report.blind_spot_tip) || `留意“${weaknesses[0] || '惯性反应'}”带来的判断盲区。`
   }
 }

@@ -70,7 +70,8 @@ export default {
       loading: true,
       submitting: false,
       selectedValue: null,
-      answeredValues: {}
+      answeredValues: {},
+      autoNextTimer: null
     }
   },
   computed: {
@@ -88,6 +89,9 @@ export default {
   onLoad(options) {
     this.attemptId = options.attemptId || ''
     this.loadQuestion()
+  },
+  onUnload() {
+    this.clearAutoNextTimer()
   },
   methods: {
     async loadQuestion() {
@@ -108,13 +112,19 @@ export default {
     },
     handleSelect(option) {
       if (this.submitting || !this.question) return
+      this.clearAutoNextTimer()
       this.selectedValue = option.value
+      this.autoNextTimer = setTimeout(() => {
+        this.goNextQuestion()
+      }, 1000)
     },
     async goPreviousQuestion() {
+      this.clearAutoNextTimer()
       await this.loadQuestionByNo(Number(this.question.questionNo) - 1)
     },
     async goNextQuestion() {
       if (!this.canGoNext) return
+      this.clearAutoNextTimer()
       await this.submitSelectedAnswer()
     },
     async submitSelectedAnswer() {
@@ -142,6 +152,7 @@ export default {
     },
     async loadQuestionByNo(questionNo) {
       if (!this.canMoveToQuestion(questionNo)) return
+      this.clearAutoNextTimer()
       this.loading = true
       try {
         const res = await getPersonalityQuestion(this.attemptId, questionNo)
@@ -153,11 +164,17 @@ export default {
       }
     },
     applyQuestion(question) {
+      this.clearAutoNextTimer()
       this.question = question || null
       this.selectedValue = this.question ? this.answeredValues[this.question.questionNo] ?? null : null
       if (!this.question) {
         uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
       }
+    },
+    clearAutoNextTimer() {
+      if (!this.autoNextTimer) return
+      clearTimeout(this.autoNextTimer)
+      this.autoNextTimer = null
     },
     canMoveToQuestion(questionNo) {
       const totalQuestions = Number(this.question?.totalQuestions)

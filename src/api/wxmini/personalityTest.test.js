@@ -13,4 +13,15 @@ describe('wxmini personality test api', () => {
       method: 'get'
     })
   })
+
+  test('normalizes old single report result shape centrally', async () => {
+    const request = (await import('@/utils/request')).default
+    request.mockResolvedValueOnce({ data: { report: { type: 6, summary: '6号解读' } } })
+    const { getPersonalityResult } = await import('./personalityTest')
+
+    await expect(getPersonalityResult(12)).resolves.toEqual({
+      report: { type: 6, summary: '6号解读' },
+      reports: [{ type: 6, summary: '6号解读' }]
+    })
+  })
 })
