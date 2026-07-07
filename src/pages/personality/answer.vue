@@ -116,7 +116,7 @@ export default {
       this.selectedValue = option.value
       this.autoNextTimer = setTimeout(() => {
         this.goNextQuestion()
-      }, 1000)
+      }, 250)
     },
     async goPreviousQuestion() {
       this.clearAutoNextTimer()
