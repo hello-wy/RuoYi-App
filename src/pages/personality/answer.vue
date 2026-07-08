@@ -45,7 +45,7 @@
             :disabled="!canGoNext"
             @click="goNextQuestion"
           >
-            下一题
+            {{ nextButtonText }}
           </button>
         </view>
       </view>
@@ -61,6 +61,7 @@
 
 <script>
 import { getCurrentQuestion, getPersonalityQuestion, savePersonalityAnswer } from '@/api/wxmini/personalityTest'
+import { getPersonalityProgress, removePersonalityProgress, setPersonalityProgress } from './progressStorage'
 
 export default {
   data() {
@@ -71,6 +72,11 @@ export default {
       submitting: false,
       selectedValue: null,
       answeredValues: {},
+      questionCache: {},
+      currentQuestionNo: 1,
+      startQuestionNo: 0,
+      totalQuestions: 0,
+      forceFirstQuestion: false,
       autoNextTimer: null
     }
   },
@@ -84,25 +90,62 @@ export default {
     },
     canGoNext() {
       return !this.loading && !this.submitting && !!this.question && this.selectedValue !== null
+    },
+    nextButtonText() {
+      if (!this.question || Number(this.question.questionNo) < Number(this.question.totalQuestions)) return '下一题'
+      return this.submitting ? '提交中...' : '完成'
     }
   },
   onLoad(options) {
     this.attemptId = options.attemptId || ''
+    this.hydrateProgress(options.restart === '1')
     this.loadQuestion()
   },
   onUnload() {
     this.clearAutoNextTimer()
   },
   methods: {
+    hydrateProgress(restart) {
+      this.forceFirstQuestion = restart
+      if (restart) {
+        removePersonalityProgress(this.attemptId)
+        return
+      }
+      const progress = getPersonalityProgress(this.attemptId)
+      if (!progress) return
+      this.answeredValues = progress.answeredValues || {}
+      this.questionCache = progress.questionCache || {}
+      this.currentQuestionNo = progress.currentQuestionNo || 1
+      this.startQuestionNo = progress.startQuestionNo || 0
+      this.totalQuestions = progress.totalQuestions || 0
+    },
+    persistProgress() {
+      setPersonalityProgress(this.attemptId, {
+        answeredValues: this.answeredValues,
+        questionCache: this.questionCache,
+        currentQuestionNo: this.currentQuestionNo,
+        startQuestionNo: this.startQuestionNo,
+        totalQuestions: this.totalQuestions,
+        updatedAt: Date.now()
+      })
+    },
     async loadQuestion() {
       if (!this.attemptId) {
         uni.showToast({ title: '测试记录不存在', icon: 'none' })
         this.loading = false
         return
       }
+      const cachedQuestion = this.questionCache[this.currentQuestionNo]
+      if (cachedQuestion) {
+        this.applyQuestion(cachedQuestion)
+        this.loading = false
+        return
+      }
       this.loading = true
       try {
-        const res = await getCurrentQuestion(this.attemptId)
+        const questionNo = this.forceFirstQuestion || this.currentQuestionNo > 1 ? this.currentQuestionNo : null
+        const res = questionNo ? await getPersonalityQuestion(this.attemptId, questionNo) : await getCurrentQuestion(this.attemptId)
+        this.forceFirstQuestion = false
         this.applyQuestion(res)
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '题目加载失败', icon: 'none' })
@@ -114,9 +157,18 @@ export default {
       if (this.submitting || !this.question) return
       this.clearAutoNextTimer()
       this.selectedValue = option.value
+      this.saveLocalAnswer(option.value)
       this.autoNextTimer = setTimeout(() => {
         this.goNextQuestion()
       }, 150)
+    },
+    saveLocalAnswer(answerValue) {
+      if (!this.question) return
+      this.answeredValues = {
+        ...this.answeredValues,
+        [this.question.questionNo]: answerValue
+      }
+      this.persistProgress()
     },
     async goPreviousQuestion() {
       this.clearAutoNextTimer()
@@ -125,27 +177,35 @@ export default {
     async goNextQuestion() {
       if (!this.canGoNext) return
       this.clearAutoNextTimer()
-      await this.submitSelectedAnswer()
+      this.saveLocalAnswer(this.selectedValue)
+      const currentNo = Number(this.question.questionNo)
+      const total = Number(this.question.totalQuestions)
+      if (currentNo >= total) {
+        await this.submitAllAnswers()
+        return
+      }
+      await this.loadQuestionByNo(currentNo + 1)
     },
-    async submitSelectedAnswer() {
-      if (this.submitting || !this.question || this.selectedValue === null) return
-      const answerValue = this.selectedValue
+    async submitAllAnswers() {
+      if (this.submitting) return
+      if (!this.hasAllAnswers()) {
+        uni.showToast({ title: '请完成所有题目', icon: 'none' })
+        return
+      }
       this.submitting = true
       try {
-        const res = await savePersonalityAnswer(this.attemptId, {
-          questionId: this.question.questionId,
-          answerValue
-        })
-        this.answeredValues[this.question.questionNo] = answerValue
-        const data = res || {}
-        if (data.completed) {
-          uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
-          return
+        const startQuestionNo = this.startQuestionNo || 1
+        for (let questionNo = startQuestionNo; questionNo <= this.totalQuestions; questionNo += 1) {
+          const question = this.questionCache[questionNo]
+          await savePersonalityAnswer(this.attemptId, {
+            questionId: question.questionId,
+            answerValue: this.answeredValues[questionNo]
+          })
         }
-        this.applyQuestion(data.nextQuestion)
+        removePersonalityProgress(this.attemptId)
+        uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '保存失败，请重试', icon: 'none' })
-        this.selectedValue = this.answeredValues[this.question.questionNo] ?? null
       } finally {
         this.submitting = false
       }
@@ -153,6 +213,11 @@ export default {
     async loadQuestionByNo(questionNo) {
       if (!this.canMoveToQuestion(questionNo)) return
       this.clearAutoNextTimer()
+      const cachedQuestion = this.questionCache[questionNo]
+      if (cachedQuestion) {
+        this.applyQuestion(cachedQuestion)
+        return
+      }
       this.loading = true
       try {
         const res = await getPersonalityQuestion(this.attemptId, questionNo)
@@ -166,10 +231,20 @@ export default {
     applyQuestion(question) {
       this.clearAutoNextTimer()
       this.question = question || null
-      this.selectedValue = this.question ? this.answeredValues[this.question.questionNo] ?? null : null
       if (!this.question) {
         uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
+        return
       }
+      const questionNo = Number(this.question.questionNo)
+      this.currentQuestionNo = questionNo
+      this.totalQuestions = Number(this.question.totalQuestions)
+      this.startQuestionNo = this.startQuestionNo || questionNo
+      this.questionCache = {
+        ...this.questionCache,
+        [questionNo]: this.question
+      }
+      this.selectedValue = this.answeredValues[questionNo] ?? null
+      this.persistProgress()
     },
     clearAutoNextTimer() {
       if (!this.autoNextTimer) return
@@ -177,8 +252,16 @@ export default {
       this.autoNextTimer = null
     },
     canMoveToQuestion(questionNo) {
-      const totalQuestions = Number(this.question?.totalQuestions)
-      return !this.loading && !this.submitting && questionNo >= 1 && questionNo <= totalQuestions
+      const totalQuestions = Number(this.question?.totalQuestions || this.totalQuestions)
+      const startQuestionNo = this.startQuestionNo || 1
+      return !this.loading && !this.submitting && questionNo >= startQuestionNo && questionNo <= totalQuestions
+    },
+    hasAllAnswers() {
+      const startQuestionNo = this.startQuestionNo || 1
+      for (let questionNo = startQuestionNo; questionNo <= this.totalQuestions; questionNo += 1) {
+        if (!this.questionCache[questionNo] || this.answeredValues[questionNo] === undefined) return false
+      }
+      return true
     },
     goHome() {
       uni.switchTab({ url: '/pages/index' })

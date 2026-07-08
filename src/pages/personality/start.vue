@@ -14,6 +14,9 @@
         <button class="start-btn" :loading="starting" @click="handleStart">
           {{ buttonText }}
         </button>
+        <button v-if="entry.hasInProgress" class="restart-btn" :disabled="starting" @click="handleRestart">
+          重新开始
+        </button>
         <button class="share-btn" open-type="share">
           <uni-icons type="redo" size="18" color="#ffffff"></uni-icons>
           <text class="share-text">分享测试</text>
@@ -28,6 +31,7 @@
 import { getPersonalityEntry, startPersonalityAttempt } from '@/api/wxmini/personalityTest'
 import { getToken } from '@/utils/auth'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import { removePersonalityProgress } from './progressStorage'
 
 export default {
   components: { LoginPopup },
@@ -79,19 +83,29 @@ export default {
       }
     },
     async handleStart() {
+      await this.openAttempt(false)
+    },
+    async handleRestart() {
+      await this.openAttempt(true)
+    },
+    async openAttempt(restart) {
       if (!getToken()) {
         this.shouldAutoOpenLogin = true
         return
       }
       this.starting = true
       try {
-        const res = await startPersonalityAttempt({ mode: 'continue_or_create' })
+        const res = await startPersonalityAttempt({ mode: restart ? 'restart' : 'continue_or_create' })
         const data = res || {}
         if (!data.attemptId) {
           uni.showToast({ title: '测试暂不可用', icon: 'none' })
           return
         }
-        uni.navigateTo({ url: `/pages/personality/answer?attemptId=${data.attemptId}` })
+        if (restart) {
+          removePersonalityProgress(data.attemptId)
+        }
+        const restartQuery = restart ? '&restart=1' : ''
+        uni.navigateTo({ url: `/pages/personality/answer?attemptId=${data.attemptId}${restartQuery}` })
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '开始失败', icon: 'none' })
       } finally {
@@ -174,6 +188,7 @@ page {
 }
 
 .start-btn,
+.restart-btn,
 .share-btn {
   width: 100%;
   height: 110rpx;
@@ -184,6 +199,16 @@ page {
   font-weight: 800;
   line-height: 110rpx;
   box-shadow: 0 12rpx 34rpx rgba(81, 222, 212, 0.38);
+}
+
+.restart-btn {
+  margin-top: 24rpx;
+  height: 82rpx;
+  line-height: 82rpx;
+  background: rgba(255, 255, 255, 0.94);
+  color: #66d7cd;
+  font-size: 30rpx;
+  box-shadow: 0 10rpx 26rpx rgba(255, 255, 255, 0.2);
 }
 
 .share-btn {
@@ -199,6 +224,7 @@ page {
 }
 
 .share-btn::after,
+.restart-btn::after,
 .start-btn::after {
   border: none;
 }
