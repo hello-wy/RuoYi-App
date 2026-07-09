@@ -1,0 +1,283 @@
+page {
+  background: #fff7ed;
+}
+
+.report-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fff7ed 0%, #ffffff 55%, #fff7ed 100%);
+}
+
+.report-scroll {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.report-content {
+  padding-bottom: calc(64rpx + env(safe-area-inset-bottom));
+}
+
+.report-overview,
+.report-card,
+.empty-card {
+  margin: 28rpx 28rpx 0;
+  padding: 32rpx;
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 16rpx 42rpx rgba(124, 45, 18, 0.08);
+}
+
+.report-overview {
+  background: linear-gradient(180deg, #fffbeb, #ffffff);
+}
+
+.overview-eyebrow,
+.overview-title,
+.overview-desc {
+  display: block;
+}
+
+.overview-eyebrow {
+  color: #ea580c;
+  font-size: 24rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
+.overview-title {
+  color: #1f2937;
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.overview-desc {
+  margin-top: 12rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.type-badge,
+.level-badge,
+.score-badge {
+  display: inline-block;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.type-badge {
+  color: #ffffff;
+  background: #f97316;
+}
+
+.level-badge {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.score-badge {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.core-title {
+  display: block;
+  margin-top: 18rpx;
+  color: #111827;
+  font-size: 42rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.intro {
+  display: block;
+  margin-top: 14rpx;
+  color: #6b7280;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.info-rows {
+  margin-top: 26rpx;
+  border-top: 2rpx solid #f3f4f6;
+}
+
+.info-row {
+  display: flex;
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f3f4f6;
+}
+
+.row-label {
+  flex: 0 0 150rpx;
+  color: #92400e;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.row-value {
+  flex: 1;
+  color: #374151;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.two-columns {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 24rpx;
+}
+
+.column-box,
+.state-box {
+  flex: 1;
+  padding: 22rpx;
+  border-radius: 24rpx;
+  background: #f9fafb;
+}
+
+.column-title,
+.section-label {
+  display: block;
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 800;
+  margin-bottom: 16rpx;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.tag {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+}
+
+.good {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.weak {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.state-columns {
+  align-items: stretch;
+}
+
+.state-text,
+.advice-text {
+  display: block;
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.advice-box {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  background: #fff7ed;
+}
+
+.report-detail-list {
+  margin-top: 24rpx;
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.detail-item {
+  padding: 22rpx;
+  border-bottom: 2rpx solid #ffffff;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label,
+.detail-text {
+  display: block;
+}
+
+.detail-label {
+  color: #111827;
+  font-size: 28rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+}
+
+.detail-text {
+  color: #4b5563;
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.blind-note {
+  margin-top: 20rpx;
+  padding: 18rpx 22rpx;
+  border-radius: 20rpx;
+  color: #6b7280;
+  background: #f3f4f6;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.empty-title,
+.empty-text {
+  display: block;
+  text-align: center;
+}
+
+.empty-title {
+  color: #111827;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.empty-text {
+  margin-top: 14rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.export-btn,
+.consult-btn {
+  margin: 32rpx 28rpx 0;
+  box-sizing: border-box;
+  line-height: 1.35;
+  padding: 22rpx 30rpx;
+  border-radius: 999rpx;
+  color: #ffffff;
+  background: #ef4444;
+  font-size: 30rpx;
+  font-weight: 800;
+  box-shadow: 0 18rpx 36rpx rgba(220, 38, 38, 0.24);
+}
+
+.export-btn {
+  background: #2563eb;
+  box-shadow: 0 18rpx 36rpx rgba(37, 99, 235, 0.24);
+}
+
+.export-btn::after,
+.consult-btn::after {
+  border: none;
+}

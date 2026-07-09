@@ -4,6 +4,10 @@
         {
             "text": "相册（读取你选择的照片用于上传资质图片）",
             "scope": "userAlbum"
+        },
+        {
+            "text": "相册（保存性格测试报告图片到手机相册）",
+            "scope": "writePhotosAlbum"
         }
     ]
 }

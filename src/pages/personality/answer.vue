@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import { getCurrentQuestion, getPersonalityQuestion, savePersonalityAnswer } from '@/api/wxmini/personalityTest'
+import { batchSavePersonalityAnswers, getAttemptQuestions } from '@/api/wxmini/personalityTest'
 import { getPersonalityProgress, removePersonalityProgress, setPersonalityProgress } from './progressStorage'
 
 export default {
@@ -77,7 +77,9 @@ export default {
       startQuestionNo: 0,
       totalQuestions: 0,
       forceFirstQuestion: false,
-      autoNextTimer: null
+      autoNextTimer: null,
+      answerFlushing: false,
+      answerDirty: false
     }
   },
   computed: {
@@ -101,8 +103,12 @@ export default {
     this.hydrateProgress(options.restart === '1')
     this.loadQuestion()
   },
+  onHide() {
+    this.flushAnswersBeforeExit()
+  },
   onUnload() {
     this.clearAutoNextTimer()
+    this.flushAnswersBeforeExit()
   },
   methods: {
     hydrateProgress(restart) {
@@ -114,6 +120,7 @@ export default {
       const progress = getPersonalityProgress(this.attemptId)
       if (!progress) return
       this.answeredValues = progress.answeredValues || {}
+      this.answerDirty = progress.answerDirty !== undefined ? progress.answerDirty : Object.keys(this.answeredValues).length > 0
       this.questionCache = progress.questionCache || {}
       this.currentQuestionNo = progress.currentQuestionNo || 1
       this.startQuestionNo = progress.startQuestionNo || 0
@@ -126,6 +133,7 @@ export default {
         currentQuestionNo: this.currentQuestionNo,
         startQuestionNo: this.startQuestionNo,
         totalQuestions: this.totalQuestions,
+        answerDirty: this.answerDirty,
         updatedAt: Date.now()
       })
     },
@@ -135,18 +143,10 @@ export default {
         this.loading = false
         return
       }
-      const cachedQuestion = this.questionCache[this.currentQuestionNo]
-      if (cachedQuestion) {
-        this.applyQuestion(cachedQuestion)
-        this.loading = false
-        return
-      }
       this.loading = true
       try {
-        const questionNo = this.forceFirstQuestion || this.currentQuestionNo > 1 ? this.currentQuestionNo : null
-        const res = questionNo ? await getPersonalityQuestion(this.attemptId, questionNo) : await getCurrentQuestion(this.attemptId)
-        this.forceFirstQuestion = false
-        this.applyQuestion(res)
+        await this.loadAttemptQuestions()
+        this.applyQuestion(this.questionCache[this.currentQuestionNo])
       } catch (e) {
         uni.showToast({ title: e?.msg || e?.message || '题目加载失败', icon: 'none' })
       } finally {
@@ -167,6 +167,37 @@ export default {
       this.answeredValues = {
         ...this.answeredValues,
         [this.question.questionNo]: answerValue
+      }
+      this.answerDirty = true
+      this.persistProgress()
+    },
+    async loadAttemptQuestions() {
+      const questions = await getAttemptQuestions(this.attemptId)
+      const questionCache = {}
+      const answeredValues = { ...this.answeredValues }
+      let firstUnansweredNo = 0
+      let totalQuestions = 0
+      questions.forEach(question => {
+        const questionNo = Number(question?.questionNo)
+        if (!questionNo) return
+        questionCache[questionNo] = question
+        totalQuestions = Math.max(totalQuestions, Number(question.totalQuestions || questions.length))
+        if (answeredValues[questionNo] === undefined && question.answerValue !== undefined && question.answerValue !== null) {
+          answeredValues[questionNo] = question.answerValue
+        }
+        if (answeredValues[questionNo] === undefined && !firstUnansweredNo) {
+          firstUnansweredNo = questionNo
+        }
+      })
+      this.questionCache = questionCache
+      this.answeredValues = answeredValues
+      this.totalQuestions = totalQuestions || questions.length
+      this.startQuestionNo = 1
+      if (this.forceFirstQuestion) {
+        this.currentQuestionNo = 1
+        this.forceFirstQuestion = false
+      } else {
+        this.currentQuestionNo = this.currentQuestionNo > 1 ? this.currentQuestionNo : (firstUnansweredNo || 1)
       }
       this.persistProgress()
     },
@@ -194,14 +225,7 @@ export default {
       }
       this.submitting = true
       try {
-        const startQuestionNo = this.startQuestionNo || 1
-        for (let questionNo = startQuestionNo; questionNo <= this.totalQuestions; questionNo += 1) {
-          const question = this.questionCache[questionNo]
-          await savePersonalityAnswer(this.attemptId, {
-            questionId: question.questionId,
-            answerValue: this.answeredValues[questionNo]
-          })
-        }
+        await this.flushAnswers()
         removePersonalityProgress(this.attemptId)
         uni.redirectTo({ url: `/pages/personality/complete?attemptId=${this.attemptId}` })
       } catch (e) {
@@ -210,23 +234,43 @@ export default {
         this.submitting = false
       }
     },
+    async flushAnswersBeforeExit() {
+      if (this.submitting) return
+      try {
+        await this.flushAnswers()
+      } catch (e) {
+        // 页面退出时不打断用户；下次进入仍会读取本地缓存后可再次批量同步。
+      }
+    },
+    async flushAnswers() {
+      if (this.answerFlushing || !this.answerDirty) return
+      const answers = this.buildAnswerPayload()
+      if (!answers.length) return
+      this.answerFlushing = true
+      try {
+        await batchSavePersonalityAnswers(this.attemptId, answers)
+        this.answerDirty = false
+        this.persistProgress()
+      } finally {
+        this.answerFlushing = false
+      }
+    },
+    buildAnswerPayload() {
+      return Object.keys(this.answeredValues)
+        .map(questionNo => {
+          const question = this.questionCache[questionNo]
+          if (!question) return null
+          return {
+            questionId: question.questionId,
+            answerValue: this.answeredValues[questionNo]
+          }
+        })
+        .filter(Boolean)
+    },
     async loadQuestionByNo(questionNo) {
       if (!this.canMoveToQuestion(questionNo)) return
       this.clearAutoNextTimer()
-      const cachedQuestion = this.questionCache[questionNo]
-      if (cachedQuestion) {
-        this.applyQuestion(cachedQuestion)
-        return
-      }
-      this.loading = true
-      try {
-        const res = await getPersonalityQuestion(this.attemptId, questionNo)
-        this.applyQuestion(res)
-      } catch (e) {
-        uni.showToast({ title: e?.msg || e?.message || '题目加载失败', icon: 'none' })
-      } finally {
-        this.loading = false
-      }
+      this.applyQuestion(this.questionCache[questionNo])
     },
     applyQuestion(question) {
       this.clearAutoNextTimer()

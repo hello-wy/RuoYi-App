@@ -24,4 +24,52 @@ describe('wxmini personality test api', () => {
       reports: [{ type: 6, summary: '6号解读' }]
     })
   })
+
+  test('gets attempt questions and normalizes embedded answer centrally', async () => {
+    const request = (await import('@/utils/request')).default
+    request.mockResolvedValueOnce({
+      data: {
+        questions: [
+          {
+            questionId: 1,
+            questionNo: 1,
+            selectedOptionId: 10,
+            options: [
+              { optionId: 10, label: '是', value: 1 },
+              { optionId: 11, label: '否', value: 0 }
+            ]
+          }
+        ]
+      }
+    })
+    const { getAttemptQuestions } = await import('./personalityTest')
+
+    await expect(getAttemptQuestions(12)).resolves.toEqual([
+      {
+        questionId: 1,
+        questionNo: 1,
+        selectedOptionId: 10,
+        answerValue: 1,
+        options: [
+          { optionId: 10, label: '是', value: 1 },
+          { optionId: 11, label: '否', value: 0 }
+        ]
+      }
+    ])
+    expect(request).toHaveBeenLastCalledWith({
+      url: '/wxmini/personality-test/attempts/12/questions',
+      method: 'get'
+    })
+  })
+
+  test('posts batch answers through the wxmini API wrapper', async () => {
+    const { batchSavePersonalityAnswers } = await import('./personalityTest')
+    const answers = [{ questionId: 1, answerValue: 1 }]
+
+    await expect(batchSavePersonalityAnswers(12, answers)).resolves.toEqual({
+      url: '/wxmini/personality-test/attempts/12/answers/batch',
+      method: 'post',
+      data: { answers }
+    })
+  })
 })

@@ -11,6 +11,35 @@ function normalizePersonalityResultResponse(result) {
   return reports ? { ...result, reports } : result
 }
 
+function normalizeAttemptQuestionsResponse(result) {
+  const questions = Array.isArray(result)
+    ? result
+    : [result?.questions, result?.list, result?.rows].find(Array.isArray) || []
+  return questions.map(normalizeAttemptQuestion)
+}
+
+function normalizeAttemptQuestion(question) {
+  if (!question || typeof question !== 'object') return question
+  const options = Array.isArray(question.options) ? question.options : []
+  const answerValue = resolveQuestionAnswerValue(question, options)
+  return answerValue === undefined ? { ...question, options } : { ...question, options, answerValue }
+}
+
+function resolveQuestionAnswerValue(question, options) {
+  const directValue = [question.answerValue, question.selectedValue].find(value => value !== undefined && value !== null)
+  if (directValue !== undefined) return normalizeOptionValue(directValue, options)
+
+  const selectedOptionId = question.selectedOptionId ?? question.answerOptionId
+  if (selectedOptionId === undefined || selectedOptionId === null) return undefined
+  const selectedOption = options.find(option => String(option.optionId ?? option.id) === String(selectedOptionId))
+  return selectedOption ? selectedOption.value : undefined
+}
+
+function normalizeOptionValue(value, options) {
+  const option = options.find(item => String(item.value) === String(value))
+  return option ? option.value : value
+}
+
 function resolveReportItems(result) {
   const reportArrays = [result.reports, result.interpretations, result.reportItems, result.items]
   const arrayValue = reportArrays.find(Array.isArray)
@@ -49,11 +78,26 @@ export function getPersonalityQuestion(attemptId, questionNo) {
   }).then(unwrap)
 }
 
+export function getAttemptQuestions(attemptId) {
+  return request({
+    url: `/wxmini/personality-test/attempts/${attemptId}/questions`,
+    method: 'get'
+  }).then(unwrap).then(normalizeAttemptQuestionsResponse)
+}
+
 export function savePersonalityAnswer(attemptId, data) {
   return request({
     url: `/wxmini/personality-test/attempts/${attemptId}/answers`,
     method: 'post',
     data
+  }).then(unwrap)
+}
+
+export function batchSavePersonalityAnswers(attemptId, answers) {
+  return request({
+    url: `/wxmini/personality-test/attempts/${attemptId}/answers/batch`,
+    method: 'post',
+    data: { answers }
   }).then(unwrap)
 }
 
