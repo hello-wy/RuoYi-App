@@ -12,7 +12,7 @@
           <view v-for="(item, index) in report.reports" :key="`${item.type}-${index}`" class="report-card">
             <view class="card-heading">
               <view class="type-badge">{{ item.type }}号</view>
-              <text v-if="item.level" class="level-badge">{{ item.level }}</text>
+              <!-- <text v-if="item.level" class="level-badge">{{ item.level }}</text> -->
               <!-- <text v-if="item.score" class="score-badge">{{ item.score }}分</text> -->
             </view>
             <text class="core-title">{{ item.title }}</text>
