@@ -29,6 +29,7 @@
 
 <script>
 import { getPersonalityEntry, startPersonalityAttempt } from '@/api/wxmini/personalityTest'
+import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { removePersonalityProgress } from './progressStorage'
@@ -40,7 +41,8 @@ export default {
       entry: {},
       loading: false,
       starting: false,
-      shouldAutoOpenLogin: false
+      shouldAutoOpenLogin: false,
+      inviteCode: ''
     }
   },
   computed: {
@@ -53,6 +55,7 @@ export default {
     if (getToken()) {
       this.loadEntry()
     }
+    this.loadInviteCode()
   },
   onShow() {
     if (getToken() && !this.entry.testId) {
@@ -62,15 +65,36 @@ export default {
   onShareAppMessage() {
     return {
       title: '天人合一·性格测试',
-      path: '/pages/personality/start'
+      path: this.buildSharePath()
     }
   },
   onShareTimeline() {
     return {
-      title: '天人合一·性格测试'
+      title: '天人合一·性格测试',
+      query: this.buildShareQuery()
     }
   },
   methods: {
+    async loadInviteCode() {
+      if (!getToken()) {
+        this.inviteCode = ''
+        return
+      }
+      try {
+        const res = await getMyReferralCode()
+        this.inviteCode = res?.data?.inviteCode || ''
+      } catch (e) {
+        this.inviteCode = ''
+      }
+    },
+    buildShareQuery() {
+      if (!this.inviteCode) return ''
+      return `inviteCode=${encodeURIComponent(this.inviteCode)}`
+    },
+    buildSharePath() {
+      const query = this.buildShareQuery()
+      return `/pages/personality/start${query ? `?${query}` : ''}`
+    },
     async loadEntry() {
       this.loading = true
       try {
@@ -116,6 +140,7 @@ export default {
       this.shouldAutoOpenLogin = false
       if (getToken()) {
         this.loadEntry()
+        this.loadInviteCode()
       }
     }
   }
