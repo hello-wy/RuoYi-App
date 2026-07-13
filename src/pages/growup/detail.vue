@@ -51,7 +51,7 @@
 						</view>
 						<view
 							class="detail-tab"
-							:class="{ active: activeTab === 'review', disabled: !orderNo }"
+							:class="{ active: activeTab === 'review' }"
 							@click="switchTab('review')"
 						>
 							<text>课程评价</text>
@@ -168,34 +168,58 @@
 
 					<view v-show="activeTab === 'review'" class="review-panel">
 						<view class="section-block review-card">
-							<text class="section-title">课程评价</text>
-							<view v-if="!orderNo" class="review-tip-card">
-								<uni-icons type="info" size="18" color="#94a3b8"></uni-icons>
-								<text class="review-tip-text">请从“我的课程”进入课程详情后评价，公开详情页不会绑定订单。</text>
+							<view class="review-title-row">
+								<text class="section-title">课程评价</text>
+								<text class="review-total">{{ reviews.length }} 条</text>
 							</view>
-							<view v-else-if="reviewLoading" class="review-loading">
+							<view v-if="reviewLoading" class="review-loading">
 								<uni-load-more status="loading"></uni-load-more>
 							</view>
-							<block v-else>
-								<textarea
-									v-model="reviewContent"
-									class="review-textarea"
-									maxlength="1000"
-									placeholder="请输入你对本次课程的评价"
-									placeholder-class="review-placeholder"
-									:disabled="reviewSaving"
-								/>
-								<view class="review-footer">
-									<text class="review-count">{{ reviewContent.length }}/1000</text>
-									<view
-										class="review-save-btn"
-										:class="{ disabled: reviewSaving }"
-										@click="handleSaveReview"
-									>
-										<text class="review-save-text">{{ reviewSaving ? '保存中...' : '保存评价' }}</text>
+							<view v-else-if="reviews.length" class="review-list">
+								<view v-for="review in reviews" :key="review.id" class="review-item">
+									<image
+										v-if="review.reviewerAvatarUrl"
+										:src="review.reviewerAvatarUrl"
+										class="review-avatar"
+										mode="aspectFill"
+									></image>
+									<view v-else class="review-avatar review-avatar-fallback">
+										<text>{{ getReviewerInitial(review.reviewerName) }}</text>
+									</view>
+									<view class="review-main">
+										<view class="review-meta-row">
+											<text class="reviewer-name">{{ review.reviewerName || '微信用户' }}</text>
+											<text class="review-time">{{ formatReviewTime(review.updateTime || review.createTime) }}</text>
+										</view>
+										<text class="review-content">{{ review.content }}</text>
 									</view>
 								</view>
-							</block>
+							</view>
+							<view v-else class="review-empty">
+								<text>暂时还没有评价，来发表第一条评价吧</text>
+							</view>
+						</view>
+
+						<view class="section-block review-composer">
+							<text class="section-title">写评价</text>
+							<textarea
+								v-model="reviewContent"
+								class="review-textarea"
+								maxlength="1000"
+								placeholder="请输入你对本次课程的评价"
+								placeholder-class="review-placeholder"
+								:disabled="reviewSaving"
+							/>
+							<view class="review-footer">
+								<text class="review-count">已报名用户可发送 · {{ reviewContent.length }}/1000</text>
+								<view
+									class="review-save-btn"
+									:class="{ disabled: reviewSaving }"
+									@click="handleSaveReview"
+								>
+									<text class="review-save-text">{{ reviewSaving ? '发送中...' : '发送' }}</text>
+								</view>
+							</view>
 						</view>
 					</view>
 
@@ -227,7 +251,7 @@
 
 <script>
 import config from '@/config'
-import { getCourse, getMyCourseReview, saveMyCourseReview } from '@/api/wxmini/growup'
+import { getCourse, getCourseReviews, saveCourseReview } from '@/api/wxmini/growup'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
 import {
@@ -256,7 +280,6 @@ export default {
 			statusBarHeight: 0,
 			type: 'course',
 			id: '',
-			orderNo: '',
 			activeTab: 'detail',
 			loading: true,
 			error: false,
@@ -264,7 +287,7 @@ export default {
 			myEnrollmentCount: 0,
 			topCoverLoadFailed: false,
 			reviewContent: '',
-			reviewLoaded: false,
+			reviews: [],
 			reviewLoading: false,
 			reviewSaving: false,
 			inviteCode: '',
@@ -332,7 +355,6 @@ export default {
 		this.statusBarHeight = sys.statusBarHeight || 0
 		this.type = options.type || 'course'
 		this.id = options.id || ''
-		this.orderNo = options.orderNo ? decodeURIComponent(options.orderNo) : ''
 		this.loadDetail()
 		this.loadInviteCode()
 	},
@@ -408,31 +430,31 @@ export default {
 			}
 		},
 		switchTab(tab) {
-			if (tab === 'review' && !this.orderNo) {
-				uni.showToast({ title: '请从我的课程进入后评价', icon: 'none' })
-				return
-			}
 			this.activeTab = tab
-			if (tab === 'review' && this.orderNo && !this.reviewLoaded && !this.reviewLoading) {
-				this.loadReview()
+			if (tab === 'review' && !this.reviewLoading) {
+				this.loadReviews()
 			}
 		},
-		async loadReview() {
+		async loadReviews() {
 			this.reviewLoading = true
 			try {
-				const review = await getMyCourseReview(this.id, this.orderNo)
-				this.reviewContent = review?.content || ''
-				this.reviewLoaded = true
+				this.reviews = await getCourseReviews(this.id)
 			} catch (error) {
 				uni.showToast({ title: error?.msg || '评价加载失败', icon: 'none' })
 			} finally {
 				this.reviewLoading = false
 			}
 		},
+		formatReviewTime(value) {
+			return value ? String(value).slice(0, 16).replace(/-/g, '.') : ''
+		},
+		getReviewerInitial(name) {
+			return String(name || '微信用户').trim().slice(0, 1)
+		},
 		async handleSaveReview() {
 			if (this.reviewSaving) return
-			if (!this.orderNo) {
-				uni.showToast({ title: '请从我的课程进入后评价', icon: 'none' })
+			if (!getToken()) {
+				uni.showToast({ title: '请先登录后发送评价', icon: 'none' })
 				return
 			}
 			const content = this.reviewContent.trim()
@@ -446,12 +468,12 @@ export default {
 			}
 			this.reviewSaving = true
 			try {
-				const review = await saveMyCourseReview(this.id, { orderNo: this.orderNo, content })
-				this.reviewContent = review?.content || content
-				this.reviewLoaded = true
-				uni.showToast({ title: '保存成功', icon: 'success' })
+				await saveCourseReview(this.id, { content })
+				this.reviewContent = ''
+				await this.loadReviews()
+				uni.showToast({ title: '发送成功', icon: 'success' })
 			} catch (error) {
-				uni.showToast({ title: error?.msg || '保存失败', icon: 'none' })
+				uni.showToast({ title: error?.msg || '发送失败', icon: 'none' })
 			} finally {
 				this.reviewSaving = false
 			}
@@ -922,21 +944,80 @@ page {
 	padding: 16px;
 }
 
-.review-tip-card {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	gap: 8px;
-	background: #f8fafc;
-	border-radius: 12px;
-	padding: 12px;
+.review-composer {
+	margin-top: 12px;
+	padding: 16px;
 }
 
-.review-tip-text {
+.review-title-row,
+.review-meta-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.review-total,
+.review-time {
+	font-size: 12px;
+	color: #94a3b8;
+}
+
+.review-list {
+	margin-top: 16px;
+}
+
+.review-item {
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+	padding: 14px 0;
+	border-top: 1px solid #edf2f7;
+}
+
+.review-avatar {
+	width: 36px;
+	height: 36px;
+	flex: 0 0 36px;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.review-avatar-fallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #dbeafe;
+	color: #2563eb;
+	font-size: 14px;
+	font-weight: 700;
+}
+
+.review-main {
+	min-width: 0;
 	flex: 1;
-	font-size: 13px;
+}
+
+.reviewer-name {
+	font-size: 14px;
+	font-weight: 600;
+	color: #1e293b;
+}
+
+.review-content {
+	display: block;
+	margin-top: 6px;
+	font-size: 14px;
 	line-height: 1.7;
-	color: #64748b;
+	color: #475569;
+	word-break: break-all;
+}
+
+.review-empty {
+	padding: 28px 0 12px;
+	text-align: center;
+	font-size: 13px;
+	color: #94a3b8;
 }
 
 .review-loading {

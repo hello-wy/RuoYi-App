@@ -103,6 +103,21 @@ export function enrollCourse(id, data) {
     })
 }
 
+export function getCourseReviews(courseId) {
+    return request({
+        url: `/wxmini/growup/courses/${courseId}/reviews`,
+        method: 'get'
+    }).then(res => res.data)
+}
+
+export function saveCourseReview(courseId, data) {
+    return request({
+        url: `/wxmini/growup/courses/${courseId}/reviews`,
+        method: 'post',
+        data
+    }).then(normalizeReview)
+}
+
 export function getMyCourseReview(courseId, orderNo) {
     return request({
         url: `/wxmini/growup/courses/${courseId}/reviews/my`,
