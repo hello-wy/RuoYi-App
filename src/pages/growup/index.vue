@@ -281,14 +281,6 @@ import {
 	prefetchLectureCovers,
 } from '@/utils/lecture-cover'
 
-const BANNER_COURSE_ORDER = [
-	'幸福解码',
-	'心法篇',
-	'活法篇',
-	'干法篇',
-	'人格解析师',
-	'九型沟通术',
-]
 const DEFAULT_BANNER_TITLE = '育见成长·讲座活动'
 const DEFAULT_BANNER_SUBTITLE = '名师专家 · 精品公益讲座'
 
@@ -337,30 +329,6 @@ export default {
 		formatDateOnly(value) {
 			return String(value || '').slice(0, 10)
 		},
-		parseCourseTimestamp(value) {
-			if (!value) return NaN
-			if (value instanceof Date) return value.getTime()
-			const normalized = String(value).trim().replace(/-/g, '/')
-			const timestamp = new Date(normalized).getTime()
-			return Number.isNaN(timestamp) ? NaN : timestamp
-		},
-		filterUpcomingCourses(courses = []) {
-			const now = Date.now()
-			return courses.filter(course => {
-				const courseTime = this.parseCourseTimestamp(course?.time)
-				return !Number.isNaN(courseTime) && courseTime >= now
-			})
-		},
-		sortCoursesByTime(courses = []) {
-			return [...courses].sort((a, b) => {
-				const timeA = this.parseCourseTimestamp(a?.time)
-				const timeB = this.parseCourseTimestamp(b?.time)
-				if (Number.isNaN(timeA) && Number.isNaN(timeB)) return 0
-				if (Number.isNaN(timeA)) return 1
-				if (Number.isNaN(timeB)) return -1
-				return timeA - timeB
-			})
-		},
 		formatBannerTitle(course) {
 			return course?.name || DEFAULT_BANNER_TITLE
 		},
@@ -368,28 +336,25 @@ export default {
 			return course?.speakerNames || DEFAULT_BANNER_SUBTITLE
 		},
 		buildBannerItems(courses = []) {
-			return BANNER_COURSE_ORDER.map(name => {
-				const course = courses.find(item => String(item?.name || '').includes(name))
-				return {
-					id: course?.id || name,
+			return courses
+				.filter(course => course?.id)
+				.map(course => ({
+					id: course.id,
 					title: this.formatBannerTitle(course),
 					subtitle: this.formatBannerSubtitle(course),
-					url: course?.id ? `/pages/growup/detail?id=${course.id}` : '',
-					imageSrc: course ? getLectureImageSrc({
+					url: `/pages/growup/detail?id=${course.id}`,
+					imageSrc: getLectureImageSrc({
 						baseUrl: config.baseUrl,
 						lecture: course,
 						fileName: 'cover.webp'
-					}) : '',
-				}
-			})
+					})
+				}))
 		},
 		async prefetchBannerAndCourseCovers(courses = [], options = {}) {
 			const {
 				expanded = this.allCoursesExpanded,
 			} = options
-			const bannerCourses = BANNER_COURSE_ORDER
-				.map(name => courses.find(course => String(course?.name || '').includes(name)))
-				.filter(course => course?.id)
+			const bannerCourses = courses.filter(course => course?.id)
 			const visibleCourses = (expanded ? courses : courses.slice(0, 3)).filter(course => course?.id)
 			await prefetchLectureCovers({
 				baseUrl: config.baseUrl,
@@ -445,12 +410,11 @@ export default {
 			this.coursesLoading = true
 			try {
 				const res = await listCourse({ pageNum: 1, pageSize: 50 })
-				const rows = res.rows || []
-				const upcomingCourses = this.sortCoursesByTime(this.filterUpcomingCourses(rows))
-				this.allCourses = upcomingCourses
+				const courses = res.rows || []
+				this.allCourses = courses
 				this.allCoursesExpanded = false
-				this.featuredCourse = upcomingCourses[0] || null
-				await this.prefetchBannerAndCourseCovers(upcomingCourses)
+				this.featuredCourse = courses[0] || null
+				await this.prefetchBannerAndCourseCovers(courses)
 				this.$nextTick(() => {
 					this.updateLocationAlignment()
 				})
