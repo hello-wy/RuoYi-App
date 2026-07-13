@@ -73,6 +73,13 @@ const pendingTutorReviewCountText = computed(() => {
 
 const actionItems = [
   {
+    key: 'mini-user',
+    label: '用户管理',
+    icon: 'person-filled',
+    iconColor: '#0f766e',
+    onClick: handleMiniUser
+  },
+  {
     key: 'system-user',
     label: '系统用户',
     icon: 'staff-filled',
@@ -178,6 +185,10 @@ const actionItems = [
     onClick: handleReferralManagement
   }
 ]
+
+function handleMiniUser() {
+  proxy.$tab.navigateTo('/pages/mine/admin/mini-user/index')
+}
 
 function handleSystemUser() {
   proxy.$tab.navigateTo('/pages/mine/admin/system-user/index')

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   filterGuideRoles,
+  isGuideRoleDisabled,
   resolveGuideRoleState,
   resolveGuideSelectedRole,
 } from './guide-user-type.helpers'
@@ -51,5 +52,18 @@ describe('guide user type helpers', () => {
       roles: ALL_ROLES,
       selectedRole: 1,
     })
+  })
+
+  test('allows every role before an identity is selected', () => {
+    expect(ALL_ROLES.every(role => !isGuideRoleDisabled('', role.value))).toBe(true)
+  })
+
+  test('allows students to keep student identity or switch to merchant only', () => {
+    expect(ALL_ROLES.filter(role => !isGuideRoleDisabled(1, role.value)).map(role => role.value)).toEqual([1, 2])
+  })
+
+  test('prevents parents from switching to student identity', () => {
+    expect(isGuideRoleDisabled(0, 1)).toBe(true)
+    expect(isGuideRoleDisabled(0, 2)).toBe(false)
   })
 })

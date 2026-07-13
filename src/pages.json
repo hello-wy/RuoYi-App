@@ -139,6 +139,12 @@
             "navigationBarBackgroundColor": "#fff7ed",
             "navigationBarTextStyle": "black"
           }
+        },
+        {
+          "path": "history",
+          "style": {
+            "navigationBarTitleText": "历史答题记录"
+          }
         }
       ]
     },
@@ -249,6 +255,17 @@
           "path": "list",
           "style": {
             "navigationBarTitleText": "已报课程"
+          }
+        }
+      ]
+    },
+    {
+      "root": "pages/mine/note",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationBarTitleText": "课程笔记"
           }
         }
       ]
@@ -404,6 +421,19 @@
           "path": "index",
           "style": {
             "navigationBarTitleText": "管理后台"
+          }
+        },
+        {
+          "path": "mini-user/index",
+          "style": {
+            "navigationBarTitleText": "用户管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "mini-user/detail",
+          "style": {
+            "navigationBarTitleText": "用户详情"
           }
         },
         {

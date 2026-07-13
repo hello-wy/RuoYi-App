@@ -119,7 +119,7 @@ function normalizeScores(result) {
   if (explicitScores) {
     return DIMENSION_NUMBERS.map(type => {
       const matched = explicitScores.find(item => Number(item.type ?? item.dimension ?? item.dimensionNo ?? item.dimension_no) === type)
-      return { type, score: toNumber(matched?.score ?? matched?.value ?? matched?.count) }
+      return { type, score: toNumber(matched?.score ?? matched?.yesCount ?? matched?.value ?? matched?.count) }
     })
   }
 

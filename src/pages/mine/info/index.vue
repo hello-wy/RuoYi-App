@@ -59,6 +59,7 @@ const fieldList = computed(() => {
     { key: 'realName', label: '姓名', value: profileRealNameText.value },
     { key: 'nickName', label: '昵称', value: profile.value.nickName },
     { key: 'gender', label: '性别', value: genderText(profile.value.gender) },
+    { key: 'birthday', label: '生日', value: profile.value.birthday },
     { key: 'phone', label: '手机号码', value: profile.value.phone },
     { key: 'userType', label: '用户类型', value: userTypeText(profile.value.userType) }
   ]

@@ -56,6 +56,13 @@ export function getPersonalityEntry() {
   }).then(unwrap)
 }
 
+export function getPersonalityAttempts() {
+  return request({
+    url: '/wxmini/personality-test/attempts',
+    method: 'get'
+  }).then(unwrap).then(result => Array.isArray(result) ? result : [])
+}
+
 export function startPersonalityAttempt(data = { mode: 'continue_or_create' }) {
   return request({
     url: '/wxmini/personality-test/attempts',

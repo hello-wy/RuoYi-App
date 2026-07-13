@@ -70,6 +70,20 @@ describe('personality complete helpers', () => {
     expect(report.reports[0].blindSpotTip).toContain('急躁')
   })
 
+  test('derives fallback report from backend yes counts', () => {
+    const report = normalizePersonalityReportResult({
+      scores: [
+        { type: 3, yesCount: 8, noCount: 10, unsureCount: 2 },
+        { type: 6, yesCount: 12, noCount: 6, unsureCount: 2 }
+      ],
+      reports: []
+    })
+
+    expect(report.scores[5]).toEqual({ type: 6, score: 12 })
+    expect(report.hasReports).toBe(true)
+    expect(report.reports[0].type).toBe(6)
+  })
+
   test('keeps multiple backend interpretation reports', () => {
     const report = normalizePersonalityReportResult({
       reports: [

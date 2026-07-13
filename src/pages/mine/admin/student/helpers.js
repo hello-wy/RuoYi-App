@@ -30,6 +30,7 @@ export function buildProfileFields(detail = {}) {
     { key: 'realName', label: '姓名', value: detail.realName },
     { key: 'nickName', label: '昵称', value: detail.nickName },
     { key: 'gender', label: '性别', value: getGenderText(detail.gender) },
+    { key: 'birthday', label: '生日', value: detail.birthday },
     { key: 'phone', label: '手机号码', value: detail.phone },
     { key: 'userType', label: '用户类型', value: getUserTypeText(detail.userType) }
   ]

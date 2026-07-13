@@ -5,6 +5,26 @@ vi.mock('@/utils/request', () => ({
 }))
 
 describe('wxmini personality test api', () => {
+  test('gets wxmini attempt history without admin auth', async () => {
+    const request = (await import('@/utils/request')).default
+    request.mockResolvedValueOnce({ data: [{ attemptId: 12 }] })
+    const { getPersonalityAttempts } = await import('./personalityTest')
+
+    await expect(getPersonalityAttempts()).resolves.toEqual([{ attemptId: 12 }])
+    expect(request).toHaveBeenLastCalledWith({
+      url: '/wxmini/personality-test/attempts',
+      method: 'get'
+    })
+  })
+
+  test('normalizes non-array attempt history to an empty list', async () => {
+    const request = (await import('@/utils/request')).default
+    request.mockResolvedValueOnce({ data: { rows: [] } })
+    const { getPersonalityAttempts } = await import('./personalityTest')
+
+    await expect(getPersonalityAttempts()).resolves.toEqual([])
+  })
+
   test('gets a personality question by number', async () => {
     const { getPersonalityQuestion } = await import('./personalityTest')
 

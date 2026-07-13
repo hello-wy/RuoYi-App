@@ -295,7 +295,7 @@ const studyItems = computed(() => {
   return [
     { key: 'course', label: '已报课程', icon: 'calendar-filled', iconColor: '#0F9D8F', cardClass: 'study-course', onClick: handleToCourse },
     { key: 'order', label: '我的订单', icon: 'list', iconColor: '#16A34A', cardClass: 'study-order', onClick: handleToOrderCenter },
-    { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleBuilding }
+    { key: 'notes', label: '课程笔记', icon: 'compose', iconColor: '#0EA5A4', cardClass: 'study-note', onClick: handleToCourseNotes }
   ]
 })
 const primaryActionPath = computed(() => {
@@ -445,6 +445,12 @@ function handleSwitchIdentity() {
 function handleVerifyClick() {
   if (isProfileVerified.value) return
   realVerifyRef.value?.openPopup()
+}
+
+function handleToCourseNotes() {
+  withLogin(() => {
+    uni.navigateTo({ url: '/pages/mine/note/index' })
+  })
 }
 
 function handleToOrderCenter() {

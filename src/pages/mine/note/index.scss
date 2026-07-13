@@ -1,0 +1,246 @@
+page {
+  height: 100%;
+  background: #f3f8f6;
+}
+
+.note-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f3f8f6;
+}
+
+.note-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx;
+  background: linear-gradient(135deg, #0f9d8f, #24b59f);
+}
+
+.note-title,
+.note-subtitle,
+.note-content,
+.note-time,
+.note-action,
+.field-label,
+.content-count,
+.form-button {
+  display: block;
+}
+
+.note-title {
+  color: #ffffff;
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.note-subtitle {
+  margin-top: 8rpx;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 24rpx;
+}
+
+.create-button {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 999rpx;
+  color: #ffffff;
+  font-size: 26rpx;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.note-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.state-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 420rpx;
+}
+
+.empty-state {
+  gap: 16rpx;
+  padding: 0 60rpx;
+  text-align: center;
+}
+
+.empty-title {
+  color: #38655d;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.empty-text {
+  color: #8ba49e;
+  font-size: 25rpx;
+  line-height: 1.6;
+}
+
+.note-list {
+  padding: 24rpx;
+}
+
+.note-card {
+  margin-bottom: 20rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(50, 92, 81, 0.08);
+}
+
+.note-card-header,
+.note-actions,
+.content-label-row,
+.form-header,
+.course-picker,
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.course-tag {
+  display: flex;
+  align-items: center;
+  max-width: 70%;
+  gap: 8rpx;
+  color: #0b766a;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.note-time,
+.content-count {
+  color: #9aaca7;
+  font-size: 22rpx;
+}
+
+.note-content {
+  margin: 20rpx 0;
+  color: #29453f;
+  font-size: 28rpx;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.note-actions {
+  justify-content: flex-end;
+  gap: 32rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #edf3f1;
+}
+
+.note-action {
+  color: #0f9d8f;
+  font-size: 25rpx;
+}
+
+.note-action.danger {
+  color: #e36c64;
+}
+
+.form-overlay,
+.form-mask {
+  position: fixed;
+  inset: 0;
+}
+
+.form-overlay {
+  z-index: 1000;
+}
+
+.form-mask {
+  background: rgba(16, 39, 34, 0.5);
+}
+
+.form-sheet {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 32rpx 32rpx calc(32rpx + env(safe-area-inset-bottom));
+  border-radius: 28rpx 28rpx 0 0;
+  background: #ffffff;
+}
+
+.form-title {
+  color: #193f36;
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.form-field {
+  margin-top: 28rpx;
+}
+
+.field-label {
+  color: #35594f;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.course-picker,
+.note-textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 14rpx;
+  border-radius: 14rpx;
+  background: #f4f8f7;
+}
+
+.course-picker {
+  padding: 20rpx;
+  color: #234a40;
+  font-size: 27rpx;
+}
+
+.course-picker.disabled {
+  color: #7b948d;
+}
+
+.note-textarea {
+  min-height: 280rpx;
+  padding: 20rpx;
+  color: #234a40;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+.textarea-placeholder {
+  color: #a4b5b0;
+}
+
+.form-actions {
+  gap: 20rpx;
+  margin-top: 36rpx;
+}
+
+.form-button {
+  flex: 1;
+  padding: 22rpx 0;
+  border-radius: 14rpx;
+  text-align: center;
+  font-size: 29rpx;
+  font-weight: 600;
+}
+
+.form-button.secondary {
+  color: #527268;
+  background: #edf4f1;
+}
+
+.form-button.primary {
+  color: #ffffff;
+  background: #0f9d8f;
+}
+
+.form-button.primary.disabled {
+  opacity: 0.48;
+}

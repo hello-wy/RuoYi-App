@@ -24,3 +24,10 @@ export function resolveGuideRoleState(allRoles = [], selectedRole, profile = {})
     selectedRole: resolveGuideSelectedRole(selectedRole, roles),
   }
 }
+
+export function isGuideRoleDisabled(currentUserType, targetUserType) {
+  if (currentUserType === '' || currentUserType === null || currentUserType === undefined) return false
+  const normalizedUserType = Number(currentUserType)
+  if (normalizedUserType === 1) return targetUserType !== 1 && targetUserType !== 2
+  return normalizedUserType === 0 && targetUserType === 1
+}

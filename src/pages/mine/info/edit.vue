@@ -39,6 +39,17 @@
         <input v-model="form.age" class="field-input" placeholder="请输入年龄" type="number" />
       </view>
       <view class="form-item">
+        <text class="form-label">生日</text>
+        <view class="birthday-field">
+          <picker mode="date" :value="form.birthday" @change="handleBirthdayChange">
+            <view class="picker-value" :class="{ 'is-placeholder': !form.birthday }">
+              {{ form.birthday || '请选择生日' }}
+            </view>
+          </picker>
+          <text v-if="form.birthday" class="clear-birthday" @click="clearBirthday">清空</text>
+        </view>
+      </view>
+      <view class="form-item">
         <text class="form-label">手机号码</text>
         <input v-model="form.phone" class="field-input is-disabled" disabled placeholder="请输入手机号码" />
       </view>
@@ -173,6 +184,15 @@ async function handleSubmit() {
   }
 }
 
+
+function handleBirthdayChange(event) {
+  form.value.birthday = event.detail.value
+}
+
+function clearBirthday() {
+  form.value.birthday = ''
+}
+
 function handleVerifyClick() {
   realVerifyRef.value?.openPopup()
 }
@@ -186,107 +206,4 @@ watch(() => verifyForm.value.verified, value => {
 })
 </script>
 
-<style lang="scss" scoped>
-page { background: #f5f7ff; }
-.edit-page {
-  min-height: 100vh;
-  padding: 24rpx 24rpx 180rpx;
-  background: linear-gradient(180deg, #f7f1ff 0%, #f5f7ff 36%, #f5f7ff 100%);
-}
-.edit-card {
-  padding: 28rpx 24rpx;
-  border-radius: 28rpx;
-  background: #ffffff;
-  box-shadow: 0 18rpx 40rpx rgba(112, 87, 193, 0.08);
-}
-.edit-title {
-  margin-bottom: 24rpx;
-  font-size: 34rpx;
-  font-weight: 700;
-  color: #241f3f;
-}
-.form-item { margin-bottom: 24rpx; }
-.form-item:last-child { margin-bottom: 0; }
-.form-label {
-  display: block;
-  margin-bottom: 12rpx;
-  font-size: 28rpx;
-  color: #6f6a86;
-}
-.verify-link-row {
-  margin-top: 12rpx;
-}
-.verify-link {
-  font-size: 26rpx;
-  color: #2563eb;
-  text-decoration: underline;
-}
-.field-input,
-.field-textarea {
-  width: 100%;
-  border: 1px solid #ebe7f7;
-  border-radius: 20rpx;
-  background: #faf9ff;
-  box-sizing: border-box;
-  font-size: 30rpx;
-  color: #241f3f;
-}
-.field-input {
-  height: 92rpx;
-  padding: 0 24rpx;
-}
-.field-textarea {
-  min-height: 180rpx;
-  padding: 24rpx;
-  line-height: 1.7;
-}
-.is-disabled {
-  color: #8b87a3;
-  background: #f3f1fa;
-}
-.gender-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
-}
-.gender-option {
-  min-width: 132rpx;
-  height: 76rpx;
-  padding: 0 28rpx;
-  border: 1px solid #d9d8ea;
-  border-radius: 999rpx;
-  background: #faf9ff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  font-size: 28rpx;
-  color: #5f5a75;
-}
-.gender-option.active {
-  border-color: #5b4fd8;
-  background: rgba(91, 79, 216, 0.08);
-  color: #5b4fd8;
-  font-weight: 600;
-}
-.submit-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 20rpx 24rpx 36rpx;
-  background: linear-gradient(180deg, rgba(245, 247, 255, 0) 0%, #f5f7ff 28%, #f5f7ff 100%);
-}
-.submit-btn {
-  height: 88rpx;
-  line-height: 88rpx;
-  border: none;
-  border-radius: 999rpx;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(135deg, #7c6cff 0%, #5b4fd8 100%);
-  box-shadow: 0 16rpx 30rpx rgba(91, 79, 216, 0.22);
-}
-.submit-btn[disabled] { opacity: 0.7; }
-</style>
+<style lang="scss" scoped src="./edit.scss"></style>

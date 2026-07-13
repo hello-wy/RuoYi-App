@@ -10,6 +10,17 @@
         <text class="desc">接下来，速速开启这段美妙的读心之旅吧！</text>
       </view>
 
+      <view v-if="attempts.length" class="history-card">
+        <view class="history-header">
+          <text class="history-title">上次测试记录</text>
+          <button class="history-more" @click="openAttemptHistory">更多</button>
+        </view>
+        <button class="history-item" @click="openAttemptResult(attempts[0].attemptId)">
+          <text class="history-time">{{ attempts[0].completedAt }}</text>
+          <uni-icons type="right" size="16" color="#7c8394"></uni-icons>
+        </button>
+      </view>
+
       <view class="action-area">
         <button class="start-btn" :loading="starting" @click="handleStart">
           {{ buttonText }}
@@ -28,7 +39,7 @@
 </template>
 
 <script>
-import { getPersonalityEntry, startPersonalityAttempt } from '@/api/wxmini/personalityTest'
+import { getPersonalityAttempts, getPersonalityEntry, startPersonalityAttempt } from '@/api/wxmini/personalityTest'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
@@ -39,6 +50,7 @@ export default {
   data() {
     return {
       entry: {},
+      attempts: [],
       loading: false,
       starting: false,
       shouldAutoOpenLogin: false,
@@ -58,8 +70,11 @@ export default {
     this.loadInviteCode()
   },
   onShow() {
-    if (getToken() && !this.entry.testId) {
-      this.loadEntry()
+    if (getToken()) {
+      if (!this.entry.testId) this.loadEntry()
+      this.loadAttempts()
+    } else {
+      this.attempts = []
     }
   },
   onShareAppMessage() {
@@ -75,6 +90,13 @@ export default {
     }
   },
   methods: {
+    async loadAttempts() {
+      try {
+        this.attempts = await getPersonalityAttempts()
+      } catch (e) {
+        this.attempts = []
+      }
+    },
     async loadInviteCode() {
       if (!getToken()) {
         this.inviteCode = ''
@@ -105,6 +127,12 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    openAttemptResult(attemptId) {
+      uni.navigateTo({ url: `/pages/personality/complete?attemptId=${attemptId}` })
+    },
+    openAttemptHistory() {
+      uni.navigateTo({ url: '/pages/personality/history' })
     },
     async handleStart() {
       await this.openAttempt(false)
@@ -140,6 +168,7 @@ export default {
       this.shouldAutoOpenLogin = false
       if (getToken()) {
         this.loadEntry()
+        this.loadAttempts()
         this.loadInviteCode()
       }
     }
@@ -155,7 +184,6 @@ page {
 .personality-start {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
   background: #061733;
 }
 
@@ -206,6 +234,64 @@ page {
   line-height: 54rpx;
   font-weight: 700;
   text-align: left;
+}
+
+.history-card {
+  margin: 28rpx 0;
+  padding: 30rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.history-title {
+  color: #7c8394;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.history-more {
+  margin: 0;
+  padding: 0 12rpx;
+  background: transparent;
+  color: #66bdb6;
+  font-size: 26rpx;
+  line-height: 48rpx;
+}
+
+.history-more::after {
+  border: none;
+}
+
+.history-item {
+  width: 100%;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid rgba(124, 131, 148, 0.2);
+  border-radius: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  line-height: 1.5;
+}
+
+.history-item:last-child {
+  border-bottom: 0;
+}
+
+.history-item::after {
+  border: none;
+}
+
+.history-time {
+  color: #7c8394;
+  font-size: 28rpx;
 }
 
 .action-area {

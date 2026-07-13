@@ -66,7 +66,7 @@
           { active: selectedRole === role.value, 'role-btn-last': shouldCenterRoleButton(index) },
           role.theme
         ]"
-        :disabled="submitting || loadingRoles"
+        :disabled="submitting || loadingRoles || isRoleDisabled(role.value)"
         @click="selectRole(role.value)"
       >
         <uni-icons :type="role.icon" size="20" :color="selectedRole === role.value ? '#ffffff' : role.color"></uni-icons>
@@ -86,7 +86,7 @@ import { computed, ref, getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store'
 import { getWxUserProfileDetail, switchWxUserType } from '@/api/wxmini/profile'
-import { resolveGuideRoleState } from './guide-user-type.helpers'
+import { isGuideRoleDisabled, resolveGuideRoleState } from './guide-user-type.helpers'
 
 const { proxy } = getCurrentInstance()
 const userStore = useUserStore()
@@ -172,19 +172,12 @@ async function loadSwitchableRoles() {
   }
 }
 
-function resolveTarget(userType) {
-  if (userType === 0) return '/pages/tutoring/parent/apply'
-  if (userType === 1) return '/pages/tutoring/tutor/apply'
-  if (userType === 2) return '/pages/jobs/list'
-  return '/pages/jobs/list'
-}
-
-function canSwitchMerchantNow() {
-  const switchableUserTypes = profileState.value?.switchableUserTypes
-  return Array.isArray(switchableUserTypes) && switchableUserTypes.includes(2)
+function isRoleDisabled(role) {
+  return isGuideRoleDisabled(userStore.userType, role)
 }
 
 function selectRole(role) {
+  if (isRoleDisabled(role)) return
   selectedRole.value = role
 }
 
@@ -203,7 +196,7 @@ async function handleContinue() {
     }
     await switchWxUserType({ userType: selectedRole.value })
     userStore.updateWxProfileState({ userType: selectedRole.value })
-    proxy.$tab.redirectTo(resolveTarget(selectedRole.value))
+    proxy.$tab.redirectTo('/pages/mine/info/edit')
   } catch (error) {
     proxy.$modal.msgError(error?.msg || '身份设置失败')
   } finally {
@@ -681,7 +674,9 @@ page {
 }
 
 .role-btn[disabled] {
-  opacity: 0.72;
+  color: #9ca3af;
+  opacity: 0.48;
+  filter: grayscale(1);
 }
 
 .continue-btn {

@@ -30,18 +30,6 @@
 				<text class="qr-tip">管理员扫描二维码即可签到</text>
 				<text v-if="courseHint" class="course-hint">{{ courseHint }}</text>
 
-				<!-- 分割线 -->
-				<view class="card-divider"></view>
-
-				<!-- ID 大字展示 -->
-				<view class="id-display-row">
-					<text class="id-display-label">ID</text>
-					<text class="id-display-value">{{ userId }}</text>
-					<view class="copy-btn" @click="copyUserId">
-						<uni-icons type="copy" size="14" color="#3B82F6"></uni-icons>
-						<text class="copy-text">复制</text>
-					</view>
-				</view>
 			</view>
 
 		</view>
@@ -85,12 +73,6 @@ export default {
 		goBack() {
 			uni.navigateBack()
 		},
-		copyUserId() {
-			uni.setClipboardData({
-				data: String(this.userId),
-				success: () => uni.showToast({ title: '已复制', icon: 'success' })
-			})
-		},
 		drawQRCode(data) {
 			const ctx = uni.createCanvasContext('qrCanvas', this);
 			const uqrcode = new UQRCode();
@@ -110,9 +92,9 @@ export default {
 			try {
 				const order = await getPaidCourseOrder(this.courseId)
 				const label = Number(order.status) === 2 ? '已签到' : '已支付待签到'
-				this.courseHint = `课程 ${this.courseId}：${label}`
+				this.courseHint = `课程 ${order.courseName}：${label}`
 			} catch (e) {
-				this.courseHint = `课程 ${this.courseId}：未找到可签到订单`
+				this.courseHint = '未找到可签到订单'
 			}
 		},
 	}
@@ -250,57 +232,6 @@ page {
 	color: #3B82F6;
 	text-align: center;
 	margin-bottom: 12px;
-}
-
-/* 分割线 */
-.card-divider {
-	width: 100%;
-	height: 1px;
-	background: #f1f5f9;
-	margin-bottom: 16px;
-}
-
-/* ID 展示行 */
-.id-display-row {
-	width: 100%;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	background: #f8fafc;
-	border-radius: 12px;
-	padding: 12px 16px;
-	gap: 10px;
-}
-
-.id-display-label {
-	font-size: 12px;
-	color: #94a3b8;
-	font-weight: 600;
-	flex-shrink: 0;
-}
-
-.id-display-value {
-	flex: 1;
-	font-size: 18px;
-	font-weight: 700;
-	color: #1e293b;
-	letter-spacing: 2px;
-}
-
-.copy-btn {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 3px;
-	background: #EFF6FF;
-	border-radius: 8px;
-	padding: 5px 10px;
-}
-
-.copy-text {
-	font-size: 12px;
-	color: #3B82F6;
-	font-weight: 600;
 }
 
 /* 底部提示 */

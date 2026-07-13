@@ -12,6 +12,7 @@ export function createInfoForm() {
     isRealnameAuth: 0,
     nickName: '',
     gender: '',
+    birthday: '',
     age: '',
     companyName: '',
     companyAddress: '',
@@ -34,6 +35,7 @@ export function normalizeInfoForm(data = {}) {
     isRealnameAuth: data.isRealnameAuth || 0,
     nickName: data.nickName || '',
     gender: normalizeGender(data.gender),
+    birthday: data.birthday || '',
     age: data.age === null || data.age === undefined ? '' : String(data.age),
     companyName: data.companyName || '',
     companyAddress: data.companyAddress || '',
@@ -125,6 +127,7 @@ function buildBasePayload(form) {
     realName: trimValue(form.realName),
     nickName: trimValue(form.nickName),
     gender: form.gender,
+    birthday: form.birthday || null,
     age: isAuntInfoForm(form) && form.age !== '' ? Number(form.age) : null,
     personalIntro: trimValue(form.personalIntro)
   }

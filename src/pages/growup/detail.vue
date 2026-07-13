@@ -238,10 +238,10 @@
 					</button>
 					<view
 						class="btn-enroll"
-						:class="{ 'btn-disabled': detail.enrolled }"
-						@click="handleEnroll"
+						:class="{ 'btn-disabled': ctaDisabled, 'btn-check-in': isCheckIn }"
+						@click="handleCta"
 					>
-						<text class="btn-enroll-text">{{ detail.enrolled ? '已报名' : '前往报名' }}</text>
+						<text class="btn-enroll-text">{{ ctaText }}</text>
 					</view>
 				</view>
 			</view>
@@ -252,6 +252,7 @@
 <script>
 import config from '@/config'
 import { getCourse, getCourseReviews, saveCourseReview } from '@/api/wxmini/growup'
+import { hasPaidCourseOrder } from '@/api/wxmini/coursePay'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
 import {
@@ -263,6 +264,23 @@ import {
 
 const DEFAULT_ENROLLED_COUNT = 0
 const DEFAULT_REMAIN_COUNT = 150
+const CTA_STATE = Object.freeze({
+	ENROLL: 'enroll',
+	LOADING: 'loading',
+	STATUS_ERROR: 'status-error',
+	REGISTERED: 'registered',
+	CHECK_IN: 'check-in',
+})
+const CTA_TEXT = Object.freeze({
+	[CTA_STATE.ENROLL]: '前往报名',
+	[CTA_STATE.LOADING]: '报名状态加载中',
+	[CTA_STATE.STATUS_ERROR]: '报名状态加载失败',
+	[CTA_STATE.REGISTERED]: '已报名',
+	[CTA_STATE.CHECK_IN]: '去签到',
+})
+const DATE_SEPARATOR_PATTERN = /-/g
+const DATE_SEPARATOR = '/'
+const COURSE_START_CHECK_MIN_DELAY = 0
 const DEFAULT_WARM_TIPS = [
 	{
 		title: '取消报名说明：',
@@ -285,6 +303,11 @@ export default {
 			error: false,
 			detail: null,
 			myEnrollmentCount: 0,
+			isRegistered: false,
+			registrationStatusLoading: false,
+			registrationStatusError: false,
+			currentTimestamp: Date.now(),
+			courseStartTimer: null,
 			topCoverLoadFailed: false,
 			reviewContent: '',
 			reviews: [],
@@ -348,6 +371,27 @@ export default {
 		},
 		warmTips() {
 			return DEFAULT_WARM_TIPS
+		},
+		courseHasStarted() {
+			const startTimestamp = this.getCourseStartTimestamp()
+			return Number.isFinite(startTimestamp) && this.currentTimestamp >= startTimestamp
+		},
+		ctaState() {
+			if (this.registrationStatusLoading) return CTA_STATE.LOADING
+			if (this.registrationStatusError) return CTA_STATE.STATUS_ERROR
+			if (!this.isRegistered) return CTA_STATE.ENROLL
+			return this.courseHasStarted ? CTA_STATE.CHECK_IN : CTA_STATE.REGISTERED
+		},
+		ctaText() {
+			return CTA_TEXT[this.ctaState]
+		},
+		isCheckIn() {
+			return this.ctaState === CTA_STATE.CHECK_IN
+		},
+		ctaDisabled() {
+			return this.ctaState === CTA_STATE.LOADING
+				|| this.ctaState === CTA_STATE.STATUS_ERROR
+				|| this.ctaState === CTA_STATE.REGISTERED
 		}
 	},
 	onLoad(options) {
@@ -357,6 +401,13 @@ export default {
 		this.id = options.id || ''
 		this.loadDetail()
 		this.loadInviteCode()
+	},
+	onShow() {
+		this.currentTimestamp = Date.now()
+		this.loadRegistrationStatus()
+	},
+	onUnload() {
+		this.clearCourseStartTimer()
 	},
 	onShareAppMessage() {
 		const title = this.detail?.name || '课程详情'
@@ -423,6 +474,7 @@ export default {
 			try {
 				const res = await getCourse(this.id)
 				this.detail = res.data || res
+				this.scheduleCourseStartCheck()
 			} catch (e) {
 				this.error = true
 			} finally {
@@ -486,11 +538,49 @@ export default {
 				uni.navigateTo({ url: `/pages/growup/tutor/detail?id=${teacher.id}` })
 			}
 		},
-		handleEnroll() {
-			if (!this.detail || this.detail.enrolled) return
-			uni.navigateTo({
-				url: `/pages/growup/course/notice?id=${this.id}`
-			})
+		getCourseStartTimestamp() {
+			const courseTime = this.detail?.time || this.detail?.startTime
+			return Date.parse(String(courseTime || '').replace(DATE_SEPARATOR_PATTERN, DATE_SEPARATOR))
+		},
+		clearCourseStartTimer() {
+			if (!this.courseStartTimer) return
+			clearTimeout(this.courseStartTimer)
+			this.courseStartTimer = null
+		},
+		scheduleCourseStartCheck() {
+			this.clearCourseStartTimer()
+			const startTimestamp = this.getCourseStartTimestamp()
+			if (!Number.isFinite(startTimestamp)) return
+			const delay = Math.max(startTimestamp - Date.now(), COURSE_START_CHECK_MIN_DELAY)
+			this.courseStartTimer = setTimeout(() => {
+				this.currentTimestamp = Date.now()
+				this.courseStartTimer = null
+			}, delay)
+		},
+		async loadRegistrationStatus() {
+			if (!getToken() || !this.id) {
+				this.isRegistered = false
+				this.registrationStatusError = false
+				return
+			}
+			this.registrationStatusLoading = true
+			this.registrationStatusError = false
+			try {
+				this.isRegistered = await hasPaidCourseOrder(this.id)
+			} catch (error) {
+				this.registrationStatusError = true
+				uni.showToast({ title: error?.msg || '报名状态获取失败', icon: 'none' })
+			} finally {
+				this.registrationStatusLoading = false
+			}
+		},
+		handleCta() {
+			if (this.ctaDisabled || !this.detail) return
+			if (this.ctaState === CTA_STATE.CHECK_IN) {
+				uni.navigateTo({ url: `/pages/growup/qrcode/index?id=${this.id}` })
+				return
+			}
+			uni.navigateTo({ url: `/pages/growup/course/notice?id=${this.id}` })
 		},
 	}
 }
@@ -1099,6 +1189,10 @@ page {
 
 .btn-enroll.btn-disabled {
 	background: #e2e8f0;
+}
+
+.btn-enroll.btn-check-in {
+	background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);
 }
 
 .btn-enroll-text {

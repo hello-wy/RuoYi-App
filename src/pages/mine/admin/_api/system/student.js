@@ -1,6 +1,8 @@
 import request from '@/utils/request'
 import { getAdminLevelLabel } from '@/pages/mine/admin/_api/system/user'
 
+const COURSE_ORDER_STATUS_PAID_WAIT_SIGN = 1
+
 function toBoolean(value) {
   if (typeof value === 'boolean') return value
   if (value === 1 || value === '1') return true
@@ -76,6 +78,10 @@ function unwrapRows(value) {
   return []
 }
 
+function isPendingCourseEnrollment(record) {
+  return record.status === COURSE_ORDER_STATUS_PAID_WAIT_SIGN
+}
+
 function normalizeCourseRecord(item = {}) {
   const source = item || {}
   return {
@@ -106,7 +112,9 @@ export function getStudentLearningRecords(id) {
   }).then((res) => {
     const data = unwrapData(res)
     return {
-      enrollmentRecords: unwrapRows(data.enrollmentRecords).map(normalizeCourseRecord),
+      enrollmentRecords: unwrapRows(data.enrollmentRecords)
+        .map(normalizeCourseRecord)
+        .filter(isPendingCourseEnrollment),
       signInRecords: unwrapRows(data.signInRecords).map(normalizeCourseRecord)
     }
   })
@@ -163,4 +171,42 @@ export function bindStudentStaff(studentId, sysUserId) {
     method: 'post',
     data
   })
+}
+
+export function listStudentFollowUpRecords(id) {
+  return request({
+    url: `/system/student/${id}/follow-up-records`,
+    adminAuth: true,
+    method: 'get'
+  }).then((res) => unwrapRows(unwrapData(res)))
+}
+
+export function addStudentFollowUpRecord(id, data) {
+  return request({
+    url: `/system/student/${id}/follow-up-records`,
+    adminAuth: true,
+    method: 'post',
+    data
+  })
+}
+
+function normalizeSalonPurchaseRecord(item = {}) {
+  return {
+    ...item,
+    id: item.id ?? item.orderNo ?? '',
+    orderNo: item.orderNo || '',
+    salonTitle: item.salonTitle || '未命名沙龙',
+    amount: item.amount ?? 0,
+    status: item.status || '',
+    payTime: item.payTime || '',
+    refundTime: item.refundTime || ''
+  }
+}
+
+export function getStudentSalonPurchaseRecords(id) {
+  return request({
+    url: `/system/student/${id}/salon-purchase-records`,
+    adminAuth: true,
+    method: 'get'
+  }).then((res) => unwrapRows(unwrapData(res)).map(normalizeSalonPurchaseRecord))
 }
