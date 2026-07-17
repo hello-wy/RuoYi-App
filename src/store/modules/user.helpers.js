@@ -6,6 +6,6 @@ export function createAdminSessionSnapshot(token, roles = []) {
   }
   return {
     token,
-    roles: ['admin']
+    roles: roles.includes('admin') ? ['admin'] : ['national_general_manager']
   }
 }

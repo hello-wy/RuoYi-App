@@ -1,9 +1,12 @@
 import { getAdminToken } from '@/utils/auth'
 
 export const ADMIN_ROLE = 'admin'
+export const NATIONAL_GENERAL_MANAGER_ROLE = 'national_general_manager'
 
 export function hasAdminRole(roles = []) {
-  return Array.isArray(roles) && roles.includes(ADMIN_ROLE)
+  return Array.isArray(roles) && roles.some(role => (
+    role === ADMIN_ROLE || role === NATIONAL_GENERAL_MANAGER_ROLE
+  ))
 }
 
 export function isAdminUser(token, roles = []) {

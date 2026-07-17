@@ -1,0 +1,67 @@
+$primary: #0f766e;
+$accent: #0f9d8f;
+$bg: #f3fbf8;
+$border: #d6eee8;
+$text: #0f172a;
+$muted: #64748b;
+
+page { background: $bg; }
+.permission-page { min-height: 100vh; padding: 24rpx 24rpx calc(40rpx + env(safe-area-inset-bottom)); box-sizing: border-box; color: $text; }
+.hero-card { display: flex; align-items: center; justify-content: space-between; padding: 38rpx 32rpx; border-radius: 30rpx; background: linear-gradient(135deg, #dcf7ef, #effcf8); border: 1rpx solid #c7eee3; }
+.hero-title, .hero-desc, .section-title, .section-desc, .user-name, .user-meta, .placeholder-title, .placeholder-desc, .empty-title, .empty-desc, .state-title, .state-desc, .group-title, .group-desc, .rule-name, .rule-desc, .save-status, .save-count, .sheet-title { display: block; }
+.hero-title { font-size: 40rpx; font-weight: 800; color: $primary; }
+.hero-desc { margin-top: 10rpx; font-size: 25rpx; color: #4f7f78; }
+.hero-icon { width: 78rpx; height: 78rpx; border-radius: 24rpx; background: rgba(255,255,255,.8); display: flex; align-items: center; justify-content: center; }
+.user-card, .rule-card, .state-card, .empty-state { margin-top: 24rpx; border-radius: 28rpx; background: #fff; border: 1rpx solid $border; box-shadow: 0 12rpx 30rpx rgba(15,118,110,.06); }
+.user-card { padding: 28rpx; }
+.section-head, .selected-user, .select-placeholder, .user-title-row, .group-head, .rule-row, .rule-title-row, .save-bar, .result-row, .sheet-head, .search-row { display: flex; align-items: center; }
+.section-head, .group-head, .sheet-head { justify-content: space-between; }
+.section-title { font-size: 30rpx; font-weight: 700; }
+.section-desc { margin-top: 6rpx; color: $muted; font-size: 23rpx; }
+.change-link, .search-action { color: $accent; font-size: 26rpx; font-weight: 600; padding: 12rpx; }
+.selected-user, .select-placeholder { margin-top: 24rpx; padding: 22rpx; border-radius: 22rpx; background: #f8fcfb; border: 1rpx solid #deeee9; }
+.avatar { flex: 0 0 auto; width: 76rpx; height: 76rpx; border-radius: 24rpx; background: linear-gradient(135deg, $primary, #20b89e); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 30rpx; font-weight: 700; }
+.avatar.small { width: 68rpx; height: 68rpx; border-radius: 21rpx; }
+.placeholder-icon { width: 76rpx; height: 76rpx; border-radius: 24rpx; background: #e7f8f3; display: flex; align-items: center; justify-content: center; }
+.user-main { flex: 1; min-width: 0; margin: 0 20rpx; }
+.user-name, .placeholder-title { font-size: 28rpx; font-weight: 700; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.user-meta, .placeholder-desc { margin-top: 8rpx; font-size: 23rpx; color: $muted; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.protected-tag { margin-left: 12rpx; padding: 5rpx 12rpx; border-radius: 999rpx; background: #fff7ed; color: #b45309; font-size: 20rpx; }
+.empty-state, .state-card { padding: 76rpx 36rpx; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.empty-title, .state-title { margin-top: 22rpx; font-size: 29rpx; font-weight: 700; }
+.empty-desc, .state-desc { margin-top: 12rpx; color: $muted; font-size: 24rpx; line-height: 1.55; }
+.retry-btn { margin-top: 26rpx; min-width: 210rpx; height: 72rpx; line-height: 72rpx; border-radius: 999rpx; background: #e8f7f3; color: $primary; font-size: 25rpx; }
+.readonly-notice { display: flex; align-items: flex-start; gap: 14rpx; margin-top: 24rpx; padding: 24rpx; border-radius: 20rpx; background: #fffbeb; color: #92400e; font-size: 24rpx; line-height: 1.55; border: 1rpx solid #fde68a; }
+.rule-card { overflow: hidden; }
+.group-head { padding: 28rpx; background: #fbfefd; }
+.group-copy, .rule-copy { flex: 1; min-width: 0; padding-right: 20rpx; }
+.group-title { font-size: 29rpx; font-weight: 750; color: $primary; }
+.group-desc, .rule-desc { margin-top: 7rpx; color: $muted; font-size: 22rpx; line-height: 1.45; }
+.rule-row { min-height: 112rpx; padding: 18rpx 28rpx; border-top: 1rpx solid #edf4f2; box-sizing: border-box; }
+.rule-name { font-size: 27rpx; font-weight: 600; }
+.delegate-tag, .inherited-tag { flex: 0 0 auto; margin-left: 12rpx; padding: 4rpx 10rpx; border-radius: 999rpx; font-size: 19rpx; }
+.delegate-tag { background: #f1f5f9; color: #64748b; }
+.inherited-tag { background: #e0f2fe; color: #0369a1; }
+.footer-space { height: 150rpx; }
+.save-bar { position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,.96); border-top: 1rpx solid $border; box-shadow: 0 -10rpx 30rpx rgba(15,23,42,.08); }
+.save-copy { flex: 1; min-width: 0; }
+.save-status { font-size: 25rpx; color: $primary; font-weight: 700; }
+.save-status.dirty { color: #b45309; }
+.save-count { margin-top: 5rpx; color: $muted; font-size: 21rpx; }
+.reload-btn, .save-btn { flex: 0 0 auto; height: 76rpx; line-height: 76rpx; margin-left: 14rpx; border-radius: 999rpx; font-size: 25rpx; padding: 0 28rpx; }
+.reload-btn { background: #eef7f5; color: $primary; }
+.save-btn { background: linear-gradient(135deg, $primary, #10b981); color: #fff; min-width: 142rpx; }
+.save-btn[disabled], .reload-btn[disabled] { opacity: .45; }
+.sheet-overlay { position: fixed; z-index: 50; inset: 0; }
+.sheet-mask { position: absolute; inset: 0; background: rgba(15,23,42,.48); }
+.user-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: min(78vh, 1080rpx); padding: 14rpx 24rpx calc(20rpx + env(safe-area-inset-bottom)); border-radius: 34rpx 34rpx 0 0; background: #fff; box-sizing: border-box; }
+.sheet-handle { width: 76rpx; height: 8rpx; margin: 0 auto 20rpx; border-radius: 999rpx; background: #dbe5e3; }
+.sheet-title { font-size: 32rpx; font-weight: 750; }
+.sheet-close { padding: 14rpx; }
+.search-row { margin-top: 22rpx; height: 82rpx; padding: 0 18rpx 0 24rpx; border-radius: 22rpx; background: #f1f7f5; border: 1rpx solid #deebe7; box-sizing: border-box; }
+.search-input { flex: 1; min-width: 0; margin-left: 14rpx; font-size: 26rpx; }
+.user-results { height: calc(100% - 150rpx); margin-top: 16rpx; }
+.result-row { padding: 22rpx 8rpx; border-bottom: 1rpx solid #edf3f1; }
+.sheet-state { min-height: 360rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.sheet-state-text { margin-top: 18rpx; color: $muted; font-size: 25rpx; }
+.sheet-retry { margin-top: 20rpx; color: $accent; font-size: 26rpx; font-weight: 650; }

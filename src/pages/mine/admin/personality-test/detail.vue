@@ -75,7 +75,7 @@
 
 <script>
 import { getPersonalityAttemptDetail } from '@/api/wxmini/personalityTest'
-import { getStudentDetail } from '@/api/system/student'
+import { getMiniUser } from '@/pages/mine/admin/_api/system/miniUser'
 import { requireAdminAccess } from '../access'
 
 export default {
@@ -121,8 +121,7 @@ export default {
 
         if (data?.userInfoId) {
           try {
-            const profileRes = await getStudentDetail(data.userInfoId)
-            const profile = profileRes.data || {}
+            const profile = await getMiniUser(data.userInfoId)
             this.detail = {
               ...this.detail,
               phone: profile.phone,

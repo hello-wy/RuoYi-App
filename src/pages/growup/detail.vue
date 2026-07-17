@@ -78,6 +78,16 @@
 									<text class="meta-label">上课地址：</text>
 									<text class="meta-value">{{ detail.location }}</text>
 								</view>
+								<view class="course-meta-item" v-if="detail.coursePrice != null">
+									<view class="meta-dot"></view>
+									<text class="meta-label">课程价格：</text>
+									<text class="meta-value">¥{{ formatPrice(detail.coursePrice) }}</text>
+								</view>
+								<view class="course-meta-item" v-if="detail.registrationFee != null">
+									<view class="meta-dot"></view>
+									<text class="meta-label">报名费：</text>
+									<text class="meta-value">¥{{ formatPrice(detail.registrationFee) }}</text>
+								</view>
 							</view>
 						</view>
 
@@ -460,6 +470,9 @@ export default {
 		formatMeta(dateStr) {
 			if (!dateStr) return ''
 			return String(dateStr).replace(/^(\d{4})-(\d{2})-(\d{2}).*/, '$1.$2.$3')
+		},
+		formatPrice(value) {
+			return Number(value).toFixed(2)
 		},
 		formatDateRange(start, end) {
 			if (!start) return ''

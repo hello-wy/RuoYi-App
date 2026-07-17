@@ -84,7 +84,12 @@ async function handleBindAdmin() {
     if (!loginRes.token) throw new Error('登录失败，未获取到 token')
     setAdminToken(loginRes.token)
     const infoRes = await getAdminInfo()
-    setAdminRoles(infoRes.roles || [])
+    const roles = [...(infoRes.roles || [])]
+    if (infoRes.user?.adminLevel === 'national_general_manager'
+      && !roles.includes('national_general_manager')) {
+      roles.push('national_general_manager')
+    }
+    setAdminRoles(roles)
     hasAdminAccess.value = isAdminUser()
     if (!hasAdminAccess.value) throw new Error('登录成功，但未获取到管理员权限')
     bindForm.value = { username: '', password: '' }

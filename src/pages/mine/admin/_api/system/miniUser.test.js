@@ -6,6 +6,20 @@ vi.mock('@/utils/request', () => ({ default: request }))
 beforeEach(() => request.mockReset())
 
 describe('mini user api adapter', () => {
+  test('loads an individual user with numeric gender', async () => {
+    request.mockResolvedValue({ data: { id: 7, gender: 0 } })
+    const { getMiniUser } = await import('./miniUser')
+
+    const result = await getMiniUser(7)
+
+    expect(request).toHaveBeenCalledWith({
+      url: '/system/mini-user/7',
+      method: 'get',
+      adminAuth: true
+    })
+    expect(result).toEqual(expect.objectContaining({ id: 7, gender: 0 }))
+  })
+
   test('keeps numeric user type zero and normalizes student flag', async () => {
     request.mockResolvedValue({ rows: [{ userId: 7, nickName: '小智', isStudent: 1 }], total: 1 })
     const { listMiniUsers } = await import('./miniUser')

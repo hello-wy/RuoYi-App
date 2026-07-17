@@ -7,6 +7,7 @@ function normalizeUser(item = {}) {
     displayName: item.displayName || item.nickName || item.nickname || item.realName || item.userName || '未命名用户',
     phone: item.phone || item.phonenumber || '',
     avatar: item.avatar || item.avatarUrl || '',
+    gender: item.gender ?? null,
     userType: item.userType ?? '',
     isStudent: item.isStudent === true || item.isStudent === 1 || item.isStudent === '1'
   }

@@ -87,6 +87,13 @@ const actionItems = [
     onClick: handleSystemUser
   },
   {
+    key: 'permission',
+    label: '权限管理',
+    icon: 'locked-filled',
+    iconColor: '#0f766e',
+    onClick: handlePermissionManagement
+  },
+  {
     key: 'department',
     label: '部门管理',
     icon: 'folder-add-filled',
@@ -194,6 +201,10 @@ function handleSystemUser() {
   proxy.$tab.navigateTo('/pages/mine/admin/system-user/index')
 }
 
+function handlePermissionManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/permission/index')
+}
+
 function handleDepartmentManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/department/index')
 }
@@ -257,12 +268,16 @@ function updateBindField(field, value) {
   }
 }
 
-function applyAdminSession(token, roles) {
+function applyAdminSession(token, roles, adminLevel) {
   if (!token) {
     return false
   }
+  const sessionRoles = [...(roles || [])]
+  if (adminLevel === 'national_general_manager' && !sessionRoles.includes(adminLevel)) {
+    sessionRoles.push(adminLevel)
+  }
   setAdminToken(token)
-  setAdminRoles(roles || [])
+  setAdminRoles(sessionRoles)
   hasAdminAccess.value = isAdminUser()
   return hasAdminAccess.value
 }
@@ -290,8 +305,9 @@ async function handleBindAdmin() {
 
     const infoRes = await getAdminInfo()
     const roles = infoRes.roles || []
+    const adminLevel = infoRes.user?.adminLevel
 
-    if (!applyAdminSession(token, roles)) {
+    if (!applyAdminSession(token, roles, adminLevel)) {
       proxy.$modal.msgError('登录成功，但未获取到管理员权限')
       return
     }

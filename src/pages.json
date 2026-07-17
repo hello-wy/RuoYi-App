@@ -444,6 +444,12 @@
           }
         },
         {
+          "path": "permission/index",
+          "style": {
+            "navigationBarTitleText": "权限管理"
+          }
+        },
+        {
           "path": "department/index",
           "style": {
             "navigationBarTitleText": "部门管理",
