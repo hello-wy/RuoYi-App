@@ -5,7 +5,16 @@ export function listLectures(query) {
   return request({
     url: '/system/lectures/list',
     method: 'get',
-    params: query
+    params: query,
+    adminAuth: true
+  })
+}
+
+export function listLectureTemplates() {
+  return request({
+    url: '/system/lectures/templates',
+    method: 'get',
+    adminAuth: true
   })
 }
 
@@ -13,7 +22,8 @@ export function listLectures(query) {
 export function getLectures(id) {
   return request({
     url: '/system/lectures/' + id,
-    method: 'get'
+    method: 'get',
+    adminAuth: true
   })
 }
 
@@ -22,7 +32,8 @@ export function addLectures(data) {
   return request({
     url: '/system/lectures',
     method: 'post',
-    data: data
+    data: data,
+    adminAuth: true
   })
 }
 
@@ -31,7 +42,8 @@ export function updateLectures(data) {
   return request({
     url: '/system/lectures',
     method: 'put',
-    data: data
+    data: data,
+    adminAuth: true
   })
 }
 
@@ -39,7 +51,8 @@ export function updateLectures(data) {
 export function delLectures(id) {
   return request({
     url: '/system/lectures/' + id,
-    method: 'delete'
+    method: 'delete',
+    adminAuth: true
   })
 }
 

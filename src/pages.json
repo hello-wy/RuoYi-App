@@ -489,6 +489,19 @@
           }
         },
         {
+          "path": "lectures/index",
+          "style": {
+            "navigationBarTitleText": "课程管理",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "lectures/edit",
+          "style": {
+            "navigationBarTitleText": "课程编辑"
+          }
+        },
+        {
           "path": "student/index",
           "style": {
             "navigationBarTitleText": "学员管理",
@@ -544,6 +557,25 @@
           "path": "refund/index",
           "style": {
             "navigationBarTitleText": "退款管理"
+          }
+        },
+        {
+          "path": "course-finance/index",
+          "style": {
+            "navigationBarTitleText": "课程财务",
+            "enablePullDownRefresh": true
+          }
+        },
+        {
+          "path": "course-finance/detail",
+          "style": {
+            "navigationBarTitleText": "支付详情"
+          }
+        },
+        {
+          "path": "course-finance/commission-config",
+          "style": {
+            "navigationBarTitleText": "分销返现配置"
           }
         },
         {

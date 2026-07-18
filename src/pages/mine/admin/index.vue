@@ -178,11 +178,25 @@ const actionItems = [
     onClick: handleSurveyManagement
   },
   {
+    key: 'lecture-management',
+    label: '课程管理',
+    icon: 'calendar-filled',
+    iconColor: '#5b4fd8',
+    onClick: handleLectureManagement
+  },
+  {
     key: 'refund',
     label: '退款管理',
     icon: 'undo-filled',
     iconColor: '#0f9d8f',
     onClick: handleRefundManagement
+  },
+  {
+    key: 'course-finance',
+    label: '课程财务',
+    icon: 'wallet-filled',
+    iconColor: '#0f766e',
+    onClick: handleCourseFinance
   },
   {
     key: 'referral',
@@ -249,8 +263,16 @@ function handleTutoringScheduleAudit() {
   proxy.$tab.navigateTo('/pages/mine/admin/tutoring-schedule-audit/index')
 }
 
+function handleLectureManagement() {
+  proxy.$tab.navigateTo('/pages/mine/admin/lectures/index')
+}
+
 function handleRefundManagement() {
   proxy.$tab.navigateTo('/pages/mine/admin/refund/index')
+}
+
+function handleCourseFinance() {
+  proxy.$tab.navigateTo('/pages/mine/admin/course-finance/index')
 }
 
 function handleReferralManagement() {
