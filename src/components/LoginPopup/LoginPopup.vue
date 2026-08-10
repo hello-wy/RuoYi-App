@@ -326,6 +326,7 @@ function handleAccountLogin() {
   withLoading('登录中，请耐心等待...', async () => {
     await userStore.login(loginForm.value)
     await userStore.getInfo()
+    await userStore.bindPendingInviteCode()
     finishLogin('account')
   }).catch(() => {
     if (captchaEnabled.value) {

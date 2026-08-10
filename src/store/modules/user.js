@@ -17,7 +17,7 @@ import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
 const PHONE_CODE_REQUIRED_MESSAGE = '需要手机号授权后继续登录'
-const REFERRAL_TERMINAL_MESSAGES = ['已经被邀请过了', '邀请码不能为空', '邀请码无效', '不能绑定自己的邀请码']
+let bindingPendingInviteCode = false
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
@@ -113,21 +113,18 @@ export const useUserStore = defineStore('user', () => {
     uni.removeStorageSync('pendingInviteCode')
   }
 
-  const shouldClearPendingInviteCode = (message) => REFERRAL_TERMINAL_MESSAGES.includes(message)
-
   const bindPendingInviteCode = async () => {
     const inviteCode = String(uni.getStorageSync('pendingInviteCode') || '').trim()
-    if (!inviteCode) {
+    if (!getToken() || !inviteCode || bindingPendingInviteCode) {
       return
     }
+    bindingPendingInviteCode = true
     try {
       await bindReferral(inviteCode)
       clearPendingInviteCode()
-    } catch (error) {
-      const message = error?.msg || error?.message || error?.errMsg || ''
-      if (shouldClearPendingInviteCode(message)) {
-        clearPendingInviteCode()
-      }
+    } catch {
+    } finally {
+      bindingPendingInviteCode = false
     }
   }
 
@@ -334,6 +331,7 @@ export const useUserStore = defineStore('user', () => {
     login: loginAction,
     getInfo: getInfoAction,
     logOut: logOutAction,
+    bindPendingInviteCode,
     resolveWxLogin: resolveWxLogin,
     resolveWxPhoneLogin
   }

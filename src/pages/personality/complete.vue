@@ -93,13 +93,16 @@
 
 <script>
 import { getPersonalityResult } from '@/api/wxmini/personalityTest'
+import { getMyReferralCode } from '@/api/wxmini/referral'
+import { getToken } from '@/utils/auth'
 import { buildPersonalityResultTables } from './complete.helpers'
 
 export default {
   data() {
     return {
       attemptId: '',
-      result: {}
+      result: {},
+      inviteCode: ''
     }
   },
   computed: {
@@ -114,19 +117,37 @@ export default {
       return
     }
     this.loadResult()
+    this.loadInviteCode()
   },
   onShareAppMessage() {
     return {
       title: '天人合一·性格测试',
-      path: '/pages/personality/start'
+      path: this.buildSharePath()
     }
   },
   onShareTimeline() {
     return {
-      title: '天人合一·性格测试'
+      title: '天人合一·性格测试',
+      query: this.buildShareQuery()
     }
   },
   methods: {
+    async loadInviteCode() {
+      if (!getToken()) return
+      try {
+        const res = await getMyReferralCode()
+        this.inviteCode = res?.data?.inviteCode || ''
+      } catch {
+        this.inviteCode = ''
+      }
+    },
+    buildShareQuery() {
+      return this.inviteCode ? `inviteCode=${encodeURIComponent(this.inviteCode)}` : ''
+    },
+    buildSharePath() {
+      const query = this.buildShareQuery()
+      return `/pages/personality/start${query ? `?${query}` : ''}`
+    },
     async loadResult() {
       if (!this.attemptId) return
       try {

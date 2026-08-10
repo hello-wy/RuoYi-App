@@ -29,19 +29,13 @@
             <picker :range="types" range-key="label" @change="form.recordType = types[$event.detail.value].value"><view class="picker-input">{{ selectedTypeLabel }}</view></picker>
 
             <view class="field-label">课程</view>
-            <view class="search-row"><input v-model="courseKeyword" class="search-input" placeholder="输入课程名称检索" @confirm="searchCourses" /><view class="search-btn" @click="searchCourses">搜索</view></view>
-            <view v-if="form.course" class="selected-item">已选：{{ form.course.name }}（售价 ¥{{ money(form.course.coursePrice) }}）</view>
-            <view v-for="item in courses" :key="item.id" class="option-item" :class="{ active: form.course?.id === item.id }" @click="form.course = item"><text>{{ item.name }}</text><text>¥{{ money(item.coursePrice) }}</text></view>
+            <RemoteSearchSelect v-model="courseKeyword" :options="courseOptions" :loading="courseSearching" placeholder="输入课程名称检索" empty-text="暂无匹配课程" @input="form.course = null" @search="searchCourses" @select="selectCourse" @clear="form.course = null" />
 
             <view class="field-label">微信用户</view>
-            <view class="search-row"><input v-model="wxminiUserKeyword" class="search-input" placeholder="姓名或手机号检索" @confirm="searchWxminiUsers" /><view class="search-btn" @click="searchWxminiUsers">搜索</view></view>
-            <view v-if="form.wxminiUser" class="selected-item">已选：{{ form.wxminiUser.displayName }} {{ form.wxminiUser.phone || '' }}</view>
-            <view v-for="item in wxminiUsers" :key="item.userId" class="option-item" :class="{ active: form.wxminiUser?.userId === item.userId }" @click="form.wxminiUser = item"><text>{{ item.displayName }}</text><text>{{ item.phone || '未填写手机号' }}</text></view>
+            <RemoteSearchSelect v-model="wxminiUserKeyword" :options="wxminiUserOptions" :loading="wxminiUserSearching" placeholder="姓名或手机号检索" empty-text="暂无匹配用户" @input="form.wxminiUser = null" @search="searchWxminiUsers" @select="selectWxminiUser" @clear="form.wxminiUser = null" />
 
             <view class="field-label">员工</view>
-            <view class="search-row"><input v-model="employeeKeyword" class="search-input" placeholder="姓名或手机号检索" @confirm="searchEmployees" /><view class="search-btn" @click="searchEmployees">搜索</view></view>
-            <view v-if="form.employee" class="selected-item">已选：{{ employeeLabel(form.employee) }} {{ form.employee.phonenumber || '' }}</view>
-            <view v-for="item in employees" :key="item.userId" class="option-item" :class="{ active: form.employee?.userId === item.userId }" @click="form.employee = item"><text>{{ employeeLabel(item) }}</text><text>{{ item.phonenumber || '未填写手机号' }}</text></view>
+            <RemoteSearchSelect v-model="employeeKeyword" :options="employeeOptions" :loading="employeeSearching" placeholder="姓名或手机号检索" empty-text="暂无匹配员工" @input="form.employee = null" @search="searchEmployees" @select="selectEmployee" @clear="form.employee = null" />
 
             <view class="field-label">金额{{ form.course ? `（不超过 ¥${money(form.course.coursePrice)}）` : '' }}</view>
             <input v-model="form.amount" class="text-input" type="digit" placeholder="请输入金额" />
@@ -58,6 +52,7 @@
 <script setup>
 import { computed, getCurrentInstance, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import RemoteSearchSelect from '@/components/RemoteSearchSelect/RemoteSearchSelect.vue'
 import { getAdminRoles } from '@/utils/auth'
 import { listLectures } from '@/api/system/lectures'
 import { listMiniUsers } from '../_api/system/miniUser'
@@ -80,9 +75,15 @@ const submitting = ref(false)
 const courseKeyword = ref('')
 const wxminiUserKeyword = ref('')
 const employeeKeyword = ref('')
-const courses = ref([])
-const wxminiUsers = ref([])
-const employees = ref([])
+const courseOptions = ref([])
+const wxminiUserOptions = ref([])
+const employeeOptions = ref([])
+const courseSearching = ref(false)
+const wxminiUserSearching = ref(false)
+const employeeSearching = ref(false)
+let courseRequest = 0
+let wxminiUserRequest = 0
+let employeeRequest = 0
 const types = [{ label: '收入', value: 'INCOME' }, { label: '提现', value: 'WITHDRAWAL' }]
 const emptyForm = () => ({ recordType: 'INCOME', course: null, wxminiUser: null, employee: null, amount: '', reason: '' })
 const form = ref(emptyForm())
@@ -92,18 +93,35 @@ const loadMoreStatus = computed(() => loading.value && records.value.length ? 'l
 function money(value) { return Number(value || 0).toFixed(2) }
 function recordType(value) { return value === 'WITHDRAWAL' ? '提现' : '收入' }
 function employeeLabel(item) { return item.nickName || item.userName || '未命名员工' }
-function openForm() { form.value = emptyForm(); courseKeyword.value = ''; wxminiUserKeyword.value = ''; employeeKeyword.value = ''; courses.value = []; wxminiUsers.value = []; employees.value = []; formVisible.value = true }
+function selectCourse(option) { form.value.course = option.raw }
+function selectWxminiUser(option) { form.value.wxminiUser = option.raw }
+function selectEmployee(option) { form.value.employee = option.raw }
+function openForm() { form.value = emptyForm(); courseKeyword.value = ''; wxminiUserKeyword.value = ''; employeeKeyword.value = ''; courseOptions.value = []; wxminiUserOptions.value = []; employeeOptions.value = []; formVisible.value = true }
 function closeForm() { if (!submitting.value) formVisible.value = false }
 
-async function searchCourses() {
-  try { const res = await listLectures({ pageNum: 1, pageSize: 20, name: courseKeyword.value.trim() || undefined }); courses.value = Array.isArray(res?.rows) ? res.rows : [] } catch (error) { proxy.$modal.showToast(error?.msg || '课程搜索失败') }
+async function searchCourses(keyword = courseKeyword.value.trim()) {
+  const requestId = ++courseRequest
+  courseSearching.value = true
+  try {
+    const res = await listLectures({ pageNum: 1, pageSize: 20, name: keyword || undefined })
+    if (requestId === courseRequest) courseOptions.value = (Array.isArray(res?.rows) ? res.rows : []).map(item => ({ label: `${item.name}（售价 ¥${money(item.coursePrice)}）`, value: item.id, raw: item }))
+  } catch (error) { if (requestId === courseRequest) proxy.$modal.showToast(error?.msg || '课程搜索失败') } finally { if (requestId === courseRequest) courseSearching.value = false }
 }
-async function searchWxminiUsers() {
-  try { wxminiUsers.value = (await listMiniUsers({ pageNum: 1, pageSize: 20, keyword: wxminiUserKeyword.value.trim() || undefined })).rows } catch (error) { proxy.$modal.showToast(error?.msg || '用户搜索失败') }
+async function searchWxminiUsers(keyword = wxminiUserKeyword.value.trim()) {
+  const requestId = ++wxminiUserRequest
+  wxminiUserSearching.value = true
+  try {
+    const result = await listMiniUsers({ pageNum: 1, pageSize: 20, keyword: keyword || undefined })
+    if (requestId === wxminiUserRequest) wxminiUserOptions.value = result.rows.map(item => ({ label: `${item.displayName} ${item.phone || ''}`.trim(), value: item.userId, raw: item }))
+  } catch (error) { if (requestId === wxminiUserRequest) proxy.$modal.showToast(error?.msg || '用户搜索失败') } finally { if (requestId === wxminiUserRequest) wxminiUserSearching.value = false }
 }
-async function searchEmployees() {
-  const keyword = employeeKeyword.value.trim()
-  try { const res = await listSystemUsers({ pageNum: 1, pageSize: 20, userName: keyword || undefined, phonenumber: keyword || undefined }); employees.value = Array.isArray(res?.rows) ? res.rows : [] } catch (error) { proxy.$modal.showToast(error?.msg || '员工搜索失败') }
+async function searchEmployees(keyword = employeeKeyword.value.trim()) {
+  const requestId = ++employeeRequest
+  employeeSearching.value = true
+  try {
+    const res = await listSystemUsers({ pageNum: 1, pageSize: 20, userName: keyword || undefined, phonenumber: keyword || undefined })
+    if (requestId === employeeRequest) employeeOptions.value = (Array.isArray(res?.rows) ? res.rows : []).map(item => ({ label: `${employeeLabel(item)} ${item.phonenumber || ''}`.trim(), value: item.userId, raw: item }))
+  } catch (error) { if (requestId === employeeRequest) proxy.$modal.showToast(error?.msg || '员工搜索失败') } finally { if (requestId === employeeRequest) employeeSearching.value = false }
 }
 async function loadRecords(reset = false) {
   if (loading.value || (!reset && finished.value)) return

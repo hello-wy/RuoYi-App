@@ -5,6 +5,7 @@
       <text class="hint">比例使用小数填写，例如 0.1 表示 10%；两级合计不能超过 1。</text>
       <input v-model="form.level1Ratio" class="input" type="digit" placeholder="直接下属（一级）返现比例" />
       <input v-model="form.level2Ratio" class="input" type="digit" placeholder="间接下属（二级）返现比例" />
+      <input v-model="form.inviteRewardAmount" class="input" type="digit" placeholder="邀请新人返现金额（元）" />
       <button class="save-btn" :loading="saving" @click="save">保存配置</button>
     </view>
   </view>
@@ -18,13 +19,14 @@ import { getDistributionCommissionConfig, updateDistributionCommissionConfig } f
 
 const { proxy } = getCurrentInstance()
 const saving = ref(false)
-const form = reactive({ level1Ratio: '', level2Ratio: '' })
+const form = reactive({ level1Ratio: '', level2Ratio: '', inviteRewardAmount: '' })
 
 async function load() {
   try {
     const config = await getDistributionCommissionConfig()
     form.level1Ratio = config.level1Ratio ?? ''
     form.level2Ratio = config.level2Ratio ?? ''
+    form.inviteRewardAmount = config.inviteRewardAmount ?? ''
   } catch (error) {
     proxy.$modal.showToast(error?.msg || '加载配置失败')
   }
@@ -33,12 +35,16 @@ async function load() {
 async function save() {
   const level1Ratio = Number(form.level1Ratio)
   const level2Ratio = Number(form.level2Ratio)
+  const inviteRewardAmount = Number(form.inviteRewardAmount)
   if (!Number.isFinite(level1Ratio) || !Number.isFinite(level2Ratio) || level1Ratio < 0 || level2Ratio < 0 || level1Ratio + level2Ratio > 1) {
     return proxy.$modal.showToast('请填写 0 到 1 的比例，合计不能超过 1')
   }
+  if (!Number.isFinite(inviteRewardAmount) || inviteRewardAmount < 0 || !/^\d+(\.\d{1,2})?$/.test(String(form.inviteRewardAmount))) {
+    return proxy.$modal.showToast('邀请新人返现金额必须是非负且最多两位小数')
+  }
   saving.value = true
   try {
-    await updateDistributionCommissionConfig({ level1Ratio, level2Ratio })
+    await updateDistributionCommissionConfig({ level1Ratio, level2Ratio, inviteRewardAmount })
     proxy.$modal.showToast('配置已保存')
   } catch (error) {
     proxy.$modal.showToast(error?.msg || '保存失败')
