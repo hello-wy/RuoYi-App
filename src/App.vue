@@ -48,7 +48,7 @@
         }
       }
       inviteCode = String(inviteCode || '').trim()
-      if (inviteCode) {
+      if (inviteCode && uni.getStorageSync('handledInviteCode') !== inviteCode) {
         uni.setStorageSync('pendingInviteCode', inviteCode)
         console.log('pendingInviteCode detected and saved:', inviteCode)
       }

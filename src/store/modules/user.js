@@ -17,6 +17,13 @@ import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
 const PHONE_CODE_REQUIRED_MESSAGE = '需要手机号授权后继续登录'
+const TERMINAL_REFERRAL_STATUSES = new Set([
+  'EMPTY_INVITE_CODE',
+  'INVALID_INVITE_CODE',
+  'SELF_INVITE',
+  'ALREADY_BOUND',
+  'REFERRAL_CYCLE'
+])
 let bindingPendingInviteCode = false
 
 export const useUserStore = defineStore('user', () => {
@@ -109,8 +116,11 @@ export const useUserStore = defineStore('user', () => {
     return profile
   }
 
-  const clearPendingInviteCode = () => {
+  const clearPendingInviteCode = (inviteCode) => {
     uni.removeStorageSync('pendingInviteCode')
+    if (inviteCode) {
+      uni.setStorageSync('handledInviteCode', inviteCode)
+    }
   }
 
   const bindPendingInviteCode = async () => {
@@ -120,9 +130,15 @@ export const useUserStore = defineStore('user', () => {
     }
     bindingPendingInviteCode = true
     try {
-      await bindReferral(inviteCode)
-      clearPendingInviteCode()
-    } catch {
+      const result = await bindReferral(inviteCode)
+      if (result?.data?.status === 'SUCCESS') {
+        clearPendingInviteCode(inviteCode)
+      }
+    } catch (error) {
+      const status = error?.data?.data?.status
+      if (TERMINAL_REFERRAL_STATUSES.has(status)) {
+        clearPendingInviteCode(inviteCode)
+      }
     } finally {
       bindingPendingInviteCode = false
     }

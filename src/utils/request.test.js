@@ -13,7 +13,7 @@ vi.mock('@/utils/auth', () => ({
 }))
 
 vi.mock('@/utils/common', () => ({
-  showConfirm: vi.fn(),
+  showConfirm: vi.fn(() => Promise.resolve({ confirm: false })),
   tansParams: vi.fn(() => ''),
   toast: vi.fn()
 }))
@@ -57,6 +57,22 @@ describe('request', () => {
     }
 
     expect(settledCalls.map(([type]) => type)).toEqual(['reject'])
+  })
+
+  test('rejects non-2xx responses with non-standard payloads', async () => {
+    uni.request.mockReturnValueOnce(Promise.resolve({
+      statusCode: 401,
+      data: 'Invalid token'
+    }))
+
+    await expect(request({
+      url: '/wxmini/referral/bind',
+      method: 'post',
+      showError: false
+    })).rejects.toMatchObject({
+      code: 401,
+      statusCode: 401
+    })
   })
 
   test('uses admin token for adminAuth requests', async () => {

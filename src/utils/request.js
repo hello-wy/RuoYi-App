@@ -65,8 +65,11 @@ const request = config => {
       dataType: 'json'
     }).then(response => {
       const res = response
-      const code = res.data.code || 200
-      const msg = errorCode[code] || res.data.msg || errorCode['default']
+      const httpStatus = res.statusCode
+      const payload = res.data
+      const isHttpError = httpStatus && (httpStatus < 200 || httpStatus >= 300)
+      const code = isHttpError ? httpStatus : (payload?.code ?? 200)
+      const msg = errorCode[code] || payload?.msg || payload?.message || errorCode['default']
       const shouldToastError = config.showError !== false
       if (code === 401) {
         showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(async res => {
@@ -77,22 +80,22 @@ const request = config => {
             })
           }
         })
-        return rejectWithMessage(reject, { code, msg, data: res.data }, '无效的会话，或者会话已过期，请重新登录。')
+        return rejectWithMessage(reject, { code, statusCode: httpStatus, msg, data: payload }, '无效的会话，或者会话已过期，请重新登录。')
       } else if (code === 500) {
         if (shouldToastError) {
           toast(msg)
         }
-        return rejectWithMessage(reject, { code, msg, data: res.data }, errorCode['default'])
+        return rejectWithMessage(reject, { code, statusCode: httpStatus, msg, data: payload }, errorCode['default'])
       } else if (code !== 200) {
         if (shouldToastError) {
           toast(msg)
         }
-        return rejectWithMessage(reject, { code, msg, data: res.data }, errorCode['default'])
+        return rejectWithMessage(reject, { code, statusCode: httpStatus, msg, data: payload }, errorCode['default'])
       }
-      resolve(res.data)
+      resolve(payload)
     })
       .catch(error => {
-        let { message } = error
+        let message = error?.message || error?.errMsg || errorCode['default']
         if (message === 'Network Error') {
           message = '后端接口连接异常'
         } else if (message.includes('timeout')) {
