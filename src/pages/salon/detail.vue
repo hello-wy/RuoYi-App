@@ -103,6 +103,7 @@ import { getInfo } from '@/pages/salon/_api/system/info'
 import { createSalonPayOrder, querySalonPayOrder } from '@/pages/salon/_api/wxmini/salonPay'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
+import { appendInviteCodeToQuery, cacheShareInviteCode } from '@/utils/invite-share'
 import { useUserStore } from '@/store';
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 
@@ -143,14 +144,14 @@ export default {
 			try {
 				const res = await getMyReferralCode()
 				this.inviteCode = res?.data?.inviteCode || ''
+				cacheShareInviteCode(this.inviteCode)
 			} catch (e) {
 				this.inviteCode = ''
 			}
 		},
 		buildShareQuery() {
 			const query = `id=${encodeURIComponent(this.salonId)}`
-			if (!this.inviteCode) return query
-			return `${query}&inviteCode=${encodeURIComponent(this.inviteCode)}`
+			return appendInviteCodeToQuery(query, this.inviteCode)
 		},
 		buildSharePath() {
 			return `/pages/salon/detail?${this.buildShareQuery()}`

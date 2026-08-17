@@ -16,7 +16,7 @@
     saveInviteCodeFromOptions(options)
 
     initApp(options)
-    bindPendingInviteCodeIfLoggedIn()
+    syncInviteCodesIfLoggedIn()
     const cityNode = await findCityNodeByName('南京市')
     if (cityNode) {
       useLocationStore().setCity(cityNode)
@@ -25,7 +25,7 @@
 
   onShow((options) => {
     saveInviteCodeFromOptions(options)
-    bindPendingInviteCodeIfLoggedIn()
+    syncInviteCodesIfLoggedIn()
   })
 
   function saveInviteCodeFromOptions(options) {
@@ -48,17 +48,22 @@
         }
       }
       inviteCode = String(inviteCode || '').trim()
-      if (inviteCode && uni.getStorageSync('handledInviteCode') !== inviteCode) {
+      if (inviteCode) {
         uni.setStorageSync('pendingInviteCode', inviteCode)
         console.log('pendingInviteCode detected and saved:', inviteCode)
       }
     }
   }
 
-  function bindPendingInviteCodeIfLoggedIn() {
-    if (getToken()) {
-      useUserStore().bindPendingInviteCode()
+  function syncInviteCodesIfLoggedIn() {
+    if (!getToken()) {
+      return
     }
+    const userStore = useUserStore()
+    userStore.bindPendingInviteCode()
+    userStore
+      .refreshShareInviteCode()
+      .catch(error => console.error('加载分享邀请码失败:', error))
   }
 
   // 初始化应用

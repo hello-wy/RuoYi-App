@@ -17,6 +17,15 @@ export function getMyInvitees(query) {
   })
 }
 
+// 分页获取当前用户的两级邀请关系树
+export function getMyReferralTree(query) {
+  return request({
+    url: '/wxmini/referral/tree',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询谁邀请了我
 export function getMyInviter() {
   return request({
@@ -41,6 +50,15 @@ export function listAllReferrals(query) {
     adminAuth: true,
     method: 'get',
     params: query
+  })
+}
+
+export function getReferralTree(userId) {
+  return request({
+    url: '/system/referral/tree',
+    adminAuth: true,
+    method: 'get',
+    params: { userId }
   })
 }
 

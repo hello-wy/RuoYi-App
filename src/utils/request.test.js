@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import request from './request'
+import request, { setUnauthorizedHandler } from './request'
 
 vi.mock('@/config', () => ({
   default: {
@@ -20,6 +20,7 @@ vi.mock('@/utils/common', () => ({
 
 describe('request', () => {
   beforeEach(() => {
+    setUnauthorizedHandler(undefined)
     globalThis.uni = {
       request: vi.fn()
     }
@@ -73,6 +74,26 @@ describe('request', () => {
       code: 401,
       statusCode: 401
     })
+  })
+
+  test('runs the registered handler after confirming a 401', async () => {
+    const { showConfirm } = await import('@/utils/common')
+    showConfirm.mockResolvedValueOnce({ confirm: true })
+    const handler = vi.fn(() => Promise.resolve())
+    setUnauthorizedHandler(handler)
+    uni.request.mockReturnValueOnce(Promise.resolve({
+      statusCode: 401,
+      data: 'Invalid token'
+    }))
+
+    await expect(request({
+      url: '/wxmini/referral/bind',
+      method: 'post',
+      showError: false
+    })).rejects.toMatchObject({ code: 401 })
+    await Promise.resolve()
+
+    expect(handler).toHaveBeenCalledOnce()
   })
 
   test('uses admin token for adminAuth requests', async () => {

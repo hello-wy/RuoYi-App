@@ -277,7 +277,6 @@ const hasLogin = computed(() => Boolean(token.value))
 const normalizedUserType = computed(() => normalizeUserType(userType.value))
 const hasSelectedUserType = computed(() => hasUserType(normalizedUserType.value))
 
-const showWalletEntry = computed(() => hasLogin.value)
 const showParttimeGroupEntry = computed(() => normalizedUserType.value === USER_TYPES.AUNT)
 const showMerchantPayrollEntry = computed(() => normalizedUserType.value === USER_TYPES.MERCHANT)
 const isProfileVerified = computed(() => isRealnameAuthed(profileDetail.value?.isRealnameAuth))
@@ -324,7 +323,6 @@ const scheduleMenuItem = { key: 'schedule', label: '安排', icon: 'calendar-fil
 const settingMenuItem = { key: 'setting', label: '设置', icon: 'gear-filled', iconColor: '#0F766E', iconClass: 'menu-icon-muted', onClick: handleToSetting }
 
 const baseMenuItems = [
-  { key: 'wallet', label: '我的钱包', icon: 'wallet-filled', iconColor: '#0F9D8F', iconClass: 'menu-icon-primary', description: '收入提现与工资流水', visible: () => showWalletEntry.value, onClick: handleToWallet },
   { key: 'merchantPayroll', label: '兼职日结查询', icon: 'list', iconColor: '#2563EB', iconClass: 'menu-icon-primary', description: '报名人员与工资结算', visible: () => showMerchantPayrollEntry.value, onClick: handleToMerchantPayroll },
   scheduleMenuItem,
   { key: 'group', label: '兼职群二维码', icon: 'chatboxes-filled', iconColor: '#7C3AED', iconClass: 'menu-icon-soft', description: '扫码加入兼职通知群', visible: () => showParttimeGroupEntry.value, onClick: handleOpenParttimeGroup },
@@ -474,12 +472,6 @@ function handleToCoursePackage() {
 function handleBuilding() {
   withLogin(() => {
     proxy.$modal.showToast('功能正在建设中~')
-  })
-}
-
-function handleToWallet() {
-  withLogin(() => {
-    proxy.$tab.navigateTo('/pages/mine/wallet/index')
   })
 }
 

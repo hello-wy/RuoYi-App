@@ -265,6 +265,7 @@ import { getCourse, getCourseReviews, saveCourseReview } from '@/api/wxmini/grow
 import { hasPaidCourseOrder } from '@/api/wxmini/coursePay'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
+import { appendInviteCodeToQuery, cacheShareInviteCode } from '@/utils/invite-share'
 import {
 	buildLectureImageUrl,
 	formatLectureImageVersion,
@@ -439,14 +440,14 @@ export default {
 			try {
 				const res = await getMyReferralCode()
 				this.inviteCode = res?.data?.inviteCode || ''
+				cacheShareInviteCode(this.inviteCode)
 			} catch (e) {
 				this.inviteCode = ''
 			}
 		},
 		buildShareQuery() {
 			const query = `id=${encodeURIComponent(this.id)}&type=${encodeURIComponent(this.type)}`
-			if (!this.inviteCode) return query
-			return `${query}&inviteCode=${encodeURIComponent(this.inviteCode)}`
+			return appendInviteCodeToQuery(query, this.inviteCode)
 		},
 		buildSharePath() {
 			return `/pages/growup/detail?${this.buildShareQuery()}`

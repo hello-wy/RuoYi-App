@@ -4,7 +4,12 @@ import errorCode from '@/utils/errorCode'
 import { toast, showConfirm, tansParams } from '@/utils/common'
 
 let timeout = 10000
+let unauthorizedHandler
 const baseUrl = config.baseUrl
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler
+}
 
 function joinRequestUrl(base = '', path = '') {
   const normalizedBase = String(base || '').replace(/\/+$/, '')
@@ -72,12 +77,9 @@ const request = config => {
       const msg = errorCode[code] || payload?.msg || payload?.message || errorCode['default']
       const shouldToastError = config.showError !== false
       if (code === 401) {
-        showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(async res => {
-          if (res.confirm) {
-            const { useUserStore } = await import('@/store/modules/user')
-            useUserStore().logOut().then(res => {
-              uni.reLaunch({ url: '/pages/login' })
-            })
+        showConfirm('登录状态已过期，您可以继续留在该页面，或者重新登录?').then(res => {
+          if (res.confirm && unauthorizedHandler) {
+            unauthorizedHandler().catch(() => {})
           }
         })
         return rejectWithMessage(reject, { code, statusCode: httpStatus, msg, data: payload }, '无效的会话，或者会话已过期，请重新登录。')

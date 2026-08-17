@@ -42,6 +42,7 @@
 import { getPersonalityAttempts, getPersonalityEntry, startPersonalityAttempt } from '@/api/wxmini/personalityTest'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
+import { appendInviteCodeToQuery, cacheShareInviteCode } from '@/utils/invite-share'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
 import { removePersonalityProgress } from './progressStorage'
 
@@ -105,13 +106,13 @@ export default {
       try {
         const res = await getMyReferralCode()
         this.inviteCode = res?.data?.inviteCode || ''
+        cacheShareInviteCode(this.inviteCode)
       } catch (e) {
         this.inviteCode = ''
       }
     },
     buildShareQuery() {
-      if (!this.inviteCode) return ''
-      return `inviteCode=${encodeURIComponent(this.inviteCode)}`
+      return appendInviteCodeToQuery('', this.inviteCode)
     },
     buildSharePath() {
       const query = this.buildShareQuery()

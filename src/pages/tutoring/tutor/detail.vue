@@ -175,6 +175,7 @@ import config from '@/config'
 import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { getTutorById, reviewTutors } from '@/pages/tutoring/_api/system/tutors'
 import request from '@/utils/request'
+import { appendInviteCodeToPath, appendInviteCodeToQuery } from '@/utils/invite-share'
 import { useLocationStore } from '@/store'
 import { appendPreviewCacheBuster } from '@/pages/tutoring/tutor/apply.helpers'
 import {
@@ -211,13 +212,13 @@ export default {
 	onShareAppMessage() {
 		const title = (this.detail?.realName || '教员') + ' - 家教教员详情'
 		const imageUrl = this.avatarSrc || ''
-		const path = `/pages/tutoring/tutor/detail?id=${this.tutorId}`
+		const path = appendInviteCodeToPath(`/pages/tutoring/tutor/detail?id=${this.tutorId}`)
 		return { title, imageUrl, path }
 	},
 	onShareTimeline() {
 		const title = (this.detail?.realName || '教员') + ' - 家教教员详情'
 		const imageUrl = this.avatarSrc || ''
-		return { title, imageUrl }
+		return { title, imageUrl, query: appendInviteCodeToQuery(`id=${encodeURIComponent(this.tutorId)}`) }
 	},
 	computed: {
 		avatarSrc() {

@@ -95,6 +95,7 @@
 import { getPersonalityResult } from '@/api/wxmini/personalityTest'
 import { getMyReferralCode } from '@/api/wxmini/referral'
 import { getToken } from '@/utils/auth'
+import { appendInviteCodeToQuery, cacheShareInviteCode } from '@/utils/invite-share'
 import { buildPersonalityResultTables } from './complete.helpers'
 
 export default {
@@ -137,12 +138,13 @@ export default {
       try {
         const res = await getMyReferralCode()
         this.inviteCode = res?.data?.inviteCode || ''
+        cacheShareInviteCode(this.inviteCode)
       } catch {
         this.inviteCode = ''
       }
     },
     buildShareQuery() {
-      return this.inviteCode ? `inviteCode=${encodeURIComponent(this.inviteCode)}` : ''
+      return appendInviteCodeToQuery('', this.inviteCode)
     },
     buildSharePath() {
       const query = this.buildShareQuery()

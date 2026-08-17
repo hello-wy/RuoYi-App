@@ -6,13 +6,14 @@ import storage from '@/utils/storage'
 import constant from '@/utils/constant'
 import { isHttp, isEmpty } from "@/utils/validate"
 import { getInfo, login, logout, wxminiLogin } from '@/api/login'
-import { bindReferral } from '@/api/wxmini/referral'
+import { bindReferral, getMyReferralCode } from '@/api/wxmini/referral'
 import { getTotalEnrollments } from '@/api/wxmini/growup'
 import { getToken, removeAdminRoles, removeAdminToken, removeToken, setAdminRoles, setAdminToken, setToken } from '@/utils/auth'
 import { EMPTY_USER_TYPE, hasUserType, normalizeUserType } from '@/utils/userType'
 import { shouldEnableRegularMineFeatures } from '@/utils/admin'
 import { resolveUserDisplayName } from '@/utils/userDisplay'
 import { createAdminSessionSnapshot } from './user.helpers'
+import { cacheShareInviteCode, clearShareInviteCode } from '@/utils/invite-share'
 import defAva from '@/static/images/profile.png'
 
 const baseUrl = config.baseUrl
@@ -116,11 +117,13 @@ export const useUserStore = defineStore('user', () => {
     return profile
   }
 
-  const clearPendingInviteCode = (inviteCode) => {
+  const clearPendingInviteCode = () => {
     uni.removeStorageSync('pendingInviteCode')
-    if (inviteCode) {
-      uni.setStorageSync('handledInviteCode', inviteCode)
-    }
+  }
+
+  const refreshShareInviteCode = async () => {
+    const response = await getMyReferralCode()
+    return cacheShareInviteCode(response?.data?.inviteCode)
   }
 
   const bindPendingInviteCode = async () => {
@@ -132,12 +135,12 @@ export const useUserStore = defineStore('user', () => {
     try {
       const result = await bindReferral(inviteCode)
       if (result?.data?.status === 'SUCCESS') {
-        clearPendingInviteCode(inviteCode)
+        clearPendingInviteCode()
       }
     } catch (error) {
       const status = error?.data?.data?.status
       if (TERMINAL_REFERRAL_STATUSES.has(status)) {
-        clearPendingInviteCode(inviteCode)
+        clearPendingInviteCode()
       }
     } finally {
       bindingPendingInviteCode = false
@@ -146,6 +149,7 @@ export const useUserStore = defineStore('user', () => {
 
   const applyWxSessionAndBindReferral = async (profile) => {
     const result = await applyWxSession(profile)
+    refreshShareInviteCode().catch(error => console.error('加载分享邀请码失败:', error))
     await bindPendingInviteCode()
     return result
   }
@@ -190,6 +194,7 @@ export const useUserStore = defineStore('user', () => {
     SET_PHONE('')
     SET_SESSION_KEY('')
     SET_USER_TYPE('')
+    clearShareInviteCode()
   }
 
   const updateWxProfileState = (profile = {}) => {
@@ -348,6 +353,7 @@ export const useUserStore = defineStore('user', () => {
     getInfo: getInfoAction,
     logOut: logOutAction,
     bindPendingInviteCode,
+    refreshShareInviteCode,
     resolveWxLogin: resolveWxLogin,
     resolveWxPhoneLogin
   }
