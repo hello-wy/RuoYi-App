@@ -1,10 +1,41 @@
 import request from '@/utils/request'
+import { getToken } from '@/utils/auth'
+import { isAdminUser } from '@/utils/admin'
+import { cacheShareInviteCode, getCachedShareInviteCode } from '@/utils/invite-share'
+
+const REFERRAL_CODE_CACHE_MESSAGE = '使用本地缓存的邀请码'
+
+function createCachedReferralCodeResponse(inviteCode) {
+  return {
+    code: 200,
+    msg: REFERRAL_CODE_CACHE_MESSAGE,
+    data: { inviteCode }
+  }
+}
+
+function shouldRequestReferralCode() {
+  const token = getToken()
+  return Boolean(token) && !isAdminUser(token, [])
+}
 
 // 获取我的邀请码 + 统计
 export function getMyReferralCode() {
+  const cachedInviteCode = getCachedShareInviteCode()
+  if (cachedInviteCode) {
+    return Promise.resolve(createCachedReferralCodeResponse(cachedInviteCode))
+  }
+  if (!shouldRequestReferralCode()) {
+    return Promise.resolve(null)
+  }
   return request({
     url: '/wxmini/referral/my-code',
     method: 'get'
+  }).then(response => {
+    const inviteCode = response?.data?.inviteCode
+    if (inviteCode) {
+      cacheShareInviteCode(inviteCode)
+    }
+    return response
   })
 }
 

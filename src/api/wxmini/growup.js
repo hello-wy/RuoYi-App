@@ -63,13 +63,30 @@ function normalizeReview(res = {}) {
     return res.data ?? null
 }
 
-//获得最近所有课程
+function normalizeCourseListResponse(res = {}) {
+    const rows = Array.isArray(res.rows)
+        ? res.rows
+        : Array.isArray(res.data?.rows)
+            ? res.data.rows
+            : Array.isArray(res.data)
+                ? res.data
+                : []
+    const total = Number(res.total ?? res.data?.total ?? rows.length) || 0
+
+    return {
+        ...res,
+        rows,
+        total
+    }
+}
+
+// 获取全部课程活动
 export function listCourse(query) {
     return request({
         url: '/wxmini/growup/courses',
         method: 'get',
         params: query
-    })
+    }).then(normalizeCourseListResponse)
 }
 
 // 展示讲师风采列表

@@ -85,10 +85,9 @@ onShareTimeline(() => ({
 
 function fetchCodeAndStats() {
   getMyReferralCode().then(res => {
-    if (res.code === 200 && res.data?.inviteCode) {
+    if (res?.code === 200 && res.data?.inviteCode) {
       inviteCode.value = res.data.inviteCode
       cacheShareInviteCode(inviteCode.value)
-      inviteCount.value = res.data.inviteCount
     }
   }).catch(() => {
     uni.showToast({
@@ -110,8 +109,10 @@ async function loadReferralTree({ reset = false } = {}) {
     if (res.code !== 200 || !Array.isArray(res.rows) || !Number.isFinite(Number(res.total))) {
       throw new Error(res.msg || '邀请关系数据格式错误')
     }
+    const total = Number(res.total)
     referralGroups.value = reset ? res.rows : [...referralGroups.value, ...res.rows]
-    referralTotal.value = Number(res.total)
+    referralTotal.value = total
+    inviteCount.value = total
     treePageNum.value += 1
   } catch (error) {
     console.error('邀请关系加载失败:', error)

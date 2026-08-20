@@ -21,6 +21,18 @@ export function buildLectureListQuery(state = {}) {
   }
 }
 
+function getLectureSortTime(lecture = {}) {
+  return String(lecture.time || '')
+}
+
+export function sortLecturesByTop(lectures = []) {
+  return [...lectures].sort((left, right) => {
+    const topDifference = Number(right.isTop === true) - Number(left.isTop === true)
+    if (topDifference !== 0) return topDifference
+    return getLectureSortTime(left).localeCompare(getLectureSortTime(right))
+  })
+}
+
 export function createLectureForm() {
   return {
     id: '',
@@ -37,7 +49,7 @@ export function createLectureForm() {
     registrationFee: '',
     deposit: '',
     coursePrice: '',
-    requiresEnrollment: true
+    requiresEnrollment: true,
   }
 }
 
@@ -60,7 +72,7 @@ export function normalizeLectureForm(lecture = {}) {
     registrationFee: lecture.registrationFee ?? '',
     deposit: lecture.deposit ?? '',
     coursePrice: lecture.coursePrice ?? '',
-    requiresEnrollment: lecture.requiresEnrollment !== false
+    requiresEnrollment: lecture.requiresEnrollment !== false,
   }
 }
 
@@ -95,7 +107,7 @@ export function buildLecturePayload(form = {}) {
     registrationFee: numberOrNull(form.registrationFee),
     deposit: numberOrNull(form.deposit),
     coursePrice: numberOrNull(form.coursePrice),
-    requiresEnrollment: Boolean(form.requiresEnrollment)
+    requiresEnrollment: Boolean(form.requiresEnrollment),
   }
   if (form.id) {
     payload.id = form.id

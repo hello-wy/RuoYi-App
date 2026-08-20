@@ -55,7 +55,7 @@
 
 				<view v-if="!featuredCourse && !coursesLoading" class="empty-card">
 					<uni-icons type="calendar" size="28" color="#cbd5e1"></uni-icons>
-					<text class="empty-text">暂无即将开始的课程</text>
+					<text class="empty-text">暂无活动</text>
 				</view>
 
 				<view v-if="featuredCourse" class="lecture-card">
@@ -125,7 +125,7 @@
 				</view>
 
 				<view v-if="allCourses.length === 0" class="empty-card">
-					<text class="empty-text">暂无课程</text>
+					<text class="empty-text">暂无活动</text>
 				</view>
 
 				<view
@@ -351,9 +351,7 @@ export default {
 				}))
 		},
 		async prefetchBannerAndCourseCovers(courses = [], options = {}) {
-			const {
-				expanded = this.allCoursesExpanded,
-			} = options
+			const { expanded = this.allCoursesExpanded } = options
 			const bannerCourses = courses.filter(course => course?.id)
 			const visibleCourses = (expanded ? courses : courses.slice(0, 3)).filter(course => course?.id)
 			await prefetchLectureCovers({
@@ -404,21 +402,22 @@ export default {
 			})
 		},
 		async loadAll() {
-			await Promise.all([this.loadRecentCourses(), this.loadSurveys()])
+			await Promise.all([this.loadCourses(), this.loadSurveys()])
 		},
-		async loadRecentCourses() {
+		async loadCourses() {
 			this.coursesLoading = true
 			try {
-				const res = await listCourse({ pageNum: 1, pageSize: 50 })
-				const courses = res.rows || []
+				const res = await listCourse()
+				const courses = Array.isArray(res.rows) ? res.rows : []
 				this.allCourses = courses
 				this.allCoursesExpanded = false
-				this.featuredCourse = courses[0] || null
+				this.featuredCourse = courses.find(course => course?.isTop === true) || courses[0] || null
 				await this.prefetchBannerAndCourseCovers(courses)
 				this.$nextTick(() => {
 					this.updateLocationAlignment()
 				})
 			} catch (e) {
+				console.error('[growup] 加载活动失败', e)
 				this.featuredCourse = null
 				this.allCourses = []
 				this.allCoursesExpanded = false

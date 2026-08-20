@@ -7,6 +7,7 @@
           <text class="level-label">一级邀请用户</text>
           <text class="user-name">{{ displayName(group.level1Invitee) }}</text>
           <text class="user-phone">{{ formatPhone(group.level1Invitee.phone) }}</text>
+          <text class="inviter-info">一级邀请人：{{ formatInviter(group.level1Invitee) }}</text>
         </view>
         <text class="invite-time">{{ formatDate(group.level1Invitee.createTime) }}</text>
       </view>
@@ -67,6 +68,10 @@ function formatPhone(phone) {
   return phone.length === 11 ? phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : phone
 }
 
+function formatInviter(referral) {
+  return `${referral.inviterUserName || '微信用户'}（${formatPhone(referral.inviterPhone)}）`
+}
+
 function formatDate(time) {
   return time ? time.split(' ')[0] : ''
 }
@@ -81,8 +86,9 @@ function formatDate(time) {
 .user-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .level-label { margin-bottom: 6rpx; color: #0f9d8f; font-size: 20rpx; font-weight: 700; }
 .user-name { overflow: hidden; color: #1e293b; font-size: 28rpx; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.user-phone, .invite-time { color: #94a3b8; font-size: 22rpx; }
+.user-phone, .inviter-info, .invite-time { color: #94a3b8; font-size: 22rpx; }
 .user-phone { margin-top: 6rpx; }
+.inviter-info { margin-top: 6rpx; }
 .invite-time { flex: none; margin-left: 12rpx; }
 .level-two-section { padding: 20rpx 24rpx 4rpx; }
 .level-two-title { display: flex; justify-content: space-between; align-items: center; padding-bottom: 12rpx; color: #475569; font-size: 24rpx; font-weight: 600; }
