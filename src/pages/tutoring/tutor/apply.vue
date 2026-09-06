@@ -296,6 +296,7 @@ import {
 } from './apply.helpers'
 import { buildApplyFormStateFromTutor, buildApplyPageMode } from './apply.mode'
 import { tutorAgreementRoute } from './agreement.content'
+import { buildVerifiedIdentityForm } from './apply.identity'
 import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.helpers'
 
 export default {
@@ -393,11 +394,8 @@ export default {
 				])
 				const userProfile = profileDetailRes?.data || null
 				const profile = tutorRes?.data || null
-				this.verified = Number(userProfile?.isRealnameAuth || 0) === 1
+				this.fillVerifiedIdentity(userProfile)
 				if (this.pageMode !== 'edit') {
-					if (this.verified && !this.form.realName && userProfile?.realName) {
-						this.form.realName = userProfile.realName
-					}
 					if (profile) {
 						uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
 					}
@@ -411,9 +409,7 @@ export default {
 				const userStore = useUserStore()
 				const hydrated = buildApplyFormStateFromTutor(profile, config.baseUrl, userStore.avatar || '')
 				this.form = hydrated.form
-				if (!this.form.realName && userProfile?.realName) {
-					this.form.realName = userProfile.realName
-				}
+				this.fillVerifiedIdentity(userProfile)
 				this.selectedAreaCodes = hydrated.selectedAreaCodes
 				this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
 				this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
@@ -425,6 +421,10 @@ export default {
 			} finally {
 				this.initializing = false
 			}
+		},
+		fillVerifiedIdentity(userProfile) {
+			this.form = buildVerifiedIdentityForm(this.form, userProfile)
+			this.verified = Number(userProfile?.isRealnameAuth || 0) === 1
 		},
 		resetUploadState() {
 			this.avatarUploading = false
