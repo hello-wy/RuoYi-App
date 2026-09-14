@@ -153,12 +153,10 @@
 				<view class="info-card">
 					<view class="card-title-row">
 						<uni-icons type="medal-filled" size="20" color="#2563EB"></uni-icons>
-						<text class="card-title">证书</text>
+						<text class="card-title">审核材料与证书</text>
 					</view>
-					<view v-if="certificatePreviewUrls.length" class="cert-preview" @click="previewCertificate">
-						<image :src="certificatePreviewUrls[0]" class="cert-img" mode="aspectFit"></image>
-						<text class="cert-hint">点击查看证书图片</text>
-					</view>
+					<TutorMaterialPanel :materials="profileMaterials" :editable="false" />
+					<text class="certificate-description-label">证书说明</text>
 					<view class="certificate-row">
 						<view v-for="(item, index) in certificateItems" :key="index" class="certificate-chip">
 							<text class="certificate-chip-text">{{ item }}</text>
@@ -182,9 +180,10 @@ import config from '@/config'
 import { useUserStore, useLocationStore } from '@/store'
 import { getMyTutor } from '@/api/wxmini/tutoring'
 import LoginPopup from '@/components/LoginPopup/LoginPopup.vue'
+import TutorMaterialPanel from '@/pages/tutoring/_components/TutorMaterialPanel/TutorMaterialPanel.vue'
 import { appendPreviewCacheBuster } from './apply.helpers'
+import { normalizeTutorMaterials } from './material.helpers'
 import {
-	buildTutorCertificatePreviewUrls,
 	buildTutorSubtitle,
 	formatTutorIdentity,
 	formatTutorListText,
@@ -197,7 +196,7 @@ import {
 } from './index.helpers'
 
 export default {
-	components: { LoginPopup },
+	components: { LoginPopup, TutorMaterialPanel },
 	dicts: ['sys_degree', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
@@ -269,9 +268,8 @@ export default {
 		certificateItems() {
 			return getTutorCertificateItems(this.profile?.certificateList)
 		},
-		certificatePreviewUrls() {
-			return buildTutorCertificatePreviewUrls(this.profile?.certificates, config.baseUrl)
-				.map(url => appendPreviewCacheBuster(url))
+		profileMaterials() {
+			return normalizeTutorMaterials(this.profile?.materials, config.baseUrl)
 		},
 		experienceList() {
 			return getTutorExperienceList(this.profile?.experience)
@@ -342,13 +340,6 @@ export default {
 		},
 		goEdit() {
 			uni.navigateTo({ url: '/pages/tutoring/tutor/apply?mode=edit' })
-		},
-		previewCertificate() {
-			if (!this.certificatePreviewUrls.length) return
-			uni.previewImage({
-				urls: this.certificatePreviewUrls,
-				current: this.certificatePreviewUrls[0]
-			})
 		}
 	}
 }
@@ -713,26 +704,12 @@ page {
 	flex-shrink: 0;
 }
 
-.cert-preview {
-	margin-bottom: 20rpx;
-	padding: 20rpx;
-	border-radius: 20rpx;
-	background: #f8fafc;
-}
-
-.cert-img {
-	width: 100%;
-	height: 280rpx;
-	border-radius: 16rpx;
-	background: #e2e8f0;
-}
-
-.cert-hint {
-	margin-top: 12rpx;
+.certificate-description-label {
 	display: block;
-	font-size: 24rpx;
-	color: #64748b;
-	text-align: center;
+	margin: 28rpx 0 16rpx;
+	font-size: 26rpx;
+	font-weight: 600;
+	color: #334155;
 }
 
 .certificate-row {

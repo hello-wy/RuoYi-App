@@ -332,13 +332,52 @@ export function setDefaultServiceAddress(id) {
     })
 }
 
-export function uploadTutorCertification(filePath) {
+export function createTutorMaterial(data) {
+    return request({
+        url: '/wxmini/tutoring/materials',
+        method: 'post',
+        data
+    })
+}
+
+const TUTOR_MATERIAL_UPLOAD_PATHS = Object.freeze({
+    1: '/wxmini/tutoring/materials/upload/id-card-front',
+    2: '/wxmini/tutoring/materials/upload/id-card-back',
+    3: '/wxmini/tutoring/materials/upload/student-card',
+    4: '/wxmini/tutoring/materials/upload/certificate'
+})
+
+function uploadTutorMaterialByPath(filePath, url) {
     return upload({
-        url: '/wxmini/common/uploadCertification',
+        url,
         filePath,
         name: 'file',
         showError: false
     })
+}
+
+export function uploadTutorIdCardFront(filePath) {
+    return uploadTutorMaterialByPath(filePath, TUTOR_MATERIAL_UPLOAD_PATHS[1])
+}
+
+export function uploadTutorIdCardBack(filePath) {
+    return uploadTutorMaterialByPath(filePath, TUTOR_MATERIAL_UPLOAD_PATHS[2])
+}
+
+export function uploadTutorStudentCard(filePath) {
+    return uploadTutorMaterialByPath(filePath, TUTOR_MATERIAL_UPLOAD_PATHS[3])
+}
+
+export function uploadTutorCertificate(filePath) {
+    return uploadTutorMaterialByPath(filePath, TUTOR_MATERIAL_UPLOAD_PATHS[4])
+}
+
+export function uploadTutorMaterialFile(filePath, type) {
+    const uploadPath = TUTOR_MATERIAL_UPLOAD_PATHS[Number(type)]
+    if (!uploadPath) {
+        throw new Error('不支持的材料类型')
+    }
+    return uploadTutorMaterialByPath(filePath, uploadPath)
 }
 
 export function uploadTutorAvatar(filePath) {

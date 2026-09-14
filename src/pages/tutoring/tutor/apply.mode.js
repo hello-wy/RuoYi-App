@@ -1,11 +1,8 @@
+import { normalizeTutorMaterials } from './material.helpers'
+
 function splitCsv(value) {
-  if (value === null || value === undefined || value === '') {
-    return []
-  }
-  return String(value)
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean)
+  if (value === null || value === undefined || value === '') return []
+  return String(value).split(',').map(item => item.trim()).filter(Boolean)
 }
 
 function toAbsoluteUrl(baseUrl = '', value = '') {
@@ -14,17 +11,13 @@ function toAbsoluteUrl(baseUrl = '', value = '') {
 }
 
 function normalizeIdentity(value) {
-  if (value === null || value === undefined || value === '') {
-    return 0
-  }
+  if (value === null || value === undefined || value === '') return 0
   const parsed = Number(value)
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
 function normalizeMethod(value) {
-  if (value === null || value === undefined || value === '') {
-    return ''
-  }
+  if (value === null || value === undefined || value === '') return ''
   return String(value)
 }
 
@@ -32,9 +25,14 @@ export function buildApplyPageMode(query = {}) {
   return query?.mode === 'edit' ? 'edit' : 'create'
 }
 
+export function shouldInitializeApplyPage({ initialized = false, initializing = false } = {}) {
+  return !initialized && !initializing
+}
+
 export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarSrc = '') {
   const subjects = splitCsv(profile.subjects)
   const selectedAreaCodes = splitCsv(profile.areas)
+  const materials = normalizeTutorMaterials(profile.materials, baseUrl)
 
   return {
     form: {
@@ -53,8 +51,9 @@ export function buildApplyFormStateFromTutor(profile = {}, baseUrl = '', avatarS
       certificateList: profile.certificateList || '',
       selfJudge: profile.selfJudge || '',
       avatar: avatarSrc || toAbsoluteUrl(baseUrl, profile.avatar || ''),
-      certificates: toAbsoluteUrl(baseUrl, profile.certificates || '')
+      certificates: profile.certificates || '',
+      materials,
     },
-    selectedAreaCodes
+    selectedAreaCodes,
   }
 }

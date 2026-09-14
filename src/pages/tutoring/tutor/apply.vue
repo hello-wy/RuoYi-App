@@ -43,6 +43,7 @@
 					<ImageUploader
 						:model-value="form.avatar"
 						:uploading="avatarUploading"
+						:removable="true"
 						trigger-text="上传头像"
 						@upload="uploadAvatarImage"
 					/>
@@ -183,14 +184,13 @@
 				</view>
 
 				<view class="form-item">
-					<text class="form-label">证书图片</text>
-					<ImageUploader
-						:model-value="form.certificates"
-						:uploading="certificateUploading"
-						trigger-text="上传证书图片"
-						:removable="true"
-						@upload="uploadCertificateImage"
-						@remove="removeCertificateImage"
+					<text class="form-label">审核材料</text>
+					<TutorMaterialPanel
+						:materials="form.materials"
+						:editable="true"
+						:uploading-types="materialUploadingTypes"
+						@upload="uploadTutorMaterial"
+						@remove="removeTutorMaterialImage"
 					/>
 				</view>
 
@@ -280,37 +280,50 @@ import {
 } from '@/api/wxmini/profile'
 import {
 	addTutors,
+	createTutorMaterial,
 	getMyTutor,
 	updateMyTutor,
 	uploadTutorAvatar,
-	uploadTutorCertification,
+	uploadTutorMaterialFile,
 } from '@/api/wxmini/tutoring'
 import { useLocationStore, useUserStore } from '@/store'
 import { USER_TYPES } from '@/utils/userType'
 import RealVerify from '@/components/RealVerify/RealVerify.vue'
 import UserTypeGuardModal from '@/components/UserTypeGuardModal/UserTypeGuardModal.vue'
 import ImageUploader from '@/pages/tutoring/_components/ImageUploader/ImageUploader.vue'
+import TutorMaterialPanel from '@/pages/tutoring/_components/TutorMaterialPanel/TutorMaterialPanel.vue'
 import {
 	buildUploadedCertificateUrl,
 	removeAreaCodeAtIndex,
 } from './apply.helpers'
-import { buildApplyFormStateFromTutor, buildApplyPageMode } from './apply.mode'
+import {
+	buildApplyFormStateFromTutor,
+	buildApplyPageMode,
+	shouldInitializeApplyPage,
+} from './apply.mode'
+import {
+	buildTutorMaterialIdList,
+	normalizeTutorMaterial,
+	removeTutorMaterial,
+	upsertTutorMaterial,
+} from './material.helpers'
 import { tutorAgreementRoute } from './agreement.content'
 import { buildVerifiedIdentityForm } from './apply.identity'
 import { buildUserTypeGuardCopy, shouldBlockUserTypeEntry } from '../role-guard.helpers'
 
 export default {
-	components: { RealVerify, UserTypeGuardModal, ImageUploader },
+	components: { RealVerify, UserTypeGuardModal, ImageUploader, TutorMaterialPanel },
 	dicts: ['sys_subject', 'sys_degree', 'sys_methods'],
 	data() {
 		return {
 			pageMode: 'create',
+			initialized: false,
 			initializing: false,
 			verified: false,
 			submitting: false,
 			showUserTypeGuard: false,
 			userTypeGuardCopy: buildUserTypeGuardCopy('student'),
-			certificateUploading: false,
+			materialUploadingTypes: {},
 			avatarUploading: false,
 			agreed: false,
 			identityOptions: [
@@ -343,7 +356,8 @@ export default {
 				certificateList: '',
 				selfJudge: '',
 				avatar: useUserStore().avatar || '',
-				certificates: ''
+				certificates: '',
+				materials: []
 			},
 			degreeIndex: -1,
 			currentGradeIndex: -1,
@@ -385,7 +399,8 @@ export default {
 			uni.navigateTo({ url: '/pages/guide/index' })
 		},
 		async initPage() {
-			if (this.initializing) return
+			const state = { initialized: this.initialized, initializing: this.initializing }
+			if (!shouldInitializeApplyPage(state)) return
 			this.initializing = true
 			try {
 				const [profileDetailRes, tutorRes] = await Promise.all([
@@ -396,12 +411,14 @@ export default {
 				const profile = tutorRes?.data || null
 				this.fillVerifiedIdentity(userProfile)
 				if (this.pageMode !== 'edit') {
+					this.initialized = true
 					if (profile) {
 						uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
 					}
 					return
 				}
 				if (!profile) {
+					this.initialized = true
 					uni.showToast({ title: '请先填写申请资料', icon: 'none' })
 					uni.redirectTo({ url: '/pages/tutoring/tutor/index' })
 					return
@@ -414,6 +431,7 @@ export default {
 				this.degreeIndex = (this.dict.type.sys_degree || []).findIndex(item => String(item.value) === String(this.form.degree))
 				this.currentGradeIndex = this.currentGradeOptions.findIndex(item => item.value === this.form.currentGrade)
 				this.agreed = true
+				this.initialized = true
 			} catch (error) {
 				if (this.pageMode === 'edit') {
 					uni.showToast({ title: '加载资料失败，请重试', icon: 'none' })
@@ -428,7 +446,7 @@ export default {
 		},
 		resetUploadState() {
 			this.avatarUploading = false
-			this.certificateUploading = false
+			this.materialUploadingTypes = {}
 		},
 		openAreaPopup() {
 			this.areaPopupVisible = true
@@ -546,25 +564,40 @@ export default {
 				this.avatarUploading = false
 			}
 		},
-		async uploadCertificateImage(file) {
-			this.certificateUploading = true
+		async uploadTutorMaterial(file, type) {
+			this.setMaterialUploading(type, true)
 			try {
-				const result = await uploadTutorCertification(file.tempFilePath || file.path)
-				const certificateUrl = buildUploadedCertificateUrl(result)
-				if (!certificateUrl) {
-					throw new Error('上传成功，但服务端没有返回证书图片地址，请稍后重试')
+				const uploadResult = await uploadTutorMaterialFile(file.tempFilePath || file.path, type)
+				const url = buildUploadedCertificateUrl(uploadResult)
+				if (!url) {
+					throw new Error('上传成功，但服务端没有返回材料图片地址，请稍后重试')
 				}
-				this.form.certificates = certificateUrl.startsWith('https') ? certificateUrl : config.baseUrl + certificateUrl
-				this.$forceUpdate()
+				const createResult = await createTutorMaterial({ type, url })
+				const material = normalizeTutorMaterial(createResult?.data, config.baseUrl)
+				if (!material.id || !material.url) {
+					throw new Error('材料登记成功，但服务端返回数据不完整')
+				}
+				this.form.materials = upsertTutorMaterial(this.form.materials, material)
+				this.syncMaterialIds()
 				uni.showToast({ title: '上传成功', icon: 'success' })
 			} catch (error) {
-				this.showUploadError(error, '证书图片上传失败，请重试')
+				this.showUploadError(error, '审核材料上传失败，请重试')
 			} finally {
-				this.certificateUploading = false
+				this.setMaterialUploading(type, false)
 			}
 		},
-		removeCertificateImage() {
-			this.form.certificates = ''
+		removeTutorMaterialImage(material) {
+			this.form.materials = removeTutorMaterial(this.form.materials, material)
+			this.syncMaterialIds()
+		},
+		setMaterialUploading(type, uploading) {
+			this.materialUploadingTypes = {
+				...this.materialUploadingTypes,
+				[type]: uploading,
+			}
+		},
+		syncMaterialIds() {
+			this.form.certificates = buildTutorMaterialIdList(this.form.materials)
 		},
 		validate() {
 			if (!this.form.realName.trim()) {
@@ -653,7 +686,7 @@ export default {
 						certificateList: this.form.certificateList,
 						selfJudge: this.form.selfJudge,
 						avatar: this.form.avatar,
-						certificates: this.form.certificates
+						certificates: buildTutorMaterialIdList(this.form.materials)
 					}
 					if (this.pageMode === 'edit') {
 						await updateMyTutor(payload)

@@ -136,6 +136,14 @@
 						</view>
 					</view>
 				</view>
+
+				<view v-if="auditMode" class="info-card">
+					<view class="card-title-row">
+						<uni-icons type="image-filled" size="20" color="#2563EB"></uni-icons>
+						<text class="card-title">审核材料</text>
+					</view>
+					<TutorMaterialPanel :materials="auditMaterials" :editable="false" />
+				</view>
 			</view>
 
 			<view :style="{ height: `${bottomPlaceholderHeight}rpx` }"></view>
@@ -174,10 +182,11 @@
 import config from '@/config'
 import { getTutors as getTutorDetail } from '@/api/wxmini/tutoring'
 import { getTutorById, reviewTutors } from '@/pages/tutoring/_api/system/tutors'
-import request from '@/utils/request'
 import { appendInviteCodeToPath, appendInviteCodeToQuery } from '@/utils/invite-share'
 import { useLocationStore } from '@/store'
 import { appendPreviewCacheBuster } from '@/pages/tutoring/tutor/apply.helpers'
+import TutorMaterialPanel from '@/pages/tutoring/_components/TutorMaterialPanel/TutorMaterialPanel.vue'
+import { normalizeTutorMaterials } from '@/pages/tutoring/tutor/material.helpers'
 import {
 	buildTutorSubtitle,
 	resolveTutorAvatarSrc
@@ -189,6 +198,7 @@ import {
 } from '@/pages/tutoring/_utils/tutorReview'
 
 export default {
+	components: { TutorMaterialPanel },
 	dicts: ['sys_degree', 'sys_subject', 'sys_methods'],
 	data() {
 		return {
@@ -203,8 +213,6 @@ export default {
 	},
 	onLoad(options) {
 		this.tutorId = options.id || ''
-		console.log(options);
-		
 		this.avatarSrcFromRoute = decodeURIComponent(options.avatarSrc || '')
 		this.auditMode = isTutorAuditMode(options)
 		this.loadDetail()
@@ -286,6 +294,9 @@ export default {
 			if (!source) return []
 			return source.split(/[，,、\n]/).map(item => item.trim()).filter(Boolean)
 		},
+		auditMaterials() {
+			return normalizeTutorMaterials(this.detail?.materials, config.baseUrl)
+		},
 		experienceList() {
 			const source = this.detail?.experience || ''
 			if (!source) return []
@@ -306,13 +317,7 @@ export default {
 			try {
 				let res
 				if (this.auditMode) {
-					const loadAuditTutorDetail = typeof getTutorById === 'function'
-						? getTutorById
-						: id => request({
-							url: '/system/tutors/' + id,
-							method: 'get'
-						})
-					res = await loadAuditTutorDetail(this.tutorId)
+					res = await getTutorById(this.tutorId)
 					this.detail = res?.data || (Array.isArray(res?.rows) ? res.rows[0] : res)
 				}else{
 					res = await getTutorDetail(this.tutorId)

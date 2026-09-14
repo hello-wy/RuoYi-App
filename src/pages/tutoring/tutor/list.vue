@@ -34,6 +34,8 @@
 				class="card"
 				@click="goDetail(item)"
 			>
+				<text v-if="item.id" class="student-id">#{{ item.id }}</text>
+
 				<view class="card-main">
 					<view class="avatar-wrap">
 						<image
@@ -232,13 +234,7 @@ export default {
 		formatName(item) {
 			const sourceName = item.realName || item.nickname || ''
 			const lastName = sourceName ? sourceName.slice(0, 1) : ''
-			const suffixMap = {
-				0: '同学',
-				1: '老师',
-				2: '教员'
-			}
-			const suffix = suffixMap[Number(item.identity)] || '教员'
-			return lastName ? lastName + suffix : suffix
+			return lastName ? lastName + '教员' : '教员'
 		},
 		getDistrictLabel(val) {
 			if (!val) return []
@@ -282,11 +278,21 @@ export default {
 }
 
 .card {
+	position: relative;
 	margin: 24rpx;
 	background: linear-gradient(180deg, #ffffff 0%, #fdfdf7 100%);
 	border-radius: 24rpx;
 	overflow: hidden;
 	box-shadow: 0 12rpx 32rpx rgba(15, 23, 42, 0.06);
+}
+
+.student-id {
+	position: absolute;
+	top: 28rpx;
+	right: 28rpx;
+	font-size: 24rpx;
+	line-height: 1;
+	color: #9ca3af;
 }
 
 .card-main {

@@ -54,15 +54,6 @@ export function getTutorCertificateItems(source = '') {
     .filter(Boolean)
 }
 
-export function buildTutorCertificatePreviewUrls(source = '', baseUrl = '') {
-  if (!source) return []
-  return String(source)
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean)
-    .map(item => (isHttp(item) ? item : `${baseUrl}${item}`))
-}
-
 export function getTutorExperienceList(source = '') {
   if (!source) return []
   return String(source)

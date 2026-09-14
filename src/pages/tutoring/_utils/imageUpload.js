@@ -31,7 +31,8 @@ export function getImageValidationError(file = {}) {
 }
 
 export function buildUploadedCertificateUrl(result = {}) {
-  const rawValue = result.fileName || result.url || ''
+  const payload = result?.data && typeof result.data === 'object' ? result.data : result
+  const rawValue = payload.fileName || payload.url || ''
   return rawValue ? stripUploadedUrlOrigin(rawValue) : ''
 }
 

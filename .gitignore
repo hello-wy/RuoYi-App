@@ -23,4 +23,6 @@ dist/
 .env.*
 conf/private.*.key
 
-.claude/worktrees
+.claude/
+AGENTS.md
+CLAUDE.md
